@@ -18,7 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import type { RankingPeriod } from '../types'
+import { formatTokens } from '../lib/format'
+import type { RankingPeriod, RankingsSnapshot } from '../types'
 
 const PERIODS: { id: RankingPeriod; labelKey: string }[] = [
   { id: 'today', labelKey: 'Today' },
@@ -31,61 +32,52 @@ const PERIODS: { id: RankingPeriod; labelKey: string }[] = [
 type RankingsHeroProps = {
   period: RankingPeriod
   onPeriodChange: (period: RankingPeriod) => void
+  snapshot?: RankingsSnapshot
 }
 
-/**
- * Hero strip for the rankings page. Intentionally minimal — title +
- * subtitle + period tabs only.
- */
 export function RankingsHero(props: RankingsHeroProps) {
   const { t } = useTranslation()
+  const totalTokens =
+    props.snapshot?.models.reduce((sum, row) => sum + row.total_tokens, 0) ?? 0
 
   return (
-    <section className='space-y-5'>
-      <div className='space-y-2'>
-        <h1 className='text-[clamp(1.75rem,4vw,2.5rem)] leading-[1.15] font-bold tracking-tight'>
-          {t('Rankings')}
-        </h1>
-        <p className='text-muted-foreground/80 max-w-2xl text-sm'>
-          {t(
-            'Discover the most-used models and rising vendors on the platform, updated from live usage data.'
-          )}
-        </p>
-      </div>
+    <section className='rounded-xl border border-white/70 bg-white/64 p-3 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-2xl sm:p-4 dark:border-white/10 dark:bg-white/[0.045]'>
+      <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between'>
+        <div className='inline-flex h-10 items-center justify-center rounded-full border border-slate-200/80 bg-white/74 px-4 text-xs font-medium text-slate-500 shadow-sm dark:border-white/10 dark:bg-white/[0.06] dark:text-slate-400'>
+          <span className='tracking-widest uppercase'>{t('tokens')}:</span>
+          <span className='ml-2 font-mono text-sm font-semibold text-slate-950 tabular-nums dark:text-slate-100'>
+            {formatTokens(totalTokens)}
+          </span>
+        </div>
 
-      {/* Underline tabs for period — clean and unobtrusive. */}
-      <div
-        role='tablist'
-        aria-label={t('Period')}
-        className='border-border/60 flex items-center border-b'
-      >
-        {PERIODS.map((p) => {
-          const isActive = props.period === p.id
-          return (
-            <button
-              key={p.id}
-              role='tab'
-              type='button'
-              aria-selected={isActive}
-              onClick={() => props.onPeriodChange(p.id)}
-              className={cn(
-                'focus-visible:ring-ring/40 relative -mb-px rounded-sm px-3 py-2 text-sm font-medium transition-colors focus-visible:ring-2 focus-visible:outline-none',
-                isActive
-                  ? 'text-foreground'
-                  : 'text-muted-foreground hover:text-foreground'
-              )}
-            >
-              {t(p.labelKey)}
-              <span
-                aria-hidden
-                className={cn(
-                  'bg-foreground absolute inset-x-3 -bottom-px h-[2px] rounded-full transition-opacity',
-                  isActive ? 'opacity-100' : 'opacity-0'
-                )}
-              />
-            </button>
-          )
-        })}
+        <div className='flex justify-end'>
+          <div
+            role='tablist'
+            aria-label={t('Period')}
+            className='inline-flex h-10 items-center rounded-full border border-slate-200/80 bg-white/74 p-1 shadow-sm dark:border-white/10 dark:bg-white/[0.06]'
+          >
+            {PERIODS.map((p) => {
+              const isActive = props.period === p.id
+              return (
+                <button
+                  key={p.id}
+                  role='tab'
+                  type='button'
+                  aria-selected={isActive}
+                  onClick={() => props.onPeriodChange(p.id)}
+                  className={cn(
+                    'h-8 rounded-full px-3 text-xs font-medium transition-all focus-visible:ring-2 focus-visible:ring-slate-400/40 focus-visible:outline-none',
+                    isActive
+                      ? 'bg-slate-950 text-white shadow-[0_8px_20px_rgba(15,23,42,0.18)] dark:bg-white dark:text-slate-950'
+                      : 'text-slate-500 hover:bg-slate-950/[0.04] hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-slate-100'
+                  )}
+                >
+                  {t(p.labelKey)}
+                </button>
+              )
+            })}
+          </div>
+        </div>
       </div>
     </section>
   )

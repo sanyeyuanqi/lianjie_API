@@ -16,12 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  ArrowDownRight,
-  ArrowUpRight,
-  TrendingDown,
-  TrendingUp,
-} from 'lucide-react'
+import { ArrowDownRight, ArrowUpRight } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { getLobeIcon } from '@/lib/lobe-icon'
 import { cn } from '@/lib/utils'
@@ -40,11 +35,10 @@ export function PulseSection(props: PulseSectionProps) {
   const { t } = useTranslation()
 
   return (
-    <section className='grid grid-cols-1 gap-4 lg:grid-cols-2'>
+    <section className='grid grid-cols-1 gap-5 lg:grid-cols-2'>
       <PulseCard
         title={t('Trending up')}
         description={t('Models climbing the leaderboard')}
-        icon={<TrendingUp className='size-4 text-emerald-500' />}
       >
         {props.movers.length === 0 ? (
           <PulseEmpty label={t('No notable climbers right now')} />
@@ -60,7 +54,6 @@ export function PulseSection(props: PulseSectionProps) {
       <PulseCard
         title={t('Trending down')}
         description={t('Models losing positions')}
-        icon={<TrendingDown className='size-4 text-rose-500' />}
       >
         {props.droppers.length === 0 ? (
           <PulseEmpty label={t('No notable drops right now')} />
@@ -79,28 +72,26 @@ export function PulseSection(props: PulseSectionProps) {
 function PulseCard(props: {
   title: string
   description: string
-  icon: React.ReactNode
   children: React.ReactNode
 }) {
   return (
-    <div className='bg-card overflow-hidden rounded-lg border'>
-      <header className='border-b px-4 py-3'>
-        <h3 className='text-foreground inline-flex items-center gap-2 text-sm font-semibold'>
-          {props.icon}
+    <div className='overflow-hidden rounded-3xl border border-white/70 bg-white/62 shadow-[0_24px_80px_rgba(15,23,42,0.06)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.045]'>
+      <header className='border-b border-slate-200/70 px-5 py-4 dark:border-white/10'>
+        <h3 className='inline-flex items-center gap-2 text-sm font-semibold text-slate-950 dark:text-slate-100'>
           {props.title}
         </h3>
-        <p className='text-muted-foreground/80 mt-0.5 text-xs'>
+        <p className='mt-0.5 text-xs text-slate-500 dark:text-slate-400'>
           {props.description}
         </p>
       </header>
-      <div className='py-1'>{props.children}</div>
+      <div className='p-3'>{props.children}</div>
     </div>
   )
 }
 
 function PulseEmpty(props: { label: string }) {
   return (
-    <div className='text-muted-foreground/80 px-4 py-6 text-center text-xs'>
+    <div className='rounded-2xl border border-dashed border-slate-200/80 bg-white/42 px-4 py-6 text-center text-xs text-slate-500 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-400'>
       {props.label}
     </div>
   )
@@ -108,16 +99,16 @@ function PulseEmpty(props: { label: string }) {
 
 function MoverRow(props: { row: RankingMover; intent: 'up' | 'down' }) {
   return (
-    <li className='flex items-center gap-3 px-4 py-2'>
+    <li className='flex items-center gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-slate-950/[0.035] dark:hover:bg-white/[0.055]'>
       <span className='shrink-0'>{getLobeIcon(props.row.vendor_icon, 20)}</span>
       <div className='min-w-0 flex-1'>
         <ModelLink
           modelName={props.row.model_name}
-          className='text-foreground block truncate font-mono text-xs font-medium'
+          className='block truncate font-mono text-xs font-medium text-slate-950 dark:text-slate-100'
         >
           {props.row.model_name}
         </ModelLink>
-        <p className='text-muted-foreground/80 truncate text-[11px]'>
+        <p className='truncate text-[11px] text-slate-500 dark:text-slate-400'>
           #{props.row.current_rank} ·{' '}
           <VendorLink vendor={props.row.vendor}>
             {props.row.vendor.toLowerCase()}

@@ -18,7 +18,6 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useMemo } from 'react'
 import { VChart } from '@visactor/react-vchart'
-import { PieChart } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useChartTheme } from '@/lib/use-chart-theme'
 import { VCHART_OPTION } from '@/lib/vchart'
@@ -211,20 +210,19 @@ export function MarketShareSection(props: MarketShareSectionProps) {
   const right = visible.slice(half)
 
   return (
-    <section className='bg-card overflow-hidden rounded-lg border'>
+    <section className='overflow-hidden rounded-3xl border border-white/70 bg-white/62 shadow-[0_24px_80px_rgba(15,23,42,0.07)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.045]'>
       {/* Chart block ----------------------------------------------------- */}
-      <header className='px-5 py-4'>
-        <h2 className='text-foreground inline-flex items-center gap-2 text-base font-semibold'>
-          <PieChart className='text-primary size-4' />
+      <header className='px-5 py-4 sm:px-6'>
+        <h2 className='inline-flex items-center gap-2 text-base font-semibold text-slate-950 dark:text-slate-100'>
           {t('Market Share')}
         </h2>
-        <p className='text-muted-foreground mt-1 text-sm'>
+        <p className='mt-1 text-sm text-slate-500 dark:text-slate-400'>
           {t(PERIOD_DESCRIPTIONS[props.period])}
         </p>
       </header>
 
-      <div className='px-5 pb-5'>
-        <div className='h-60 sm:h-72'>
+      <div className='px-5 pb-5 sm:px-6'>
+        <div className='h-64 rounded-2xl border border-slate-200/70 bg-white/42 p-3 dark:border-white/10 dark:bg-white/[0.035]'>
           {themeReady && spec ? (
             <VChart
               key={`vendor-share-${resolvedTheme}-${props.period}`}
@@ -236,29 +234,27 @@ export function MarketShareSection(props: MarketShareSectionProps) {
               option={VCHART_OPTION}
             />
           ) : (
-            <div className='text-muted-foreground/80 flex h-full items-center justify-center text-xs'>
-              {t('No history data available')}
-            </div>
+            <ChartEmpty label={t('No history data available')} />
           )}
         </div>
       </div>
 
       {/* Vendor list block ----------------------------------------------- */}
-      <div className='border-t'>
-        <header className='px-5 pt-4 pb-2'>
-          <h3 className='text-foreground text-sm font-semibold'>
+      <div className='border-t border-slate-200/70 dark:border-white/10'>
+        <header className='px-5 pt-4 pb-2 sm:px-6'>
+          <h3 className='text-sm font-semibold text-slate-950 dark:text-slate-100'>
             {t('By model author')}
           </h3>
-          <p className='text-muted-foreground/80 mt-0.5 text-xs'>
+          <p className='mt-0.5 text-xs text-slate-500 dark:text-slate-400'>
             {t('Vendors ranked by aggregated token volume')}
           </p>
         </header>
         {visible.length === 0 ? (
-          <div className='text-muted-foreground/80 px-5 py-8 text-center text-sm'>
+          <div className='mx-5 mb-5 rounded-2xl border border-dashed border-slate-200/80 bg-white/42 px-5 py-8 text-center text-sm text-slate-500 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-400 sm:mx-6'>
             {t('No vendor data available')}
           </div>
         ) : (
-          <div className='grid grid-cols-1 gap-x-8 px-5 pt-1 pb-4 md:grid-cols-2'>
+          <div className='grid grid-cols-1 gap-x-8 px-5 pt-1 pb-5 sm:px-6 2xl:grid-cols-2'>
             <VendorList rows={left} colourMap={colourMap} />
             {right.length > 0 && (
               <VendorList rows={right} colourMap={colourMap} />
@@ -278,7 +274,7 @@ function VendorList(props: {
     <ul>
       {props.rows.map((vendor) => (
         <li key={vendor.vendor} className='flex items-center gap-3 py-2.5'>
-          <span className='text-muted-foreground/80 w-6 shrink-0 text-right font-mono text-xs tabular-nums'>
+          <span className='w-6 shrink-0 text-right font-mono text-xs text-slate-400 tabular-nums dark:text-slate-500'>
             {vendor.rank}.
           </span>
           <span
@@ -290,20 +286,30 @@ function VendorList(props: {
           />
           <VendorLink
             vendor={vendor.vendor}
-            className='text-foreground min-w-0 flex-1 truncate text-sm font-medium'
+            className='min-w-0 flex-1 truncate text-sm font-medium text-slate-950 dark:text-slate-100'
           >
             {vendor.vendor}
           </VendorLink>
           <div className='shrink-0 text-right'>
-            <div className='text-foreground font-mono text-sm font-semibold tabular-nums'>
+            <div className='font-mono text-sm font-semibold text-slate-950 tabular-nums dark:text-slate-100'>
               {formatTokens(vendor.total_tokens)}
             </div>
-            <div className='text-muted-foreground/80 font-mono text-[11px] tabular-nums'>
+            <div className='font-mono text-[11px] text-slate-500 tabular-nums dark:text-slate-400'>
               {formatShare(vendor.share)}
             </div>
           </div>
         </li>
       ))}
     </ul>
+  )
+}
+
+function ChartEmpty(props: { label: string }) {
+  return (
+    <div className='flex h-full items-center justify-center'>
+      <div className='rounded-full border border-dashed border-slate-200/80 bg-white/60 px-4 py-2 text-xs font-medium text-slate-500 dark:border-white/10 dark:bg-white/[0.04] dark:text-slate-400'>
+        {props.label}
+      </div>
+    </div>
   )
 }

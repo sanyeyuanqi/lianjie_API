@@ -53,7 +53,7 @@ export function ModelLeaderboard(props: ModelLeaderboardProps) {
   }
 
   return (
-    <div className='grid grid-cols-1 gap-x-8 md:grid-cols-2'>
+    <div className='grid grid-cols-1 gap-x-5 md:grid-cols-2'>
       <ModelList rows={left} variant={variant} />
       {right.length > 0 && <ModelList rows={right} variant={variant} />}
     </div>
@@ -73,12 +73,12 @@ function ModelList(props: {
           key={row.model_name}
           className={
             compact
-              ? 'flex items-center gap-3 py-2'
-              : 'flex items-center gap-3 py-2.5'
+              ? 'flex items-center gap-3 rounded-xl px-2 py-2 transition-colors hover:bg-slate-950/[0.035] dark:hover:bg-white/[0.055]'
+              : 'flex items-center gap-3 rounded-2xl px-2 py-2.5 transition-colors hover:bg-slate-950/[0.035] dark:hover:bg-white/[0.055]'
           }
         >
-          <span className='text-muted-foreground/80 w-6 shrink-0 text-right font-mono text-xs tabular-nums'>
-            {row.rank}.
+          <span className='flex size-7 shrink-0 items-center justify-center rounded-full bg-slate-100 font-mono text-xs font-semibold text-slate-500 tabular-nums dark:bg-white/10 dark:text-slate-400'>
+            {row.rank}
           </span>
           <span className='shrink-0'>
             {getLobeIcon(row.vendor_icon, compact ? 20 : 22)}
@@ -88,8 +88,8 @@ function ModelList(props: {
               modelName={row.model_name}
               className={
                 compact
-                  ? 'text-foreground block truncate font-mono text-xs font-medium'
-                  : 'text-foreground block truncate font-mono text-sm font-medium'
+                  ? 'block truncate font-mono text-xs font-medium text-slate-950 dark:text-slate-100'
+                  : 'block truncate font-mono text-sm font-medium text-slate-950 dark:text-slate-100'
               }
             >
               {row.model_name}
@@ -97,8 +97,8 @@ function ModelList(props: {
             <p
               className={
                 compact
-                  ? 'text-muted-foreground/80 truncate text-[11px] italic'
-                  : 'text-muted-foreground/80 truncate text-xs italic'
+                  ? 'truncate text-[11px] text-slate-500 italic dark:text-slate-400'
+                  : 'truncate text-xs text-slate-500 italic dark:text-slate-400'
               }
             >
               by{' '}
@@ -111,15 +111,15 @@ function ModelList(props: {
             <div
               className={
                 compact
-                  ? 'text-foreground font-mono text-xs font-semibold tabular-nums'
-                  : 'text-foreground font-mono text-sm font-semibold tabular-nums'
+                  ? 'font-mono text-xs font-semibold text-slate-950 tabular-nums dark:text-slate-100'
+                  : 'font-mono text-sm font-semibold text-slate-950 tabular-nums dark:text-slate-100'
               }
             >
               {formatTokens(row.total_tokens)}
               {!compact && (
                 <>
                   {' '}
-                  <span className='text-muted-foreground/80 font-normal'>
+                  <span className='font-normal text-slate-400 dark:text-slate-500'>
                     {t('tokens')}
                   </span>
                 </>
