@@ -271,16 +271,17 @@ export function PlaygroundChat({
                                       <>
                                         {isUser ? (
                                           <div className='flex max-w-full flex-col items-end'>
-                                            <div className='text-muted-foreground mb-1 max-w-[90%] truncate pr-1 text-right text-xs font-medium sm:max-w-[66ch] md:max-w-[72ch] lg:max-w-[78ch]'>
+                                            <div className='text-muted-foreground mb-1 max-w-[92%] truncate pr-1 text-right text-xs font-medium sm:max-w-[66ch] md:max-w-[72ch] lg:max-w-[78ch]'>
                                               {username}
                                             </div>
                                             <MessageContent
                                               variant='flat'
                                               className={cn(
-                                                getMessageContentStyles()
+                                                getMessageContentStyles(),
+                                                '!w-fit !max-w-[calc(100vw-4rem)] sm:!max-w-[66ch] md:!max-w-[72ch] lg:!max-w-[78ch]'
                                               )}
                                             >
-                                              <Response>
+                                              <Response className='!h-auto !w-auto max-w-full'>
                                                 {displayContent}
                                               </Response>
                                             </MessageContent>
@@ -290,7 +291,7 @@ export function PlaygroundChat({
                                             {showReasoning && (
                                               <Reasoning
                                                 className='mb-2'
-                                                defaultOpen={true}
+                                                defaultOpen={false}
                                                 isStreaming={
                                                   message.isReasoningStreaming
                                                 }

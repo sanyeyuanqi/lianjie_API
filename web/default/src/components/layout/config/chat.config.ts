@@ -23,14 +23,20 @@ import type { NavGroup, SidebarView } from '../types'
 function getChatNavGroups(t: TFunction): NavGroup[] {
   return [
     {
-      id: 'chat',
-      title: t('Chat'),
+      id: 'playground',
+      title: '',
       items: [
         {
           title: t('Playground'),
           url: '/playground',
           icon: FlaskConical,
         },
+      ],
+    },
+    {
+      id: 'chat',
+      title: t('Features'),
+      items: [
         {
           title: t('New chat'),
           type: 'playground-sessions',

@@ -46,6 +46,7 @@ export interface Message {
 export interface PlaygroundSession {
   id: string
   title: string
+  customTitle?: boolean
   messages: Message[]
   createdAt: number
   updatedAt: number

@@ -16,31 +16,13 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { MessageSquare } from 'lucide-react'
 import { createFileRoute } from '@tanstack/react-router'
-import { useTranslation } from 'react-i18next'
-import { useChatPresets } from '@/features/chat/hooks/use-chat-presets'
+import { ChatWorkspace } from '@/features/chat/components/chat-workspace'
 
 export const Route = createFileRoute('/_authenticated/chat/')({
   component: ChatIndexPage,
 })
 
 function ChatIndexPage() {
-  const { t } = useTranslation()
-  const { chatPresets } = useChatPresets()
-  const hasPresets = chatPresets.some((preset) => preset.type !== 'fluent')
-
-  return (
-    <div className='flex h-full flex-col items-center justify-center gap-3 p-6 text-center'>
-      <MessageSquare className='text-muted-foreground h-12 w-12' />
-      <div className='space-y-1'>
-        <h2 className='text-lg font-semibold'>{t('Chat Presets')}</h2>
-        <p className='text-muted-foreground'>
-          {hasPresets
-            ? t('Select a chat preset from the sidebar.')
-            : t('No available Web chat links')}
-        </p>
-      </div>
-    </div>
-  )
+  return <ChatWorkspace />
 }

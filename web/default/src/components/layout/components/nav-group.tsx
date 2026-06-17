@@ -65,9 +65,11 @@ export function NavGroup({ title, items }: NavGroupProps) {
 
   return (
     <SidebarGroup className='px-2 py-0.5'>
-      <SidebarGroupLabel className='text-muted-foreground/65 h-7 px-2 font-mono text-[12px] font-medium tracking-normal'>
-        {title}
-      </SidebarGroupLabel>
+      {title && (
+        <SidebarGroupLabel className='text-muted-foreground/65 h-7 px-2 font-mono text-[12px] font-medium tracking-normal'>
+          {title}
+        </SidebarGroupLabel>
+      )}
       <SidebarMenu>
         {items.map((item) => {
           const key = `${item.title}-${item.url || item.type}`

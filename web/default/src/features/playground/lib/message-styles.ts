@@ -25,7 +25,6 @@ export function getMessageContentStyles() {
     // Assistant content fills the row; user bubble auto-width
     'group-[.is-assistant]:w-full',
     'group-[.is-assistant]:max-w-none',
-    'group-[.is-user]:w-fit',
     // User bubble: rounded and themed background
     'group-[.is-user]:text-foreground',
     'group-[.is-user]:border',
@@ -46,10 +45,5 @@ export function getMessageContentStyles() {
     'break-words',
     'whitespace-pre-wrap',
     'sm:leading-7',
-    // Cap user bubble width so it does not look like a banner
-    'group-[.is-user]:max-w-[90%]',
-    'sm:group-[.is-user]:max-w-[66ch]',
-    'md:group-[.is-user]:max-w-[72ch]',
-    'lg:group-[.is-user]:max-w-[78ch]',
   ].join(' ')
 }
