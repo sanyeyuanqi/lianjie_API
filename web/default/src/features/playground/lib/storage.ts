@@ -17,8 +17,81 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { STORAGE_KEYS } from '../constants'
-import type { PlaygroundConfig, ParameterEnabled, Message } from '../types'
+import type {
+  PlaygroundConfig,
+  ParameterEnabled,
+  Message,
+  PlaygroundSession,
+} from '../types'
 import { sanitizeMessagesOnLoad } from './message-utils'
+
+const DEFAULT_SESSION_TITLE = 'New chat'
+export const PLAYGROUND_SESSIONS_CHANGED_EVENT = 'playground:sessions-changed'
+
+export function notifyPlaygroundSessionsChanged(): void {
+  if (typeof window === 'undefined') return
+  window.setTimeout(() => {
+    window.dispatchEvent(new Event(PLAYGROUND_SESSIONS_CHANGED_EVENT))
+  }, 0)
+}
+
+function createSessionId(): string {
+  if (typeof crypto !== 'undefined' && 'randomUUID' in crypto) {
+    return crypto.randomUUID()
+  }
+
+  return `session-${Date.now()}-${Math.random().toString(36).slice(2)}`
+}
+
+function getMessageText(message: Message | undefined): string {
+  return message?.versions?.[0]?.content?.trim() || ''
+}
+
+export function sortPlaygroundSessions(
+  sessions: PlaygroundSession[]
+): PlaygroundSession[] {
+  return [...sessions].sort(comparePlaygroundSessions)
+}
+
+function comparePlaygroundSessions(
+  a: PlaygroundSession,
+  b: PlaygroundSession
+): number {
+  const pinnedA = a.pinnedAt || 0
+  const pinnedB = b.pinnedAt || 0
+
+  if (pinnedA !== pinnedB) {
+    return pinnedB - pinnedA
+  }
+
+  return b.updatedAt - a.updatedAt
+}
+
+export function getSessionTitle(messages: Message[]): string {
+  const firstUserMessage = messages.find((message) => message.from === 'user')
+  const text = getMessageText(firstUserMessage)
+
+  if (!text) {
+    return DEFAULT_SESSION_TITLE
+  }
+
+  return text.length > 28 ? `${text.slice(0, 28)}...` : text
+}
+
+export function createPlaygroundSession(
+  messages: Message[] = []
+): PlaygroundSession {
+  const now = Date.now()
+
+  return {
+    id: createSessionId(),
+    title: getSessionTitle(messages),
+    messages,
+    createdAt: now,
+    updatedAt: now,
+    pinnedAt: null,
+  }
+}
 
 /**
  * Load playground config from localStorage
@@ -107,6 +180,112 @@ export function loadMessages(): Message[] | null {
 }
 
 /**
+ * Load playground chat sessions from localStorage
+ */
+export function loadSessions(): PlaygroundSession[] {
+  try {
+    const saved = localStorage.getItem(STORAGE_KEYS.SESSIONS)
+    if (saved) {
+      const parsed: unknown = JSON.parse(saved)
+      if (Array.isArray(parsed)) {
+        let changed = false
+        const sessions = parsed
+          .map((session) => {
+            const value = session as Partial<PlaygroundSession>
+            const originalMessages = Array.isArray(value.messages)
+              ? (value.messages as Message[])
+              : []
+            const messages = sanitizeMessagesOnLoad(originalMessages)
+            if (messages !== originalMessages) {
+              changed = true
+            }
+
+            return {
+              id: typeof value.id === 'string' ? value.id : createSessionId(),
+              title:
+                typeof value.title === 'string' && value.title.trim()
+                  ? value.title
+                  : getSessionTitle(messages),
+              messages,
+              createdAt:
+                typeof value.createdAt === 'number'
+                  ? value.createdAt
+                  : Date.now(),
+              updatedAt:
+                typeof value.updatedAt === 'number'
+                  ? value.updatedAt
+                  : Date.now(),
+              pinnedAt:
+                typeof value.pinnedAt === 'number' ? value.pinnedAt : null,
+            }
+          })
+          .sort(comparePlaygroundSessions)
+
+        if (changed) {
+          saveSessions(sessions)
+        }
+
+        return sessions
+      }
+    }
+
+    const legacyMessages = loadMessages()
+    if (legacyMessages?.length) {
+      const legacySession = createPlaygroundSession(legacyMessages)
+      saveSessions([legacySession])
+      saveActiveSessionId(legacySession.id)
+      return [legacySession]
+    }
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load playground sessions:', error)
+  }
+
+  return []
+}
+
+/**
+ * Save playground chat sessions to localStorage
+ */
+export function saveSessions(sessions: PlaygroundSession[]): void {
+  try {
+    localStorage.setItem(
+      STORAGE_KEYS.SESSIONS,
+      JSON.stringify(sortPlaygroundSessions(sessions))
+    )
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to save playground sessions:', error)
+  }
+}
+
+/**
+ * Load the active playground session id
+ */
+export function loadActiveSessionId(): string | null {
+  try {
+    return localStorage.getItem(STORAGE_KEYS.ACTIVE_SESSION_ID)
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to load active playground session:', error)
+  }
+
+  return null
+}
+
+/**
+ * Save the active playground session id
+ */
+export function saveActiveSessionId(sessionId: string): void {
+  try {
+    localStorage.setItem(STORAGE_KEYS.ACTIVE_SESSION_ID, sessionId)
+  } catch (error) {
+    // eslint-disable-next-line no-console
+    console.error('Failed to save active playground session:', error)
+  }
+}
+
+/**
  * Save messages to localStorage
  */
 export function saveMessages(messages: Message[]): void {
@@ -124,6 +303,8 @@ export function saveMessages(messages: Message[]): void {
 export function clearPlaygroundMessages(): void {
   try {
     localStorage.removeItem(STORAGE_KEYS.MESSAGES)
+    localStorage.removeItem(STORAGE_KEYS.SESSIONS)
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION_ID)
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to clear playground messages:', error)
@@ -138,6 +319,8 @@ export function clearPlaygroundData(): void {
     localStorage.removeItem(STORAGE_KEYS.CONFIG)
     localStorage.removeItem(STORAGE_KEYS.PARAMETER_ENABLED)
     localStorage.removeItem(STORAGE_KEYS.MESSAGES)
+    localStorage.removeItem(STORAGE_KEYS.SESSIONS)
+    localStorage.removeItem(STORAGE_KEYS.ACTIVE_SESSION_ID)
   } catch (error) {
     // eslint-disable-next-line no-console
     console.error('Failed to clear playground data:', error)

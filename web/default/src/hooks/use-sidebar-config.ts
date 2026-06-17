@@ -211,6 +211,10 @@ function isNavItemVisible(
     return userChat.chat !== false
   }
 
+  if ('type' in item && item.type === 'playground-sessions') {
+    return isModuleEnabled('/playground', adminConfig, userConfig)
+  }
+
   // Handle direct link type
   if ('url' in item && item.url) {
     const configUrls = item.configUrls ?? [item.url]

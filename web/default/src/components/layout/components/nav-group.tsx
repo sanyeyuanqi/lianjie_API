@@ -53,6 +53,7 @@ import {
   type NavGroup as NavGroupProps,
 } from '../types'
 import { ChatPresetsItem } from './chat-presets-item'
+import { PlaygroundSessionsItem } from './playground-sessions-item'
 
 /**
  * Sidebar navigation group component
@@ -74,6 +75,10 @@ export function NavGroup({ title, items }: NavGroupProps) {
           // Special handling: dynamic chat presets list
           if (item.type === 'chat-presets') {
             return <ChatPresetsItem key={key} item={item as NavChatPresets} />
+          }
+
+          if (item.type === 'playground-sessions') {
+            return <PlaygroundSessionsItem key={key} />
           }
 
           // If no sub-items, render regular link

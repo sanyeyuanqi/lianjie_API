@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useMemo, useState, type ReactNode } from 'react'
 import { useParams } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
+import { Button } from '@/components/ui/button'
 import { SectionPageLayout } from '@/components/layout'
 import { useSystemOptions, getOptionValue } from '../hooks/use-system-options'
 import type { SystemOption } from '../types'
@@ -107,7 +108,8 @@ export function SettingsPage<
   resolveSettings,
 }: SettingsPageProps<TSettings, TSectionId, TExtraArgs>) {
   const { t } = useTranslation()
-  const { data, isLoading } = useSystemOptions()
+  const { data, error, isError, isFetching, isLoading, refetch } =
+    useSystemOptions()
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const params = useParams({ from: routePath as any })
   const activeSection = (params?.section ?? defaultSection) as TSectionId
@@ -128,6 +130,32 @@ export function SettingsPage<
       <SettingsPageFrame title={t(sectionMeta.titleKey)}>
         <div className='text-muted-foreground flex min-h-40 items-center justify-center text-sm'>
           {t(loadingMessage)}
+        </div>
+      </SettingsPageFrame>
+    )
+  }
+
+  if (isError) {
+    const errorMessage =
+      error instanceof Error && error.message
+        ? error.message
+        : t('Request failed')
+
+    return (
+      <SettingsPageFrame title={t(sectionMeta.titleKey)}>
+        <div className='border-border bg-card flex min-h-40 flex-col items-center justify-center gap-3 rounded-lg border p-6 text-center shadow-xs'>
+          <div className='text-sm font-medium'>{t('Request failed')}</div>
+          <div className='text-muted-foreground max-w-md text-sm'>
+            {errorMessage}
+          </div>
+          <Button
+            variant='outline'
+            size='sm'
+            disabled={isFetching}
+            onClick={() => void refetch()}
+          >
+            {t('Retry')}
+          </Button>
         </div>
       </SettingsPageFrame>
     )

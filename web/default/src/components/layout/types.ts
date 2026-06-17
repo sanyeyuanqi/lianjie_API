@@ -58,10 +58,20 @@ export type NavChatPresets = BaseNavItem & {
   items?: never
 }
 
+export type NavPlaygroundSessions = BaseNavItem & {
+  type: 'playground-sessions'
+  url?: never
+  items?: never
+}
+
 /**
  * Navigation item union type
  */
-export type NavItem = NavCollapsible | NavLink | NavChatPresets
+export type NavItem =
+  | NavCollapsible
+  | NavLink
+  | NavChatPresets
+  | NavPlaygroundSessions
 
 /**
  * Navigation group type - a group of navigation items in sidebar

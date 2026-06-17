@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useRef } from 'react'
+import { useCallback, useRef, useState } from 'react'
 import { SSE } from 'sse.js'
 import { getCommonHeaders } from '@/lib/api'
 import { API_ENDPOINTS, ERROR_MESSAGES } from '../constants'
@@ -28,6 +28,8 @@ import type { ChatCompletionRequest, ChatCompletionChunk } from '../types'
 export function useStreamRequest() {
   const sseSourceRef = useRef<SSE | null>(null)
   const isStreamCompleteRef = useRef(false)
+  const hasStreamDataRef = useRef(false)
+  const [isStreaming, setIsStreaming] = useState(false)
 
   const sendStreamRequest = useCallback(
     (
@@ -44,10 +46,19 @@ export function useStreamRequest() {
 
       sseSourceRef.current = source
       isStreamCompleteRef.current = false
+      hasStreamDataRef.current = false
 
       const closeSource = () => {
         source.close()
         sseSourceRef.current = null
+        setIsStreaming(false)
+      }
+
+      const completeStream = () => {
+        if (isStreamCompleteRef.current) return
+        isStreamCompleteRef.current = true
+        closeSource()
+        onComplete()
       }
 
       const handleError = (errorMessage: string, errorCode?: string) => {
@@ -59,15 +70,14 @@ export function useStreamRequest() {
 
       source.addEventListener('message', (e: MessageEvent) => {
         if (e.data === '[DONE]') {
-          isStreamCompleteRef.current = true
-          closeSource()
-          onComplete()
+          completeStream()
           return
         }
 
         try {
           const chunk: ChatCompletionChunk = JSON.parse(e.data)
           const delta = chunk.choices?.[0]?.delta
+          hasStreamDataRef.current = true
 
           if (delta) {
             if (delta.reasoning_content) {
@@ -85,6 +95,11 @@ export function useStreamRequest() {
       })
 
       source.addEventListener('error', (e: Event & { data?: string }) => {
+        if (source.readyState === 2 && hasStreamDataRef.current) {
+          completeStream()
+          return
+        }
+
         // Only handle errors if stream didn't complete normally
         if (source.readyState !== 2) {
           // eslint-disable-next-line no-console
@@ -112,24 +127,28 @@ export function useStreamRequest() {
         'readystatechange',
         (e: Event & { readyState?: number }) => {
           const status = (source as unknown as { status?: number }).status
-          if (
-            e.readyState !== undefined &&
-            e.readyState >= 2 &&
-            status !== undefined &&
-            status !== 200
-          ) {
-            handleError(`HTTP ${status}: ${ERROR_MESSAGES.CONNECTION_CLOSED}`)
+          if (e.readyState !== undefined && e.readyState >= 2) {
+            if (
+              status === 200 ||
+              (status === undefined && hasStreamDataRef.current)
+            ) {
+              completeStream()
+            } else if (status !== undefined) {
+              handleError(`HTTP ${status}: ${ERROR_MESSAGES.CONNECTION_CLOSED}`)
+            }
           }
         }
       )
 
       try {
+        setIsStreaming(true)
         source.stream()
       } catch (error: unknown) {
         // eslint-disable-next-line no-console
         console.error('Failed to start SSE stream:', error)
         onError(ERROR_MESSAGES.STREAM_START_ERROR)
         sseSourceRef.current = null
+        setIsStreaming(false)
       }
     },
     []
@@ -140,15 +159,12 @@ export function useStreamRequest() {
       sseSourceRef.current.close()
       sseSourceRef.current = null
     }
+    setIsStreaming(false)
   }, [])
-
-  // eslint-disable-next-line react-hooks/refs
-  const isStreaming = sseSourceRef.current !== null
 
   return {
     sendStreamRequest,
     stopStream,
-    // eslint-disable-next-line react-hooks/refs
     isStreaming,
   }
 }

@@ -16,24 +16,62 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { DEFAULT_CONFIG, DEFAULT_PARAMETER_ENABLED } from '../constants'
 import {
   loadConfig,
   saveConfig,
   loadParameterEnabled,
   saveParameterEnabled,
-  loadMessages,
   saveMessages,
   clearPlaygroundMessages,
+  loadSessions,
+  saveSessions,
+  loadActiveSessionId,
+  saveActiveSessionId,
+  createPlaygroundSession,
+  getSessionTitle,
+  notifyPlaygroundSessionsChanged,
+  PLAYGROUND_SESSIONS_CHANGED_EVENT,
+  sortPlaygroundSessions,
 } from '../lib'
 import type {
   Message,
+  PlaygroundSession,
   PlaygroundConfig,
   ParameterEnabled,
   ModelOption,
   GroupOption,
 } from '../types'
+
+function hasPendingAssistantMessage(messages: Message[]): boolean {
+  return messages.some(
+    (message) =>
+      message.from === 'assistant' &&
+      (message.status === 'loading' || message.status === 'streaming')
+  )
+}
+
+function loadInitialSessionState() {
+  const savedSessions = loadSessions()
+  const sessions =
+    savedSessions.length > 0 ? savedSessions : [createPlaygroundSession()]
+  const savedActiveId = loadActiveSessionId()
+  const activeSession =
+    sessions.find((session) => session.id === savedActiveId) || sessions[0]
+
+  if (savedSessions.length === 0) {
+    saveSessions(sessions)
+  }
+  saveActiveSessionId(activeSession.id)
+  saveMessages(activeSession.messages)
+
+  return {
+    sessions,
+    activeSessionId: activeSession.id,
+    messages: activeSession.messages,
+  }
+}
 
 /**
  * Main state management hook for playground
@@ -52,12 +90,49 @@ export function usePlaygroundState() {
     }
   )
 
-  const [messages, setMessages] = useState<Message[]>(() => {
-    return loadMessages() || []
-  })
+  const [initialSessionState] = useState(() => loadInitialSessionState())
+  const [messages, setMessages] = useState<Message[]>(
+    () => initialSessionState.messages
+  )
+  const [sessions, setSessions] = useState<PlaygroundSession[]>(
+    () => initialSessionState.sessions
+  )
+  const [activeSessionId, setActiveSessionId] = useState<string>(
+    () => initialSessionState.activeSessionId
+  )
 
   const [models, setModels] = useState<ModelOption[]>([])
   const [groups, setGroups] = useState<GroupOption[]>([])
+
+  const syncSessionsFromStorage = useCallback(() => {
+    const savedSessions = loadSessions()
+    const nextSessions =
+      savedSessions.length > 0 ? savedSessions : [createPlaygroundSession()]
+    const savedActiveId = loadActiveSessionId()
+    const activeSession =
+      nextSessions.find((session) => session.id === savedActiveId) ||
+      nextSessions[0]
+
+    setSessions(nextSessions)
+    setActiveSessionId(activeSession.id)
+    setMessages(activeSession.messages)
+    saveActiveSessionId(activeSession.id)
+    saveMessages(activeSession.messages)
+  }, [])
+
+  useEffect(() => {
+    window.addEventListener(
+      PLAYGROUND_SESSIONS_CHANGED_EVENT,
+      syncSessionsFromStorage
+    )
+
+    return () => {
+      window.removeEventListener(
+        PLAYGROUND_SESSIONS_CHANGED_EVENT,
+        syncSessionsFromStorage
+      )
+    }
+  }, [syncSessionsFromStorage])
 
   // Update config with automatic save
   const updateConfig = useCallback(
@@ -90,16 +165,73 @@ export function usePlaygroundState() {
         const newMessages =
           typeof updater === 'function' ? updater(prev) : updater
         saveMessages(newMessages)
+        setSessions((prevSessions) => {
+          const now = Date.now()
+          const updatedSessions = sortPlaygroundSessions(
+            prevSessions.map((session) =>
+              session.id === activeSessionId
+                ? {
+                    ...session,
+                    title: getSessionTitle(newMessages),
+                    messages: newMessages,
+                    updatedAt: now,
+                  }
+                : session
+            )
+          )
+
+          saveSessions(updatedSessions)
+          if (!hasPendingAssistantMessage(newMessages)) {
+            notifyPlaygroundSessionsChanged()
+          }
+          return updatedSessions
+        })
         return newMessages
       })
     },
-    []
+    [activeSessionId]
   )
+
+  const selectSession = useCallback(
+    (sessionId: string) => {
+      const session = sessions.find((item) => item.id === sessionId)
+      if (!session) return
+
+      setActiveSessionId(session.id)
+      saveActiveSessionId(session.id)
+      setMessages(session.messages)
+      saveMessages(session.messages)
+      notifyPlaygroundSessionsChanged()
+    },
+    [sessions]
+  )
+
+  const createNewSession = useCallback(() => {
+    const session = createPlaygroundSession()
+
+    setSessions((prevSessions) => {
+      const updatedSessions = [session, ...prevSessions]
+      saveSessions(updatedSessions)
+      notifyPlaygroundSessionsChanged()
+      return updatedSessions
+    })
+    setActiveSessionId(session.id)
+    saveActiveSessionId(session.id)
+    setMessages([])
+    saveMessages([])
+  }, [])
 
   // Clear all messages
   const clearMessages = useCallback(() => {
+    const session = createPlaygroundSession()
     setMessages([])
+    setSessions([session])
+    setActiveSessionId(session.id)
     clearPlaygroundMessages()
+    saveSessions([session])
+    saveActiveSessionId(session.id)
+    saveMessages([])
+    notifyPlaygroundSessionsChanged()
   }, [])
 
   // Reset config to defaults
@@ -115,6 +247,8 @@ export function usePlaygroundState() {
     config,
     parameterEnabled,
     messages,
+    sessions,
+    activeSessionId,
     models,
     groups,
 
@@ -126,6 +260,8 @@ export function usePlaygroundState() {
     updateConfig,
     updateParameterEnabled,
     updateMessages,
+    selectSession,
+    createNewSession,
     clearMessages,
     resetConfig,
   }

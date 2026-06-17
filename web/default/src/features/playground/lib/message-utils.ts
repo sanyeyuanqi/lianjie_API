@@ -315,42 +315,44 @@ export function finalizeMessage(
  * Converts stuck loading/streaming messages to stable state
  */
 export function sanitizeMessagesOnLoad(messages: Message[]): Message[] {
-  let targetIndex = -1
-  for (let i = messages.length - 1; i >= 0; i--) {
-    const m = messages[i]
+  const interruptedErrorText = `${ERROR_MESSAGES.API_REQUEST_ERROR}: ${ERROR_MESSAGES.INTERRUPTED}`
+  let changed = false
+
+  const sanitized = messages.flatMap((message) => {
     if (
-      m?.from === MESSAGE_ROLES.ASSISTANT &&
-      (m?.status === MESSAGE_STATUS.LOADING ||
-        m?.status === MESSAGE_STATUS.STREAMING)
+      message?.from === MESSAGE_ROLES.ASSISTANT &&
+      message.status === MESSAGE_STATUS.ERROR &&
+      getCurrentVersion(message).content.trim() === interruptedErrorText
     ) {
-      targetIndex = i
-      break
+      changed = true
+      return []
     }
-  }
 
-  if (targetIndex === -1) return messages
+    if (
+      message?.from !== MESSAGE_ROLES.ASSISTANT ||
+      (message.status !== MESSAGE_STATUS.LOADING &&
+        message.status !== MESSAGE_STATUS.STREAMING)
+    ) {
+      return [message]
+    }
 
-  const finalized = finalizeMessage(messages[targetIndex])
-  const hasContent = finalized.versions?.[0]?.content?.trim()
-  const hasReasoning = finalized.reasoning?.content?.trim()
+    changed = true
+    const finalized = finalizeMessage(message)
+    const hasContent = finalized.versions?.[0]?.content?.trim()
+    const hasReasoning = finalized.reasoning?.content?.trim()
 
-  const sanitized: Message =
-    hasContent || hasReasoning
-      ? {
-          ...finalized,
-          status: MESSAGE_STATUS.COMPLETE,
-          isReasoningStreaming: false,
-        }
-      : {
-          ...updateCurrentVersionContent(
-            finalized,
-            `${ERROR_MESSAGES.API_REQUEST_ERROR}: ${ERROR_MESSAGES.INTERRUPTED}`
-          ),
-          status: MESSAGE_STATUS.ERROR,
-          isReasoningStreaming: false,
-        }
+    if (!hasContent && !hasReasoning) {
+      return []
+    }
 
-  const result = [...messages]
-  result[targetIndex] = sanitized
-  return result
+    return [
+      {
+        ...finalized,
+        status: MESSAGE_STATUS.COMPLETE,
+        isReasoningStreaming: false,
+      },
+    ]
+  })
+
+  return changed ? sanitized : messages
 }

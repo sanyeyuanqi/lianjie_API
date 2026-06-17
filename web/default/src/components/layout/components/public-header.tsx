@@ -41,6 +41,21 @@ type AuthPromptTarget = {
   href: string
 }
 
+function normalizePath(path: string) {
+  if (path === '/') return path
+  return path.replace(/\/+$/, '')
+}
+
+function isPathActive(currentPath: string, href: string) {
+  const targetPath = normalizePath(href)
+
+  if (targetPath === '/') {
+    return currentPath === '/'
+  }
+
+  return currentPath === targetPath || currentPath.startsWith(`${targetPath}/`)
+}
+
 export interface PublicHeaderProps {
   navLinks?: TopNavLink[]
   mobileLinks?: TopNavLink[]
@@ -82,7 +97,7 @@ export function PublicHeader(props: PublicHeaderProps) {
   const dynamicLinks = useTopNavLinks()
   const notifications = useNotifications()
   const routerState = useRouterState()
-  const pathname = routerState.location.pathname
+  const pathname = normalizePath(routerState.location.pathname)
 
   const user = auth.user
   const isAuthenticated = !!user
@@ -170,9 +185,7 @@ export function PublicHeader(props: PublicHeaderProps) {
         <div
           className={cn(
             'pointer-events-auto mx-auto transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
-            scrolled
-              ? 'px-0 pt-2'
-              : 'max-w-[1480px] px-4 pt-3 md:px-6'
+            scrolled ? 'px-0 pt-2' : 'max-w-[1480px] px-4 pt-3 md:px-6'
           )}
           style={
             scrolled
@@ -216,7 +229,7 @@ export function PublicHeader(props: PublicHeaderProps) {
             {/* Desktop nav */}
             <div className='absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 sm:flex'>
               {links.map((link, i) => {
-                const isActive = pathname === link.href
+                const isActive = isPathActive(pathname, link.href)
                 if (link.external) {
                   return (
                     <a
@@ -344,7 +357,7 @@ export function PublicHeader(props: PublicHeaderProps) {
         <div className='flex h-full flex-col justify-between px-8 pt-20 pb-10'>
           <nav className='flex flex-col gap-1'>
             {links.map((link, i) => {
-              const isActive = pathname === link.href
+              const isActive = isPathActive(pathname, link.href)
               const linkClassName = cn(
                 'flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
                 mobileOpen

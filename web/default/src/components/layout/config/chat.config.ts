@@ -32,6 +32,10 @@ function getChatNavGroups(t: TFunction): NavGroup[] {
           icon: FlaskConical,
         },
         {
+          title: t('New chat'),
+          type: 'playground-sessions',
+        },
+        {
           title: t('Chat'),
           icon: MessageSquare,
           type: 'chat-presets',

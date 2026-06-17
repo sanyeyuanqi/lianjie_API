@@ -29,7 +29,11 @@ import type {
 } from './types'
 
 export async function getSystemOptions() {
-  const res = await api.get<SystemOptionsResponse>('/api/option/')
+  const res = await api.get<SystemOptionsResponse>('/api/option/', {
+    disableDuplicate: true,
+    skipErrorHandler: true,
+    timeout: 15000,
+  })
   return res.data
 }
 
