@@ -26,6 +26,7 @@ type DataTableRowProps<TData> = {
   className?: string
   isSelected?: boolean
   getColumnClassName?: DataTableColumnClassName
+  renderVersion?: unknown
 } & Omit<React.ComponentProps<typeof TableRow>, 'children'>
 
 function DataTableRowInner<TData>({
@@ -33,6 +34,7 @@ function DataTableRowInner<TData>({
   className,
   isSelected = row.getIsSelected(),
   getColumnClassName,
+  renderVersion: _renderVersion,
   ...rowProps
 }: DataTableRowProps<TData>) {
   return (
@@ -54,12 +56,13 @@ function DataTableRowInner<TData>({
 }
 
 export const DataTableRow = React.memo(DataTableRowInner, (prev, next) => {
-  // Skip re-render when only the getColumnClassName reference changed but the
-  // row identity and selection state are the same — callers rarely stabilize
-  // this callback, so excluding it from comparison avoids unnecessary renders.
+  // Column definitions can contain render functions that close over changing
+  // state. Re-render when that definition array changes even if TanStack keeps
+  // the same row object, otherwise cells can display stale state.
   return (
     prev.row === next.row &&
     prev.className === next.className &&
-    prev.isSelected === next.isSelected
+    prev.isSelected === next.isSelected &&
+    prev.renderVersion === next.renderVersion
   )
 }) as typeof DataTableRowInner

@@ -344,6 +344,7 @@ function renderDefaultRow<TData>(
       key={row.id}
       row={row}
       isSelected={row.getIsSelected()}
+      renderVersion={props.table.options.columns}
       className={cn(props.tableBodyRowClassName, props.getRowClassName?.(row))}
       getColumnClassName={getColumnClassName}
     />
