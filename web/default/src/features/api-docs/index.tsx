@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useState } from 'react'
 import {
   ArrowRight,
   AudioLines,
@@ -31,6 +32,7 @@ import {
   ListChecks,
   MessageSquareText,
   Network,
+  PanelLeft,
   RadioTower,
   Route,
   ShieldCheck,
@@ -39,6 +41,15 @@ import {
   Zap,
   type LucideIcon,
 } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import { PublicLayout } from '@/components/layout'
 import { PageTransition } from '@/components/page-transition'
 
@@ -233,11 +244,81 @@ function AnchorLink(props: { section: GuideSection }) {
   return (
     <a
       href={`#${props.section.id}`}
-      className='hover:bg-accent flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors'
+      className='hover:bg-accent flex items-center gap-2 rounded-md px-2 py-2 text-sm leading-5 transition-colors'
     >
       <Icon className='text-muted-foreground size-4' />
       <span>{props.section.title}</span>
     </a>
+  )
+}
+
+function ApiDocsMobileNavigation() {
+  const [open, setOpen] = useState(false)
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger
+        render={
+          <Button
+            type='button'
+            variant='ghost'
+            className='h-9 gap-1.5 rounded-lg px-2 text-sm font-semibold text-slate-700 hover:bg-slate-950/[0.05] sm:hidden dark:text-slate-300 dark:hover:bg-white/[0.06]'
+            aria-label='打开文档导航'
+          />
+        }
+      >
+        <PanelLeft className='size-4' aria-hidden='true' />
+        <span>目录</span>
+      </SheetTrigger>
+
+      <SheetContent
+        side='left'
+        showCloseButton={false}
+        className='top-2 bottom-2 left-2 h-auto w-[min(68vw,17.5rem)] gap-0 rounded-[1.5rem] border border-slate-200/80 bg-white/94 p-0 shadow-[18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl sm:max-w-none dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]'
+      >
+        <SheetHeader className='px-5 pt-5 pb-2'>
+          <SheetTitle className='text-xs font-medium text-slate-400 dark:text-slate-500'>
+            文档导航
+          </SheetTitle>
+          <SheetDescription className='sr-only'>
+            跳转到 API 文档的指定章节
+          </SheetDescription>
+        </SheetHeader>
+
+        <nav className='flex flex-col gap-1 px-3 py-1'>
+          {guideSections.map((section) => {
+            const Icon = section.icon
+            return (
+              <a
+                key={section.id}
+                href={`#${section.id}`}
+                onClick={() => setOpen(false)}
+                className='flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] font-medium tracking-tight text-slate-700 transition-colors duration-300 hover:bg-white/80 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/[0.08] dark:hover:text-white'
+              >
+                <Icon className='size-4' aria-hidden='true' />
+                <span>{section.title}</span>
+              </a>
+            )
+          })}
+          <a
+            href='#endpoints'
+            onClick={() => setOpen(false)}
+            className='flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] font-medium tracking-tight text-slate-700 transition-colors duration-300 hover:bg-white/80 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/[0.08] dark:hover:text-white'
+          >
+            <ListChecks className='size-4' aria-hidden='true' />
+            <span>接口清单</span>
+          </a>
+          <a
+            href='#examples'
+            onClick={() => setOpen(false)}
+            className='flex h-10 items-center gap-3 rounded-xl px-3 text-[15px] font-medium tracking-tight text-slate-700 transition-colors duration-300 hover:bg-white/80 hover:text-slate-950 dark:text-slate-300 dark:hover:bg-white/[0.08] dark:hover:text-white'
+          >
+            <Code2 className='size-4' aria-hidden='true' />
+            <span>请求示例</span>
+          </a>
+        </nav>
+      </SheetContent>
+    </Sheet>
   )
 }
 
@@ -456,29 +537,35 @@ export function ApiDocs() {
   const baseUrl = useBaseUrl()
 
   return (
-    <PublicLayout showMainContainer={false}>
+    <PublicLayout
+      showMainContainer={false}
+      headerProps={{
+        hideMobileBrand: true,
+        mobileLeadingContent: <ApiDocsMobileNavigation />,
+      }}
+    >
       <PageTransition className='mx-auto w-full max-w-[1800px] px-3 pt-20 pb-8 sm:px-5 sm:pt-24 sm:pb-10 xl:px-6'>
-        <div className='grid w-full gap-4 xl:grid-cols-[300px_minmax(0,1fr)]'>
+        <div className='grid w-full gap-4 xl:grid-cols-[240px_minmax(0,1fr)]'>
           <aside className='hidden xl:block'>
-            <div className='bg-card sticky top-20 rounded-2xl border p-3 shadow-xs'>
+            <div className='bg-card sticky top-20 rounded-xl border p-2.5 shadow-xs'>
               <div className='flex items-center gap-2 px-2 py-2'>
                 <BookOpen className='text-muted-foreground size-4' />
-                <span className='text-sm font-semibold'>API文档</span>
+                <span className='text-sm leading-5 font-semibold'>API文档</span>
               </div>
-              <div className='mt-2 space-y-1'>
+              <div className='mt-1.5 space-y-1'>
                 {guideSections.map((section) => (
                   <AnchorLink key={section.id} section={section} />
                 ))}
                 <a
                   href='#endpoints'
-                  className='hover:bg-accent flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors'
+                  className='hover:bg-accent flex items-center gap-2 rounded-md px-2 py-2 text-sm leading-5 transition-colors'
                 >
                   <ListChecks className='text-muted-foreground size-4' />
                   <span>接口清单</span>
                 </a>
                 <a
                   href='#examples'
-                  className='hover:bg-accent flex items-center gap-2 rounded-lg px-2 py-2 text-sm transition-colors'
+                  className='hover:bg-accent flex items-center gap-2 rounded-md px-2 py-2 text-sm leading-5 transition-colors'
                 >
                   <Code2 className='text-muted-foreground size-4' />
                   <span>请求示例</span>

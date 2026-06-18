@@ -28,6 +28,10 @@ import type { HomePageContentResponse } from './types'
  * Returns Markdown/HTML content or iframe URL
  */
 export async function getHomePageContent(): Promise<HomePageContentResponse> {
-  const res = await api.get('/api/home_page_content')
+  const res = await api.get('/api/home_page_content', {
+    // Custom home content is optional. If this request fails, the default
+    // landing page can still render, so avoid noisy global error toasts.
+    skipErrorHandler: true,
+  })
   return res.data
 }

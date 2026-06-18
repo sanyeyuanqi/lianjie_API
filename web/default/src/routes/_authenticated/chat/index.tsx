@@ -16,10 +16,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { getFreshSidebarModuleEnabled } from '@/lib/nav-modules'
 import { ChatWorkspace } from '@/features/chat/components/chat-workspace'
 
 export const Route = createFileRoute('/_authenticated/chat/')({
+  beforeLoad: async () => {
+    if (await getFreshSidebarModuleEnabled('chat', 'chat')) {
+      return
+    }
+
+    if (await getFreshSidebarModuleEnabled('chat', 'playground')) {
+      throw redirect({ to: '/playground' })
+    }
+
+    throw redirect({ to: '/dashboard' })
+  },
   component: ChatIndexPage,
 })
 

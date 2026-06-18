@@ -133,16 +133,13 @@ const oauthTabContentClassName =
 const oauthTabTriggerClassName =
   'h-10 min-w-0 rounded-lg border bg-background px-4 shadow-xs data-active:border-foreground/15 data-active:bg-background data-active:shadow-sm'
 
-const oauthProviderKeys = [
-  'github',
-  'discord',
-  'oidc',
-  'telegram',
-  'linuxdo',
-  'wechat',
-] as const
-
-type OAuthProviderKey = (typeof oauthProviderKeys)[number]
+type OAuthProviderKey =
+  | 'github'
+  | 'discord'
+  | 'oidc'
+  | 'telegram'
+  | 'linuxdo'
+  | 'wechat'
 
 const buildFormDefaults = (defaults: FlatOAuthDefaults): OAuthFormValues => ({
   GitHubOAuthEnabled: defaults.GitHubOAuthEnabled,
@@ -357,7 +354,7 @@ export function OAuthSection(props: OAuthSectionProps) {
                     setActiveTab(value as OAuthProviderKey)
                   }
                 >
-                  <SelectTrigger className='h-10 w-full rounded-lg bg-background shadow-xs'>
+                  <SelectTrigger className='bg-background h-10 w-full rounded-lg shadow-xs'>
                     <SelectValue placeholder={t('Select OAuth Provider')} />
                   </SelectTrigger>
                   <SelectContent alignItemWithTrigger={false}>

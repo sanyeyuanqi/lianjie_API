@@ -61,6 +61,7 @@ import { MessageError } from './message-error'
 interface PlaygroundChatProps {
   messages: MessageType[]
   assistantName?: string
+  contentClassName?: string
   onCopyMessage?: (message: MessageType) => void
   onRegenerateMessage?: (message: MessageType) => void
   onEditMessage?: (message: MessageType) => void
@@ -89,6 +90,7 @@ function ScrollToLatestMessage({ messageCount }: { messageCount: number }) {
 export function PlaygroundChat({
   messages,
   assistantName = 'AI',
+  contentClassName,
   onCopyMessage,
   onRegenerateMessage,
   onEditMessage,
@@ -110,7 +112,6 @@ export function PlaygroundChat({
     if (!editingKey) return
     const message = messages.find((m) => m.key === editingKey)
     const content = message?.versions?.[0]?.content || ''
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEditText(content)
 
     setOriginalText(content)
@@ -127,7 +128,9 @@ export function PlaygroundChat({
       <ScrollToLatestMessage messageCount={messages.length} />
       {/* Remove outer padding; apply padding to inner centered container to align with input */}
       <ConversationContent className='p-0'>
-        <div className='mx-auto w-full max-w-4xl px-4 py-4'>
+        <div
+          className={cn('mx-auto w-full max-w-5xl px-4 py-4', contentClassName)}
+        >
           {messages.map((message, messageIndex) => {
             const { versions = [] } = message
             const isUser = message.from === MESSAGE_ROLES.USER
@@ -291,7 +294,9 @@ export function PlaygroundChat({
                                             {showReasoning && (
                                               <Reasoning
                                                 className='mb-2'
-                                                defaultOpen={false}
+                                                defaultOpen={Boolean(
+                                                  message.isReasoningStreaming
+                                                )}
                                                 isStreaming={
                                                   message.isReasoningStreaming
                                                 }

@@ -33,6 +33,10 @@ import { useStreamRequest } from './use-stream-request'
 interface UseChatHandlerOptions {
   config: PlaygroundConfig
   parameterEnabled: ParameterEnabled
+  onDebugUpdate?: (event: {
+    type: 'request' | 'response' | 'sse'
+    data: unknown
+  }) => void
   onMessageUpdate: (updater: (prev: Message[]) => Message[]) => void
 }
 
@@ -42,6 +46,7 @@ interface UseChatHandlerOptions {
 export function useChatHandler({
   config,
   parameterEnabled,
+  onDebugUpdate,
   onMessageUpdate,
 }: UseChatHandlerOptions) {
   const { sendStreamRequest, stopStream, isStreaming } = useStreamRequest()
@@ -93,11 +98,20 @@ export function useChatHandler({
   const handleStreamError = useCallback(
     (error: string, errorCode?: string) => {
       toast.error(error)
+      onDebugUpdate?.({
+        type: 'response',
+        data: {
+          error: {
+            message: error,
+            code: errorCode,
+          },
+        },
+      })
       onMessageUpdate((prev) =>
         updateAssistantMessageWithError(prev, error, errorCode)
       )
     },
-    [onMessageUpdate]
+    [onDebugUpdate, onMessageUpdate]
   )
 
   // Send streaming chat request
@@ -112,12 +126,21 @@ export function useChatHandler({
         payload,
         handleStreamUpdate,
         handleStreamComplete,
-        handleStreamError
+        handleStreamError,
+        (event) => {
+          if (event.type === 'start') {
+            onDebugUpdate?.({ type: 'request', data: event.data })
+            return
+          }
+
+          onDebugUpdate?.({ type: 'sse', data: event.data })
+        }
       )
     },
     [
       config,
       parameterEnabled,
+      onDebugUpdate,
       sendStreamRequest,
       handleStreamUpdate,
       handleStreamComplete,
@@ -135,7 +158,9 @@ export function useChatHandler({
       )
 
       try {
+        onDebugUpdate?.({ type: 'request', data: payload })
         const response = await sendChatCompletion(payload)
+        onDebugUpdate?.({ type: 'response', data: response })
         const choice = response.choices?.[0]
         if (!choice) return
 
@@ -171,7 +196,13 @@ export function useChatHandler({
         )
       }
     },
-    [config, parameterEnabled, onMessageUpdate, handleStreamError]
+    [
+      config,
+      parameterEnabled,
+      onDebugUpdate,
+      onMessageUpdate,
+      handleStreamError,
+    ]
   )
 
   // Send chat request (stream or non-stream based on config)

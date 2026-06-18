@@ -211,7 +211,11 @@ export async function getUserGroups(): Promise<{
 
 // Get system status
 export async function getStatus() {
-  const res = await api.get('/api/status')
+  const res = await api.get('/api/status', {
+    // Status is used by public headers/branding as cache-first background data.
+    // Network failures should not interrupt otherwise usable public pages.
+    skipErrorHandler: true,
+  })
   return res.data?.data as Record<string, unknown>
 }
 
@@ -221,7 +225,10 @@ export async function getNotice(): Promise<{
   message?: string
   data?: string
 }> {
-  const res = await api.get('/api/notice')
+  const res = await api.get('/api/notice', {
+    // Notice is optional public content; fall back silently when unavailable.
+    skipErrorHandler: true,
+  })
   return res.data
 }
 

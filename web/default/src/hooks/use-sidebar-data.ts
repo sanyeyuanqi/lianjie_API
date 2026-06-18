@@ -24,7 +24,6 @@ import {
   Key,
   LayoutDashboard,
   ListTodo,
-  MessageSquare,
   Radio,
   Rocket,
   Settings,
@@ -47,19 +46,6 @@ export function useSidebarData(): SidebarData {
 
   return {
     navGroups: [
-      {
-        id: 'chat',
-        title: t('Chat'),
-        items: [
-          {
-            title: t('Chat'),
-            url: '/playground',
-            activeUrls: ['/chat', '/chat/0'],
-            configUrls: ['/playground', '/chat'],
-            icon: MessageSquare,
-          },
-        ],
-      },
       {
         id: 'general',
         title: t('General'),

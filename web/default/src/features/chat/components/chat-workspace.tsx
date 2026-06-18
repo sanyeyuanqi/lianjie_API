@@ -29,6 +29,7 @@ import {
   createUserMessage,
 } from '@/features/playground/lib'
 import type { Message as MessageType } from '@/features/playground/types'
+import { cn } from '@/lib/utils'
 import { useChatState } from '../hooks/use-chat-state'
 
 export function ChatWorkspace() {
@@ -123,11 +124,6 @@ export function ChatWorkspace() {
     sendChat(newMessages)
   }
 
-  const handleCopyMessage = (message: MessageType) => {
-    // eslint-disable-next-line no-console
-    console.log('Message copied:', message.key)
-  }
-
   const handleRegenerateMessage = (message: MessageType) => {
     const messageIndex = messages.findIndex((m) => m.key === message.key)
     if (messageIndex === -1) return
@@ -195,8 +191,8 @@ export function ChatWorkspace() {
       <div className='flex flex-1 flex-col overflow-hidden'>
         <PlaygroundChat
           assistantName={assistantName}
+          contentClassName='pb-80'
           messages={messages}
-          onCopyMessage={handleCopyMessage}
           onRegenerateMessage={handleRegenerateMessage}
           onEditMessage={handleEditMessage}
           onDeleteMessage={handleDeleteMessage}
@@ -208,7 +204,23 @@ export function ChatWorkspace() {
         />
       </div>
 
-      <div className='mx-auto w-full max-w-4xl px-3 pb-3 md:px-0 md:pb-0'>
+      <h1
+        className={cn(
+          'pointer-events-none absolute left-1/2 top-[calc(46%-5rem-150px)] z-10 -translate-x-1/2 text-center text-3xl font-semibold tracking-normal text-foreground transition-opacity duration-200 md:text-4xl xl:left-[calc(50%-40px)]',
+          messages.length === 0 ? 'opacity-100' : 'opacity-0'
+        )}
+      >
+        今天聊点什么？
+      </h1>
+
+      <div
+        className={cn(
+          'absolute left-1/2 z-10 mx-auto w-full max-w-4xl -translate-x-1/2 px-3 pb-3 transition-[top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:px-0 md:pb-0 xl:left-[calc(50%-40px)]',
+          messages.length === 0
+            ? 'top-[calc(46%-150px)]'
+            : 'top-[calc(100%-12.25rem)]'
+        )}
+      >
         <PlaygroundInput
           disabled={isGenerating}
           groups={groups}

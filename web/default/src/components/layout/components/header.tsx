@@ -43,7 +43,11 @@ export function Header({
           contentClassName
         )}
       >
-        <SidebarTrigger variant='ghost' className='size-8 shrink-0' />
+        <SidebarTrigger
+          variant='ghost'
+          mobileLabel='目录'
+          className='h-9 w-auto shrink-0 gap-1.5 rounded-lg bg-transparent px-2 text-sm font-semibold text-slate-700 hover:bg-slate-950/[0.05] md:size-8 md:px-0 dark:bg-transparent dark:text-slate-300 dark:hover:bg-white/[0.06]'
+        />
         {children}
       </div>
     </header>

@@ -19,18 +19,13 @@ For commercial licensing, please contact support@quantumnous.com
 import { useEffect, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useTheme } from '@/context/theme-provider'
+import { useNotifications } from '@/hooks/use-notifications'
 import { LanguageSwitcher } from '@/components/language-switcher'
+import { NotificationPopover } from '@/components/notification-popover'
 import { ThemeSwitch } from '@/components/theme-switch'
 
 type AuthLayoutProps = {
   children: React.ReactNode
-}
-
-type GlobeNode = {
-  lat: number
-  lng: number
-  name?: string
-  label?: boolean
 }
 
 type BrandIntroProps = {
@@ -39,7 +34,22 @@ type BrandIntroProps = {
   chipStyle: React.CSSProperties
 }
 
-/* ── Globe Canvas ──────────────────────────────────────────────── */
+type Particle = {
+  x: number
+  y: number
+  vx: number
+  vy: number
+  r: number
+  alpha: number
+  pulse: number
+  depth: number
+  color: [number, number, number]
+}
+
+type GlobeNode = {
+  lat: number
+  lng: number
+}
 
 function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
@@ -60,12 +70,16 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
       dotBase: isDark ? 0.22 : 0.2,
       dotBoost: isDark ? 0.46 : 0.48,
       arc: isDark ? 'rgba(226,232,240,0.50)' : 'rgba(79,70,229,0.58)',
+      arcSoft: isDark ? 'rgba(34,211,238,0.18)' : 'rgba(56,189,248,0.22)',
       node: isDark ? [248, 250, 252] : [99, 102, 241],
-      labelText: isDark ? 'rgba(248,250,252,0.82)' : 'rgba(49,46,129,0.86)',
+      halo: isDark ? 'rgba(34,211,238,0.10)' : 'rgba(99,102,241,0.10)',
+      ring: isDark ? [252, 211, 133] : [99, 102, 241],
+      ringHot: isDark ? [255, 247, 209] : [125, 211, 252],
+      ringGlow: isDark ? 'rgba(252,211,133,0.52)' : 'rgba(99,102,241,0.34)',
     }
 
     const resize = () => {
-      const ratio = window.devicePixelRatio || 1
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.25)
       canvas.width = canvas.offsetWidth * ratio
       canvas.height = canvas.offsetHeight * ratio
       ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
@@ -76,6 +90,8 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
     const W = () => canvas.offsetWidth
     const H = () => canvas.offsetHeight
     const R = () => Math.min(W(), H()) * 0.46
+    const globeMotionTilt = -0.24
+    const ringMotionTilt = -0.33
 
     const DOTS: { lat: number; lng: number }[] = []
     for (let lat = -80; lat <= 80; lat += 8) {
@@ -87,30 +103,30 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
     }
 
     const NODES: GlobeNode[] = [
-      { lat: 40, lng: -74, name: 'New York' },
-      { lat: 51, lng: 0, name: 'London' },
-      { lat: 35, lng: 139, name: 'Tokyo' },
-      { lat: 31, lng: 121, name: 'Shanghai' },
-      { lat: 37, lng: -122, name: 'San Francisco' },
-      { lat: 1, lng: 103, name: 'Singapore' },
-      { lat: -33, lng: 151, name: 'Sydney' },
-      { lat: 48, lng: 2, name: 'Paris' },
-      { lat: 52, lng: 13, name: 'Berlin' },
-      { lat: 25, lng: 55, name: 'Dubai' },
-      { lat: 19, lng: 72, name: 'Mumbai' },
-      { lat: 37, lng: 127, name: 'Seoul' },
-      { lat: 22, lng: 114, name: 'Hong Kong' },
-      { lat: 25, lng: 121, name: 'Taipei' },
-      { lat: 13, lng: 100, name: 'Bangkok' },
-      { lat: -6, lng: 106, name: 'Jakarta' },
-      { lat: 49, lng: -123, name: 'Vancouver' },
-      { lat: 43, lng: -79, name: 'Toronto' },
-      { lat: 34, lng: -118, name: 'Los Angeles' },
-      { lat: 19, lng: -99, name: 'Mexico City' },
-      { lat: -23, lng: -46, name: 'Sao Paulo' },
-      { lat: -34, lng: -58, name: 'Buenos Aires' },
-      { lat: 59, lng: 18, name: 'Stockholm' },
-      { lat: 41, lng: 29, name: 'Istanbul' },
+      { lat: 40, lng: -74 },
+      { lat: 51, lng: 0 },
+      { lat: 35, lng: 139 },
+      { lat: 31, lng: 121 },
+      { lat: 37, lng: -122 },
+      { lat: 1, lng: 103 },
+      { lat: -33, lng: 151 },
+      { lat: 48, lng: 2 },
+      { lat: 52, lng: 13 },
+      { lat: 25, lng: 55 },
+      { lat: 19, lng: 72 },
+      { lat: 37, lng: 127 },
+      { lat: 22, lng: 114 },
+      { lat: 25, lng: 121 },
+      { lat: 13, lng: 100 },
+      { lat: -6, lng: 106 },
+      { lat: 49, lng: -123 },
+      { lat: 43, lng: -79 },
+      { lat: 34, lng: -118 },
+      { lat: 19, lng: -99 },
+      { lat: -23, lng: -46 },
+      { lat: -34, lng: -58 },
+      { lat: 59, lng: 18 },
+      { lat: 41, lng: 29 },
     ]
     const ARCS: [number, number][] = [
       [0, 1],
@@ -141,6 +157,16 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
       [7, 23],
     ]
     const arcProgress = ARCS.map(() => Math.random())
+    const ringParticleCount = 760
+    const ringParticles = Array.from({ length: ringParticleCount }, (_, index) => ({
+      angle: (index / ringParticleCount) * Math.PI * 2,
+      lane: (Math.random() - 0.5) * 2.7,
+      size: 0.9 + Math.random() * 2.05,
+      alpha: 0.42 + Math.random() * 0.7,
+      drift: 0.55 + Math.random() * 0.85,
+      twinkle: Math.random() * Math.PI * 2,
+      hot: index % 14 === 0,
+    }))
 
     function project(lat: number, lng: number, rot: number) {
       const phi = (lat * Math.PI) / 180
@@ -152,9 +178,13 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
       }
     }
     function toScreen(p: { x: number; y: number; z: number }) {
+      const cosTilt = Math.cos(globeMotionTilt)
+      const sinTilt = Math.sin(globeMotionTilt)
+      const px = p.x * R()
+      const py = -p.y * R()
       return {
-        sx: W() / 2 + p.x * R(),
-        sy: H() / 2 - p.y * R(),
+        sx: W() / 2 + px * cosTilt - py * sinTilt,
+        sy: H() / 2 + px * sinTilt + py * cosTilt,
         visible: p.z > -0.15,
         b: (p.z + 1) / 2,
       }
@@ -182,6 +212,53 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
       }
     }
 
+    function drawRingLayer(layer: 'back' | 'front') {
+      const radius = R()
+      const tilt = ringMotionTilt
+      const cosTilt = Math.cos(tilt)
+      const sinTilt = Math.sin(tilt)
+      const spin = -t * 0.0028
+      const cx = W() / 2
+      const cy = H() / 2
+
+      ctx.save()
+      ctx.globalCompositeOperation = 'lighter'
+
+      for (const particle of ringParticles) {
+        const phase = particle.angle + spin * particle.drift
+        const depth = Math.sin(phase)
+        if (layer === 'back' ? depth > 0.34 : depth <= -0.08) continue
+
+        const laneOffset = particle.lane * radius * 0.24
+        const major = radius * 1.76 + laneOffset
+        const minor = radius * 0.5 + particle.lane * radius * 0.068
+        const localX = Math.cos(phase) * major
+        const localY = Math.sin(phase) * minor
+        const x = cx + localX * cosTilt - localY * sinTilt
+        const y = cy + localX * sinTilt + localY * cosTilt
+        const pulse = 0.66 + Math.sin(t * 0.035 + particle.twinkle) * 0.34
+        const rightSweepBoost =
+          localX > radius * 0.2 && localY < radius * 0.3 ? 1.72 : 1
+        const depthBoost =
+          layer === 'front' ? 1.3 + depth * 0.4 : 0.88 * rightSweepBoost
+        const opacity = particle.alpha * pulse * depthBoost
+        const color = particle.hot ? colors.ringHot : colors.ring
+        const size = particle.size * (layer === 'front' ? 1.16 : 0.92)
+
+        ctx.beginPath()
+        ctx.arc(x, y, size, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${color.join(',')},${Math.min(0.96, opacity)})`
+        if (particle.hot) {
+          ctx.shadowColor = `rgba(${colors.ringHot.join(',')},${layer === 'front' ? 0.64 : 0.44})`
+          ctx.shadowBlur = size * (layer === 'front' ? 6 : 4)
+        }
+        ctx.fill()
+        ctx.shadowBlur = 0
+      }
+
+      ctx.restore()
+    }
+
     let rot = 0,
       t = 0
 
@@ -189,6 +266,8 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
       ctx.clearRect(0, 0, W(), H())
       const cx = W() / 2,
         cy = H() / 2
+
+      drawRingLayer('back')
 
       const fill = ctx.createRadialGradient(
         cx - R() * 0.2,
@@ -204,6 +283,11 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
       ctx.arc(cx, cy, R(), 0, Math.PI * 2)
       ctx.fillStyle = fill
       ctx.fill()
+      const halo = ctx.createRadialGradient(cx, cy, R() * 0.42, cx, cy, R() * 1.28)
+      halo.addColorStop(0, colors.halo)
+      halo.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = halo
+      ctx.fillRect(cx - R() * 1.35, cy - R() * 1.35, R() * 2.7, R() * 2.7)
       ctx.beginPath()
       ctx.arc(cx, cy, R(), 0, Math.PI * 2)
       ctx.strokeStyle = colors.globeStroke
@@ -266,20 +350,29 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
             first = false
           } else ctx.lineTo(sc.sx, sc.sy)
         }
+        ctx.strokeStyle = colors.arcSoft
+        ctx.lineWidth = 2.4
+        ctx.shadowColor = colors.arc
+        ctx.shadowBlur = 6
+        ctx.stroke()
+        ctx.shadowBlur = 0
         ctx.strokeStyle = colors.arc
-        ctx.lineWidth = 1.2
+        ctx.lineWidth = 1.05
         ctx.stroke()
         const head = arcPt(n1.lat, n1.lng, n2.lat, n2.lng, prog, rot)
         const hs = toScreen(head)
         if (hs.visible) {
           ctx.beginPath()
-          ctx.arc(hs.sx, hs.sy, 2.5, 0, Math.PI * 2)
+          ctx.arc(hs.sx, hs.sy, 3, 0, Math.PI * 2)
           ctx.fillStyle = `rgba(${colors.node.join(',')},0.92)`
+          ctx.shadowColor = colors.arc
+          ctx.shadowBlur = 6
           ctx.fill()
+          ctx.shadowBlur = 0
         }
       })
 
-      NODES.forEach(({ lat, lng, name, label = true }) => {
+      NODES.forEach(({ lat, lng }) => {
         const p = project(lat, lng, rot)
         const s = toScreen(p)
         if (!s.visible || s.b < 0.5) return
@@ -293,22 +386,9 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
         ctx.arc(s.sx, s.sy, 2.5, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(${colors.node.join(',')},${0.9 * s.b})`
         ctx.fill()
-
-        if (!name || !label || s.b < 0.63) return
-        const labelY = s.sy + 15
-        ctx.font = '600 11px "Public Sans", Inter, system-ui, sans-serif'
-        const metrics = ctx.measureText(name)
-        const labelX = s.sx - metrics.width / 2
-        ctx.save()
-        ctx.shadowColor = isDark ? 'rgba(0,0,0,0.65)' : 'rgba(255,255,255,0.95)'
-        ctx.shadowBlur = 5
-        ctx.lineWidth = 3
-        ctx.strokeStyle = isDark ? 'rgba(0,0,0,0.42)' : 'rgba(255,255,255,0.88)'
-        ctx.strokeText(name, labelX, labelY)
-        ctx.fillStyle = colors.labelText
-        ctx.fillText(name, labelX, labelY)
-        ctx.restore()
       })
+
+      drawRingLayer('front')
 
       rot = (rot + 0.1) % 360
       t++
@@ -323,6 +403,203 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
   }, [tone])
 
   return <canvas ref={canvasRef} className='h-full w-full' />
+}
+
+function ParticleField({ tone }: { tone: 'light' | 'dark' }) {
+  const canvasRef = useRef<HTMLCanvasElement>(null)
+  const rafRef = useRef<number>(0)
+  const particlesRef = useRef<Particle[]>([])
+
+  useEffect(() => {
+    const canvas = canvasRef.current
+    if (!canvas) return
+
+    const ctx = canvas.getContext('2d')
+    if (!ctx) return
+
+    const isDark = tone === 'dark'
+    const palette: [number, number, number][] = isDark
+      ? [
+          [125, 211, 252],
+          [168, 85, 247],
+          [248, 250, 252],
+        ]
+      : [
+          [56, 189, 248],
+          [96, 165, 250],
+          [255, 255, 255],
+        ]
+    const prefersReducedMotion = window.matchMedia(
+      '(prefers-reduced-motion: reduce)'
+    ).matches
+    const pointer = { x: 0, y: 0 }
+    const scroll = { y: window.scrollY || 0 }
+
+    const resize = () => {
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.25)
+      const width = canvas.offsetWidth
+      const height = canvas.offsetHeight
+      canvas.width = width * ratio
+      canvas.height = height * ratio
+      ctx.setTransform(ratio, 0, 0, ratio, 0, 0)
+
+      const count = Math.max(
+        48,
+        Math.min(96, Math.floor((width * height) / 12000))
+      )
+      particlesRef.current = Array.from({ length: count }, (_, index) => ({
+        x: Math.random() * width,
+        y: Math.random() * height,
+        vx: (Math.random() - 0.5) * (prefersReducedMotion ? 0 : 0.09),
+        vy: (Math.random() - 0.5) * (prefersReducedMotion ? 0 : 0.09),
+        r:
+          index % 13 === 0
+            ? 2.3 + Math.random() * 1.9
+            : 0.7 + Math.random() * 1.6,
+        alpha: 0.16 + Math.random() * 0.46,
+        pulse: Math.random() * Math.PI * 2,
+        depth: 0.25 + Math.random() * 0.75,
+        color: palette[index % palette.length],
+      }))
+    }
+
+    const handlePointerMove = (event: PointerEvent) => {
+      const rect = canvas.getBoundingClientRect()
+      pointer.x = ((event.clientX - rect.left) / Math.max(rect.width, 1) - 0.5) * 2
+      pointer.y =
+        ((event.clientY - rect.top) / Math.max(rect.height, 1) - 0.5) * 2
+    }
+
+    const handleScroll = () => {
+      scroll.y = window.scrollY || 0
+    }
+
+    resize()
+    window.addEventListener('resize', resize)
+    window.addEventListener('pointermove', handlePointerMove, { passive: true })
+    window.addEventListener('scroll', handleScroll, { passive: true })
+
+    let tick = 0
+    const draw = () => {
+      const width = canvas.offsetWidth
+      const height = canvas.offsetHeight
+      ctx.clearRect(0, 0, width, height)
+
+      const parallaxX = prefersReducedMotion ? 0 : pointer.x * 18
+      const parallaxY = prefersReducedMotion
+        ? 0
+        : pointer.y * 14 + (scroll.y % 220) * 0.045
+
+      const nebula = ctx.createRadialGradient(
+        width * 0.56 + parallaxX * 0.5,
+        height * 0.42 + parallaxY * 0.4,
+        0,
+        width * 0.5,
+        height * 0.46,
+        Math.max(width, height) * 0.62
+      )
+      nebula.addColorStop(
+        0,
+        isDark ? 'rgba(59,130,246,0.14)' : 'rgba(125,211,252,0.22)'
+      )
+      nebula.addColorStop(
+        0.42,
+        isDark ? 'rgba(139,92,246,0.10)' : 'rgba(96,165,250,0.07)'
+      )
+      nebula.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = nebula
+      ctx.fillRect(0, 0, width, height)
+
+      const distantCloud = ctx.createRadialGradient(
+        width * 0.18 - parallaxX,
+        height * 0.74 - parallaxY,
+        0,
+        width * 0.18,
+        height * 0.74,
+        Math.max(width, height) * 0.42
+      )
+      distantCloud.addColorStop(
+        0,
+        isDark ? 'rgba(125,211,252,0.075)' : 'rgba(56,189,248,0.055)'
+      )
+      distantCloud.addColorStop(1, 'rgba(255,255,255,0)')
+      ctx.fillStyle = distantCloud
+      ctx.fillRect(0, 0, width, height)
+
+      const particles = particlesRef.current
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i]
+        if (!prefersReducedMotion) {
+          p.x += p.vx
+          p.y += p.vy
+          if (p.x < -12) p.x = width + 12
+          if (p.x > width + 12) p.x = -12
+          if (p.y < -12) p.y = height + 12
+          if (p.y > height + 12) p.y = -12
+        }
+
+        const depthOffsetX = parallaxX * (p.depth - 0.45)
+        const depthOffsetY = parallaxY * (p.depth - 0.45)
+        const drawX = p.x + depthOffsetX
+        const drawY = p.y + depthOffsetY
+        const pulse = 0.68 + Math.sin(tick * 0.016 + p.pulse) * 0.32
+        const size = p.r * (0.75 + p.depth * 0.95) * pulse
+        const opacity = p.alpha * (0.42 + p.depth * 0.58)
+        ctx.beginPath()
+        ctx.arc(drawX, drawY, size, 0, Math.PI * 2)
+        ctx.fillStyle = `rgba(${p.color.join(',')},${opacity})`
+        if (i % 13 === 0) {
+          ctx.shadowColor = `rgba(${p.color.join(',')},${isDark ? 0.34 : 0.24})`
+          ctx.shadowBlur = size * 4
+        }
+        ctx.fill()
+        ctx.shadowBlur = 0
+      }
+
+      let linesDrawn = 0
+      for (let i = 0; i < particles.length; i++) {
+        if (linesDrawn > 62) break
+        for (let j = i + 1; j < particles.length; j++) {
+          const a = particles[i]
+          const b = particles[j]
+          if (Math.abs(a.depth - b.depth) > 0.2) continue
+          const ax = a.x + parallaxX * (a.depth - 0.45)
+          const ay = a.y + parallaxY * (a.depth - 0.45)
+          const bx = b.x + parallaxX * (b.depth - 0.45)
+          const by = b.y + parallaxY * (b.depth - 0.45)
+          const dx = ax - bx
+          const dy = ay - by
+          const distance = Math.hypot(dx, dy)
+          if (distance > 96) continue
+          const opacity =
+            (1 - distance / 96) *
+            (0.06 + Math.min(a.depth, b.depth) * (isDark ? 0.12 : 0.1))
+          ctx.beginPath()
+          ctx.moveTo(ax, ay)
+          ctx.lineTo(bx, by)
+          ctx.strokeStyle = `rgba(147,197,253,${opacity})`
+          ctx.lineWidth = 0.7
+          ctx.stroke()
+          linesDrawn++
+          if (linesDrawn > 62) break
+        }
+      }
+
+      tick++
+      rafRef.current = requestAnimationFrame(draw)
+    }
+
+    rafRef.current = requestAnimationFrame(draw)
+
+    return () => {
+      cancelAnimationFrame(rafRef.current)
+      window.removeEventListener('resize', resize)
+      window.removeEventListener('pointermove', handlePointerMove)
+      window.removeEventListener('scroll', handleScroll)
+    }
+  }, [tone])
+
+  return <canvas ref={canvasRef} aria-hidden className='h-full w-full' />
 }
 
 function BrandIntro({ isDark, compact = false, chipStyle }: BrandIntroProps) {
@@ -397,10 +674,11 @@ function BrandIntro({ isDark, compact = false, chipStyle }: BrandIntroProps) {
 
 export function AuthLayout({ children }: AuthLayoutProps) {
   const { resolvedTheme } = useTheme()
+  const notifications = useNotifications()
   const isDark = resolvedTheme === 'dark'
   const pageBackground = isDark
     ? 'radial-gradient(circle at 82% 43%,rgba(255,255,255,0.045),rgba(255,255,255,0) 22%),linear-gradient(180deg,#030303 0%,#070707 48%,#030303 100%)'
-    : 'radial-gradient(circle at 78% 36%,rgba(255,255,255,0.82),rgba(255,255,255,0) 28%),linear-gradient(135deg,#edf6ff 0%,#f3f6ff 46%,#f6f2ff 100%)'
+    : 'radial-gradient(circle at 78% 36%,rgba(255,255,255,0.82),rgba(255,255,255,0) 28%),linear-gradient(135deg,#edf6ff 0%,#f3f8ff 48%,#f8fbff 100%)'
   const navPanelClass = isDark
     ? 'border-white/12 bg-zinc-950/72 shadow-[0_14px_38px_rgba(0,0,0,0.84),0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.08)] [&_[data-slot=button]]:text-zinc-500 [&_[data-slot=button]]:hover:bg-zinc-800/70 [&_[data-slot=button]]:hover:text-zinc-200'
     : 'border-indigo-200/45 bg-white/45 shadow-[0_10px_30px_rgba(99,102,241,0.10),inset_0_1px_0_rgba(255,255,255,0.72)] [&_[data-slot=button]]:text-slate-600 [&_[data-slot=button]]:hover:bg-white/70 [&_[data-slot=button]]:hover:text-indigo-950'
@@ -415,9 +693,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         color: '#6366f1',
         background: 'rgba(99,102,241,0.06)',
       }
-  const authCardSurfaceClass = isDark
-    ? 'border-white/12 bg-[#18181b]/95 shadow-[0_28px_96px_rgba(0,0,0,0.86),0_10px_34px_rgba(0,0,0,0.62),0_0_0_1px_rgba(255,255,255,0.026),inset_0_1px_0_rgba(255,255,255,0.085),inset_0_-1px_0_rgba(0,0,0,0.52)] lg:bg-[#18181b]/94 lg:shadow-[0_36px_128px_rgba(0,0,0,0.92),0_12px_46px_rgba(0,0,0,0.68),0_0_64px_rgba(255,255,255,0.042),inset_0_1px_0_rgba(255,255,255,0.09),inset_0_-1px_0_rgba(0,0,0,0.54)] lg:hover:bg-[#1b1b1f] lg:hover:shadow-[0_44px_150px_rgba(0,0,0,0.96),0_14px_54px_rgba(0,0,0,0.72),0_0_82px_rgba(255,255,255,0.06),inset_0_1px_0_rgba(255,255,255,0.12),inset_0_-1px_0_rgba(0,0,0,0.56)]'
-    : 'border-white/70 bg-white/92 shadow-[0_22px_70px_rgba(79,70,229,0.14),0_14px_42px_rgba(30,41,59,0.10),inset_0_1px_0_rgba(255,255,255,0.92)] lg:bg-white/88 lg:shadow-[0_28px_90px_rgba(79,70,229,0.16),0_18px_54px_rgba(30,41,59,0.12),0_0_60px_rgba(255,255,255,0.78),inset_0_1px_0_rgba(255,255,255,0.92)] lg:hover:bg-white/94 lg:hover:shadow-[0_36px_104px_rgba(79,70,229,0.18),0_22px_62px_rgba(30,41,59,0.15),0_0_86px_rgba(255,255,255,0.88),inset_0_1px_0_rgba(255,255,255,0.98)]'
+  const authFormSurfaceClass = isDark
+    ? 'border-white/14 bg-zinc-900/58 text-slate-50 shadow-[0_28px_92px_rgba(0,0,0,0.56),0_16px_48px_rgba(0,0,0,0.34),inset_0_1px_0_rgba(255,255,255,0.10)] backdrop-blur-2xl transition-[transform,border-color,background-color,box-shadow] duration-700 ease-out hover:-translate-y-1 hover:border-white/22 hover:bg-zinc-900/66 hover:shadow-[0_36px_112px_rgba(0,0,0,0.62),0_20px_58px_rgba(0,0,0,0.38),0_0_32px_rgba(252,211,133,0.07),inset_0_1px_0_rgba(255,255,255,0.14)] [&_input]:border-white/14 [&_input]:bg-white/7 [&_input]:text-slate-100 [&_input]:placeholder:text-slate-500 [&_label]:text-slate-300 [&_[data-slot=checkbox]]:border-white/18 [&_[data-slot=checkbox]]:bg-white/6'
+    : 'border-white/75 bg-white/72 text-slate-950 shadow-[0_28px_90px_rgba(79,70,229,0.16),0_16px_44px_rgba(30,41,59,0.10),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-2xl transition-[transform,border-color,background-color,box-shadow] duration-700 ease-out hover:-translate-y-1 hover:border-white hover:bg-white/82 hover:shadow-[0_34px_108px_rgba(79,70,229,0.20),0_20px_58px_rgba(30,41,59,0.13),0_0_48px_rgba(125,211,252,0.18),inset_0_1px_0_rgba(255,255,255,0.98)]'
 
   return (
     <div
@@ -425,23 +703,38 @@ export function AuthLayout({ children }: AuthLayoutProps) {
       style={{ background: pageBackground }}
     >
       {/* Top bar */}
-      <header className='z-30 flex h-12 flex-shrink-0 items-center justify-end bg-transparent px-4 sm:px-6 lg:h-16 lg:px-10'>
+      <header className='z-30 flex h-16 flex-shrink-0 items-center justify-end bg-transparent px-4 sm:px-6 lg:px-10'>
         <div
           className={`flex items-center gap-1 rounded-full border p-1 backdrop-blur-xl [&_[data-slot=button]]:rounded-full ${navPanelClass}`}
         >
-          <ThemeSwitch />
           <LanguageSwitcher />
+          <ThemeSwitch />
+          <NotificationPopover
+            open={notifications.popoverOpen}
+            onOpenChange={notifications.setPopoverOpen}
+            unreadCount={notifications.unreadCount}
+            activeTab={notifications.activeTab}
+            onTabChange={notifications.setActiveTab}
+            notice={notifications.notice}
+            announcements={notifications.announcements}
+            loading={notifications.loading}
+            onCloseToday={notifications.closeToday}
+          />
         </div>
       </header>
 
       {/* Body */}
       <div className='relative flex flex-1 flex-col overflow-x-hidden overflow-y-auto lg:min-h-0 lg:flex-row lg:overflow-hidden'>
+        <div className='pointer-events-none absolute inset-y-[-10rem] right-[-7vw] z-0 hidden w-[58vw] opacity-70 [mask-image:linear-gradient(90deg,transparent_0%,black_20%,black_88%,transparent_100%)] lg:block dark:opacity-58'>
+          <ParticleField tone={resolvedTheme} />
+        </div>
+
         <div
           className='pointer-events-none absolute z-0 hidden opacity-60 lg:block lg:opacity-100'
           style={{
-            width: 'clamp(850px, calc(96vw + 120px), 2050px)',
+            width: 'clamp(1120px, calc(116vw + 340px), 2600px)',
             height: 'clamp(700px, calc(108vh + 18vh - 44px), 1320px)',
-            left: 'clamp(-565px, calc(-20vw - 165px), -245px)',
+            left: 'clamp(-840px, calc(-20vw - 380px), -360px)',
             top: 'clamp(142px, 18vh, 250px)',
           }}
         >
@@ -459,12 +752,12 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           <BrandIntro isDark={isDark} compact chipStyle={chipStyle} />
         </div>
 
-        {/* Right — auth card */}
+        {/* Right — auth form */}
         <div
-          className='relative z-10 flex w-full flex-1 items-start justify-center px-4 pt-0 pb-8 sm:px-6 md:px-10 lg:mr-[clamp(24px,6vw,128px)] lg:w-[clamp(340px,38vw,480px)] lg:flex-none lg:items-center lg:px-[clamp(12px,2vw,24px)] lg:pt-8 lg:pb-8 lg:[transform:translate(clamp(-56px,-5vw,-12px),clamp(-72px,-6vw,-32px))]'
+          className='relative z-10 flex w-full flex-1 items-start justify-center px-5 pt-0 pb-8 sm:px-8 md:px-10 lg:mr-[clamp(44px,7vw,140px)] lg:w-[clamp(360px,34vw,520px)] lg:flex-none lg:items-center lg:px-0 lg:pt-4 lg:pb-12'
         >
           <div
-            className={`w-full max-w-[min(420px,100%)] rounded-xl border p-5 backdrop-blur-xl transition-all duration-300 ease-out sm:p-7 md:p-8 lg:max-w-[min(410px,100%)] lg:hover:-translate-y-1 ${authCardSurfaceClass}`}
+            className={`w-full max-w-[min(408px,100%)] rounded-[1.35rem] border px-5 py-7 sm:px-7 sm:py-8 md:px-8 lg:max-w-[392px] ${authFormSurfaceClass}`}
           >
             {children}
           </div>

@@ -151,3 +151,12 @@ export interface GroupOption {
   ratio: number
   desc?: string
 }
+
+export interface DebugData {
+  previewRequest: ChatCompletionRequest | null
+  previewTimestamp: number | null
+  request: ChatCompletionRequest | null
+  response: unknown
+  sseMessages: string[]
+  timestamp: number | null
+}

@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
@@ -67,6 +67,8 @@ export interface PublicHeaderProps {
   homeUrl?: string
   leftContent?: React.ReactNode
   rightContent?: React.ReactNode
+  mobileLeadingContent?: React.ReactNode
+  hideMobileBrand?: boolean
   showNavigation?: boolean
   showAuthButtons?: boolean
   showNotifications?: boolean
@@ -88,6 +90,11 @@ export function PublicHeader(props: PublicHeaderProps) {
   const navigate = useNavigate()
   const [scrolled, setScrolled] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
+  const [isDesktop, setIsDesktop] = useState(() =>
+    typeof window === 'undefined'
+      ? true
+      : window.matchMedia('(min-width: 640px)').matches
+  )
   const [authPromptTarget, setAuthPromptTarget] =
     useState<AuthPromptTarget | null>(null)
   const [authPromptSecondsLeft, setAuthPromptSecondsLeft] =
@@ -96,6 +103,7 @@ export function PublicHeader(props: PublicHeaderProps) {
   const { systemName, logo: systemLogo, loading } = useSystemConfig()
   const dynamicLinks = useTopNavLinks()
   const notifications = useNotifications()
+  const setNotificationPopoverOpenRef = useRef(notifications.setPopoverOpen)
   const routerState = useRouterState()
   const pathname = normalizePath(routerState.location.pathname)
 
@@ -109,6 +117,22 @@ export function PublicHeader(props: PublicHeaderProps) {
     onScroll()
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    setNotificationPopoverOpenRef.current = notifications.setPopoverOpen
+  }, [notifications.setPopoverOpen])
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia('(min-width: 640px)')
+    const handleChange = () => {
+      setIsDesktop(mediaQuery.matches)
+      setNotificationPopoverOpenRef.current(false)
+    }
+
+    handleChange()
+    mediaQuery.addEventListener('change', handleChange)
+    return () => mediaQuery.removeEventListener('change', handleChange)
   }, [])
 
   useEffect(() => {
@@ -203,10 +227,19 @@ export function PublicHeader(props: PublicHeaderProps) {
                 : 'h-12 rounded-xl border-slate-200/70 bg-white/62 px-2.5 shadow-[0_12px_36px_rgba(15,23,42,0.08)] dark:border-white/10 dark:bg-zinc-950/58 dark:shadow-[0_14px_46px_rgba(0,0,0,0.42)]'
             )}
           >
+            {props.mobileLeadingContent && (
+              <div className='flex shrink-0 items-center sm:hidden'>
+                {props.mobileLeadingContent}
+              </div>
+            )}
+
             {/* Logo */}
             <Link
               to={homeUrl}
-              className='group flex shrink-0 items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-slate-950/[0.03] dark:hover:bg-white/[0.05]'
+              className={cn(
+                'group shrink-0 items-center gap-2 rounded-lg px-2 py-1 transition-colors hover:bg-slate-950/[0.03] dark:hover:bg-white/[0.05]',
+                props.hideMobileBrand ? 'hidden sm:flex' : 'flex'
+              )}
             >
               {loading ? (
                 <Skeleton className='size-6 rounded-md' />
@@ -272,7 +305,7 @@ export function PublicHeader(props: PublicHeaderProps) {
             <div className='ml-auto hidden items-center gap-1 sm:flex'>
               {showLanguageSwitcher && <LanguageSwitcher />}
               {showThemeSwitch && <ThemeSwitch />}
-              {showNotifications && (
+              {showNotifications && isDesktop && (
                 <NotificationPopover
                   open={notifications.popoverOpen}
                   onOpenChange={notifications.setPopoverOpen}
@@ -282,6 +315,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                   notice={notifications.notice}
                   announcements={notifications.announcements}
                   loading={notifications.loading}
+                  onCloseToday={notifications.closeToday}
                 />
               )}
 
@@ -291,7 +325,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                   {loading ? (
                     <Skeleton className='h-8 w-20 rounded-lg' />
                   ) : isAuthenticated ? (
-                    <ProfileDropdown showName />
+                    <ProfileDropdown showName nameMode='username' />
                   ) : (
                     <Button
                       size='sm'
@@ -305,11 +339,29 @@ export function PublicHeader(props: PublicHeaderProps) {
               )}
             </div>
 
-            {/* Mobile: compact actions + hamburger */}
-            <div className='flex items-center gap-2 sm:hidden'>
+            {/* Mobile: keep the utility actions visible beside the menu. */}
+            <div className='ml-auto flex min-w-0 items-center gap-1 sm:hidden [&_[data-slot=button]]:size-8'>
+              {showLanguageSwitcher && <LanguageSwitcher />}
               {showThemeSwitch && <ThemeSwitch />}
+              {showNotifications && !isDesktop && (
+                <NotificationPopover
+                  open={notifications.popoverOpen}
+                  onOpenChange={notifications.setPopoverOpen}
+                  unreadCount={notifications.unreadCount}
+                  activeTab={notifications.activeTab}
+                  onTabChange={notifications.setActiveTab}
+                  notice={notifications.notice}
+                  announcements={notifications.announcements}
+                  loading={notifications.loading}
+                  onCloseToday={notifications.closeToday}
+                />
+              )}
               {showAuthButtons && !loading && isAuthenticated && (
-                <ProfileDropdown showName className='max-w-[140px]' />
+                <ProfileDropdown
+                  showName
+                  nameMode='username'
+                  className='max-w-[92px]'
+                />
               )}
               <Button
                 type='button'
@@ -345,27 +397,43 @@ export function PublicHeader(props: PublicHeaderProps) {
         </div>
       </header>
 
-      {/* Mobile full-screen overlay */}
+      {/* Mobile right drawer */}
       <div
         className={cn(
-          'fixed inset-0 z-40 bg-[linear-gradient(180deg,rgba(248,250,252,0.98),rgba(238,244,255,0.98))] backdrop-blur-2xl transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)] sm:pointer-events-none sm:hidden dark:bg-[linear-gradient(180deg,rgba(5,5,5,0.98),rgba(17,17,19,0.98))]',
+          'fixed inset-0 z-[60] transition-colors duration-300 sm:pointer-events-none sm:hidden',
           mobileOpen
-            ? 'pointer-events-auto opacity-100'
-            : 'pointer-events-none opacity-0'
+            ? 'pointer-events-auto bg-slate-950/18 backdrop-blur-[1px] dark:bg-black/40'
+            : 'pointer-events-none bg-transparent'
         )}
+        onClick={() => setMobileOpen(false)}
       >
-        <div className='flex h-full flex-col justify-between px-8 pt-20 pb-10'>
-          <nav className='flex flex-col gap-1'>
+        <div
+          className={cn(
+            'absolute top-2 right-2 bottom-2 flex w-[min(70vw,18rem)] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/94 shadow-[-18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[-18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]',
+            mobileOpen ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
+          )}
+          onClick={(event) => event.stopPropagation()}
+        >
+          <div className='border-b border-slate-200/70 px-5 py-4 dark:border-white/10'>
+            <p className='text-xs font-semibold tracking-[0.18em] text-slate-400 uppercase dark:text-slate-500'>
+              {t('Navigation')}
+            </p>
+            <p className='mt-1 text-sm font-semibold text-slate-950 dark:text-slate-50'>
+              {displaySiteName}
+            </p>
+          </div>
+
+          <nav className='mx-3 mt-3 flex flex-col gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-1.5 dark:border-white/10 dark:bg-white/[0.04]'>
             {links.map((link, i) => {
               const isActive = isPathActive(pathname, link.href)
               const linkClassName = cn(
-                'flex items-center gap-3 rounded-xl px-4 py-3 text-base font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+                'flex h-11 items-center gap-3 rounded-xl px-3.5 text-[15px] font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
                 mobileOpen
-                  ? 'translate-y-0 opacity-100'
-                  : 'translate-y-4 opacity-0',
+                  ? 'translate-x-0 opacity-100'
+                  : 'translate-x-4 opacity-0',
                 isActive
-                  ? 'bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950'
-                  : 'text-slate-600 hover:bg-slate-950/[0.04] hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100',
+                  ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80 dark:bg-white/10 dark:text-white dark:ring-white/10'
+                  : 'text-slate-600 hover:bg-white/80 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-slate-100',
                 link.disabled && 'pointer-events-none opacity-50'
               )
               const transitionStyle = {
@@ -405,7 +473,7 @@ export function PublicHeader(props: PublicHeaderProps) {
 
           <div
             className={cn(
-              'flex flex-col gap-3 transition-all duration-500',
+              'mt-auto border-t border-slate-200/70 p-4 transition-all duration-500 dark:border-white/10',
               mobileOpen
                 ? 'translate-y-0 opacity-100'
                 : 'translate-y-4 opacity-0'
@@ -416,7 +484,7 @@ export function PublicHeader(props: PublicHeaderProps) {
               <Link
                 to={isAuthenticated ? '/dashboard' : '/sign-in'}
                 onClick={() => setMobileOpen(false)}
-                className='inline-flex h-10 items-center justify-center rounded-lg bg-slate-950 text-sm font-semibold text-white shadow-sm transition-opacity hover:opacity-90 active:opacity-80 dark:bg-white dark:text-slate-950'
+                className='inline-flex h-11 w-full items-center justify-center rounded-xl bg-slate-950 text-sm font-semibold text-white shadow-[0_12px_28px_rgba(15,23,42,0.22)] transition-colors hover:bg-slate-800 active:bg-slate-950 dark:bg-white dark:text-slate-950 dark:shadow-[0_12px_30px_rgba(0,0,0,0.42)] dark:hover:bg-slate-200'
               >
                 {isAuthenticated ? t('Go to Dashboard') : t('Sign in')}
               </Link>

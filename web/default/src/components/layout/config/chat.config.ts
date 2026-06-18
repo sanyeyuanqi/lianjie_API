@@ -18,11 +18,14 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { type TFunction } from 'i18next'
 import { FlaskConical, MessageSquare } from 'lucide-react'
+import { isSidebarModuleEnabled } from '@/lib/nav-modules'
 import type { NavGroup, SidebarView } from '../types'
 
 function getChatNavGroups(t: TFunction): NavGroup[] {
-  return [
-    {
+  const navGroups: NavGroup[] = []
+
+  if (isSidebarModuleEnabled('chat', 'playground')) {
+    navGroups.push({
       id: 'playground',
       title: '',
       items: [
@@ -32,8 +35,11 @@ function getChatNavGroups(t: TFunction): NavGroup[] {
           icon: FlaskConical,
         },
       ],
-    },
-    {
+    })
+  }
+
+  if (isSidebarModuleEnabled('chat', 'chat')) {
+    navGroups.push({
       id: 'chat',
       title: t('Features'),
       items: [
@@ -48,8 +54,10 @@ function getChatNavGroups(t: TFunction): NavGroup[] {
           variant: 'flat',
         },
       ],
-    },
-  ]
+    })
+  }
+
+  return navGroups
 }
 
 export const CHAT_VIEW: SidebarView = {

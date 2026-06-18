@@ -212,7 +212,7 @@ function isNavItemVisible(
   }
 
   if ('type' in item && item.type === 'playground-sessions') {
-    return isModuleEnabled('/chat', adminConfig, userConfig)
+    return isModuleEnabled('/playground', adminConfig, userConfig)
   }
 
   // Handle direct link type

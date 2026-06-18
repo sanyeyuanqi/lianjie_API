@@ -16,21 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { Link } from '@tanstack/react-router'
-import { BookOpen } from 'lucide-react'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { MOTION_TRANSITION, MOTION_VARIANTS } from '@/lib/motion'
 import { useLayout } from '@/context/layout-provider'
 import { useSidebarView } from '@/hooks/use-sidebar-view'
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from '@/components/ui/sidebar'
+import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
 import { NavGroup } from './nav-group'
 import { SidebarViewHeader } from './sidebar-view-header'
 
@@ -58,7 +48,7 @@ export function AppSidebar() {
 
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
-      {view && <SidebarViewHeader view={view} />}
+      {view && view.id !== 'chat' && <SidebarViewHeader view={view} />}
 
       <SidebarContent className='px-1 py-3'>
         <AnimatePresence mode='wait' initial={false}>
@@ -76,24 +66,6 @@ export function AppSidebar() {
           </motion.div>
         </AnimatePresence>
       </SidebarContent>
-
-      {!view && (
-        <SidebarFooter className='border-sidebar-border border-t px-2 py-2'>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <SidebarMenuButton
-                tooltip='API文档'
-                render={<Link to='/docs' target='_blank' rel='noreferrer' />}
-              >
-                <BookOpen className='shrink-0' />
-                <span className='min-w-0 flex-1 truncate'>API文档</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarFooter>
-      )}
-
-      <SidebarRail />
     </Sidebar>
   )
 }

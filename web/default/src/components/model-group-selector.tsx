@@ -89,22 +89,25 @@ const ModelTriggerButton = React.forwardRef<
     size='sm'
     disabled={isDisabled}
     className={cn(
-      'flex h-8 items-center gap-2 border px-3 font-medium',
+      'flex h-9 items-center gap-2 border px-3 font-medium',
       'justify-center p-0 sm:w-auto sm:justify-start sm:px-3',
-      'w-8',
-      'bg-background text-foreground',
-      'hover:bg-accent transition-colors',
+      'w-9 rounded-full',
+      'border-slate-200/80 bg-white/90 text-slate-700',
+      'shadow-[0_6px_18px_rgba(15,23,42,0.08)]',
+      'transition-all duration-300',
+      'hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)]',
+      'dark:border-white/10 dark:bg-white/7 dark:text-slate-200 dark:hover:border-white/18 dark:hover:bg-white/12 dark:hover:text-white',
       'focus:!ring-0 focus:!outline-none',
-      'shadow-none',
+      'disabled:opacity-100',
       triggerClassName
     )}
     {...props}
   >
-    <CpuIcon className='text-muted-foreground block size-4 sm:hidden' />
-    <span className='text-muted-foreground sm:text-foreground hidden truncate text-xs sm:block'>
+    <CpuIcon className='block size-4 text-current/75 sm:hidden' />
+    <span className='hidden truncate text-xs text-current sm:block'>
       {currentLabel}
     </span>
-    <ChevronsUpDown className='text-muted-foreground hidden h-4 w-4 opacity-50 sm:block' />
+    <ChevronsUpDown className='hidden size-4 text-current/60 sm:block' />
   </Button>
 ))
 
@@ -125,22 +128,25 @@ const GroupTriggerButton = React.forwardRef<
     size='sm'
     disabled={isDisabled}
     className={cn(
-      'flex h-8 items-center gap-2 border px-3 font-medium',
+      'flex h-9 items-center gap-2 border px-3 font-medium',
       'justify-center p-0 sm:w-auto sm:justify-start sm:px-3',
-      'w-8',
-      'bg-background text-foreground',
-      'hover:bg-accent transition-colors',
+      'w-9 rounded-full',
+      'border-slate-200/80 bg-white/90 text-slate-700',
+      'shadow-[0_6px_18px_rgba(15,23,42,0.08)]',
+      'transition-all duration-300',
+      'hover:-translate-y-0.5 hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 hover:shadow-[0_10px_24px_rgba(15,23,42,0.12)]',
+      'dark:border-white/10 dark:bg-white/7 dark:text-slate-200 dark:hover:border-white/18 dark:hover:bg-white/12 dark:hover:text-white',
       'focus:!ring-0 focus:!outline-none',
-      'shadow-none',
+      'disabled:opacity-100',
       triggerClassName
     )}
     {...props}
   >
-    <LayersIcon className='text-muted-foreground block size-4 sm:hidden' />
-    <span className='text-muted-foreground sm:text-foreground hidden truncate text-xs sm:block'>
+    <LayersIcon className='block size-4 text-current/75 sm:hidden' />
+    <span className='hidden truncate text-xs text-current sm:block'>
       {currentLabel}
     </span>
-    <ChevronsUpDown className='text-muted-foreground hidden h-4 w-4 opacity-50 sm:block' />
+    <ChevronsUpDown className='hidden size-4 text-current/60 sm:block' />
   </Button>
 ))
 

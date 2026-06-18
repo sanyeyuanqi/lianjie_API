@@ -21,9 +21,8 @@ For commercial licensing, please contact support@quantumnous.com
 import * as React from 'react'
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
-import { SidebarLeftIcon } from '@hugeicons/core-free-icons'
-import { HugeiconsIcon } from '@hugeicons/react'
 import { cva, type VariantProps } from 'class-variance-authority'
+import { PanelLeft } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useIsMobile } from '@/hooks/use-mobile'
 import { Button } from '@/components/ui/button'
@@ -206,7 +205,17 @@ function Sidebar({
           data-sidebar='sidebar'
           data-slot='sidebar'
           data-mobile='true'
-          className='bg-background text-sidebar-foreground w-(--sidebar-width) p-0 [&>button]:hidden'
+          className={cn(
+            'text-sidebar-foreground top-2 bottom-2 left-2 h-auto w-[min(68vw,17.5rem)] rounded-[1.5rem] border border-slate-200/80 bg-white/94 p-0 shadow-[18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl sm:max-w-none dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]',
+            '[&>button]:hidden [&_[data-sidebar=content]]:px-3 [&_[data-sidebar=content]]:py-3 [&_[data-sidebar=group]]:px-0 [&_[data-sidebar=group]]:py-0',
+            '[&_[data-sidebar=group-label]]:h-8 [&_[data-sidebar=group-label]]:px-2 [&_[data-sidebar=group-label]]:text-xs [&_[data-sidebar=group-label]]:font-medium [&_[data-sidebar=group-label]]:text-slate-400 [&_[data-sidebar=group-label]]:dark:text-slate-500',
+            '[&_[data-sidebar=menu]]:gap-1 [&_[data-sidebar=menu-button]]:h-10 [&_[data-sidebar=menu-button]]:rounded-xl [&_[data-sidebar=menu-button]]:px-3 [&_[data-sidebar=menu-button]]:font-sans [&_[data-sidebar=menu-button]]:text-[15px] [&_[data-sidebar=menu-button]]:tracking-tight [&_[data-sidebar=menu-button]]:text-slate-700 [&_[data-sidebar=menu-button]]:duration-300 [&_[data-sidebar=menu-button]]:hover:bg-white/80 [&_[data-sidebar=menu-button]]:hover:text-slate-950 [&_[data-sidebar=menu-button]]:dark:text-slate-300 [&_[data-sidebar=menu-button]]:dark:hover:bg-white/[0.08] [&_[data-sidebar=menu-button]]:dark:hover:text-white',
+            '[&_[data-sidebar=menu-button][data-active=true]]:border-slate-200/80 [&_[data-sidebar=menu-button][data-active=true]]:bg-white [&_[data-sidebar=menu-button][data-active=true]]:font-semibold [&_[data-sidebar=menu-button][data-active=true]]:text-slate-950 [&_[data-sidebar=menu-button][data-active=true]]:shadow-sm [&_[data-sidebar=menu-button][data-active=true]]:dark:border-white/10 [&_[data-sidebar=menu-button][data-active=true]]:dark:bg-white/10 [&_[data-sidebar=menu-button][data-active=true]]:dark:text-white',
+            '[&_[data-sidebar=menu-sub]]:mx-0 [&_[data-sidebar=menu-sub]]:gap-1 [&_[data-sidebar=menu-sub]]:px-0 [&_[data-sidebar=menu-sub-button]]:h-9 [&_[data-sidebar=menu-sub-button]]:rounded-xl [&_[data-sidebar=menu-sub-button]]:px-3 [&_[data-sidebar=menu-sub-button]]:font-sans [&_[data-sidebar=menu-sub-button]]:text-[14px] [&_[data-sidebar=menu-sub-button]]:text-slate-700 [&_[data-sidebar=menu-sub-button]]:duration-300 [&_[data-sidebar=menu-sub-button]]:hover:bg-white/80 [&_[data-sidebar=menu-sub-button]]:hover:text-slate-950 [&_[data-sidebar=menu-sub-button]]:dark:text-slate-300 [&_[data-sidebar=menu-sub-button]]:dark:hover:bg-white/[0.08] [&_[data-sidebar=menu-sub-button]]:dark:hover:text-white',
+            '[&_[data-sidebar=menu-sub-button][data-active=true]]:border-slate-200/80 [&_[data-sidebar=menu-sub-button][data-active=true]]:bg-white [&_[data-sidebar=menu-sub-button][data-active=true]]:font-semibold [&_[data-sidebar=menu-sub-button][data-active=true]]:text-slate-950 [&_[data-sidebar=menu-sub-button][data-active=true]]:shadow-sm [&_[data-sidebar=menu-sub-button][data-active=true]]:dark:border-white/10 [&_[data-sidebar=menu-sub-button][data-active=true]]:dark:bg-white/10 [&_[data-sidebar=menu-sub-button][data-active=true]]:dark:text-white',
+            side === 'right' &&
+              'right-2 left-auto shadow-[-18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] dark:shadow-[-18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]'
+          )}
           style={
             {
               '--sidebar-width': SIDEBAR_WIDTH_MOBILE,
@@ -218,7 +227,9 @@ function Sidebar({
             <SheetTitle>Sidebar</SheetTitle>
             <SheetDescription>Displays the mobile sidebar.</SheetDescription>
           </SheetHeader>
-          <div className='flex h-full w-full flex-col'>{children}</div>
+          <div className='flex h-full w-full flex-col overflow-hidden'>
+            {children}
+          </div>
         </SheetContent>
       </Sheet>
     )
@@ -273,8 +284,9 @@ function Sidebar({
 function SidebarTrigger({
   className,
   onClick,
+  mobileLabel,
   ...props
-}: React.ComponentProps<typeof Button>) {
+}: React.ComponentProps<typeof Button> & { mobileLabel?: React.ReactNode }) {
   const { toggleSidebar } = useSidebar()
 
   return (
@@ -283,15 +295,22 @@ function SidebarTrigger({
       data-slot='sidebar-trigger'
       variant='ghost'
       size='icon-sm'
-      className={cn(className)}
+      className={cn(
+        'bg-sky-50/75 text-slate-700 hover:bg-sky-100 dark:bg-slate-900/70 dark:text-slate-200 dark:hover:bg-slate-800',
+        className
+      )}
       onClick={(event) => {
         onClick?.(event)
         toggleSidebar()
       }}
       {...props}
     >
-      <HugeiconsIcon icon={SidebarLeftIcon} strokeWidth={2} />
-      <span className='sr-only'>Toggle Sidebar</span>
+      <PanelLeft className='size-4' />
+      {mobileLabel ? (
+        <span className='md:sr-only'>{mobileLabel}</span>
+      ) : (
+        <span className='sr-only'>Toggle Sidebar</span>
+      )}
     </Button>
   )
 }

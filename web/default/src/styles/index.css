@@ -606,3 +606,167 @@ For commercial licensing, please contact support@quantumnous.com
     animation: none !important;
   }
 }
+
+/* About page system-map motion */
+@keyframes about-network-flow {
+  from {
+    stroke-dashoffset: 180;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes about-float {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(0, -10px, 0);
+  }
+}
+
+@keyframes about-node-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.86);
+    box-shadow: 0 0 0 0 rgb(34 211 238 / 0.36);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+    box-shadow: 0 0 0 12px rgb(34 211 238 / 0);
+  }
+}
+
+@keyframes about-scanline {
+  0% {
+    opacity: 0;
+    transform: translateY(0);
+  }
+  12%,
+  74% {
+    opacity: 0.9;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(174px);
+  }
+}
+
+@keyframes about-progress-glow {
+  0%,
+  100% {
+    filter: saturate(1);
+  }
+  50% {
+    filter: saturate(1.35) drop-shadow(0 0 8px rgb(45 212 191 / 0.45));
+  }
+}
+
+@keyframes about-cycle-ring {
+  0% {
+    opacity: 0.1;
+    transform: translate(-50%, -50%) scale(0.84) rotate(0deg);
+  }
+  38% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0.06;
+    transform: translate(-50%, -50%) scale(1.18) rotate(360deg);
+  }
+}
+
+.about-network-path {
+  stroke-dasharray: 12 16;
+}
+
+.about-network-path-delayed {
+}
+
+.about-network-path-slow {
+}
+
+.about-float-main {
+  will-change: transform;
+}
+
+.about-float-secondary {
+  will-change: transform;
+}
+
+.about-float-tertiary {
+  will-change: transform;
+}
+
+.about-float-badge {
+  will-change: transform;
+}
+
+.about-node {
+  position: absolute;
+  z-index: 1;
+  width: 0.7rem;
+  height: 0.7rem;
+  border-radius: 9999px;
+  background: rgb(34 211 238);
+  box-shadow: 0 0 24px rgb(34 211 238 / 0.72);
+  opacity: 0.55;
+  transform: scale(0.86);
+  will-change: transform, opacity;
+}
+
+.about-node-a {
+  top: 5.2rem;
+  left: 5.5rem;
+}
+
+.about-node-b {
+  top: 9.4rem;
+  right: 3.7rem;
+}
+
+.about-node-c {
+  right: 1.8rem;
+  bottom: 3.3rem;
+}
+
+.about-node-d {
+  bottom: 6.8rem;
+  left: 2.2rem;
+}
+
+.about-scanline {
+  opacity: 0;
+  will-change: transform, opacity;
+}
+
+.about-progress {
+  will-change: filter;
+}
+
+.about-cycle-ring {
+  transform-origin: center;
+  opacity: 0.1;
+  will-change: transform, opacity;
+}
+
+.about-cycle-ring-delayed {
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .about-network-path,
+  .about-cycle-ring,
+  .about-float-main,
+  .about-float-secondary,
+  .about-float-tertiary,
+  .about-float-badge,
+  .about-node,
+  .about-scanline,
+  .about-progress {
+    animation: none !important;
+  }
+}

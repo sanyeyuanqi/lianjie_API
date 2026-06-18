@@ -85,20 +85,26 @@ export function ProfileDropdown(props: ProfileDropdownProps = {}) {
             </Avatar>
           )}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align='end' sideOffset={8} className='w-56'>
-          <div className='flex items-center px-1.5 py-1.5'>
+        <DropdownMenuContent
+          align='end'
+          sideOffset={10}
+          className='w-60 overflow-hidden rounded-xl border border-slate-200/80 bg-white/95 p-1.5 shadow-[0_18px_54px_rgba(15,23,42,0.14),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-xl dark:border-white/10 dark:bg-zinc-950/92 dark:shadow-[0_18px_60px_rgba(0,0,0,0.55),0_1px_0_rgba(255,255,255,0.08)_inset]'
+        >
+          <div className='flex items-center px-2.5 py-2.5'>
             <div className='flex flex-1 flex-col gap-0.5 overflow-hidden'>
-              <p className='text-foreground truncate text-sm font-medium'>
+              <p className='truncate text-sm font-semibold text-slate-950 dark:text-slate-50'>
                 {displayName}
               </p>
               <div className='flex items-center gap-1.5'>
-                <span className='text-muted-foreground text-xs'>
+                <span className='text-xs text-slate-500 dark:text-slate-400'>
                   {roleLabel}
                 </span>
                 {user?.group && (
                   <>
-                    <span className='text-muted-foreground text-xs'>·</span>
-                    <span className='text-muted-foreground truncate text-xs'>
+                    <span className='text-xs text-slate-400 dark:text-slate-500'>
+                      ·
+                    </span>
+                    <span className='truncate text-xs text-slate-500 dark:text-slate-400'>
                       {String(user.group)}
                     </span>
                   </>
@@ -107,20 +113,27 @@ export function ProfileDropdown(props: ProfileDropdownProps = {}) {
             </div>
           </div>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className='mx-1 my-1 bg-slate-200/70 dark:bg-white/10' />
 
-          <DropdownMenuItem onClick={() => navigate({ to: '/profile' })}>
+          <DropdownMenuItem
+            className='h-9 cursor-pointer gap-2 rounded-lg px-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100/90 focus:bg-slate-100/90 dark:text-slate-300 dark:hover:bg-white/8 dark:focus:bg-white/8'
+            onClick={() => navigate({ to: '/profile' })}
+          >
             <User className='size-4' />
             {t('Profile')}
           </DropdownMenuItem>
 
-          <DropdownMenuItem onClick={() => navigate({ to: '/wallet' })}>
+          <DropdownMenuItem
+            className='h-9 cursor-pointer gap-2 rounded-lg px-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100/90 focus:bg-slate-100/90 dark:text-slate-300 dark:hover:bg-white/8 dark:focus:bg-white/8'
+            onClick={() => navigate({ to: '/wallet' })}
+          >
             <Wallet className='size-4' />
             {t('Wallet')}
           </DropdownMenuItem>
 
           {isSuperAdmin && (
             <DropdownMenuItem
+              className='h-9 cursor-pointer gap-2 rounded-lg px-2.5 text-sm text-slate-700 transition-colors hover:bg-slate-100/90 focus:bg-slate-100/90 dark:text-slate-300 dark:hover:bg-white/8 dark:focus:bg-white/8'
               onClick={() =>
                 navigate({
                   to: '/system-settings/site/$section',
@@ -133,9 +146,13 @@ export function ProfileDropdown(props: ProfileDropdownProps = {}) {
             </DropdownMenuItem>
           )}
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className='mx-1 my-1 bg-slate-200/70 dark:bg-white/10' />
 
-          <DropdownMenuItem variant='destructive' onClick={() => setOpen(true)}>
+          <DropdownMenuItem
+            className='h-9 cursor-pointer gap-2 rounded-lg px-2.5 text-sm font-medium text-red-600 transition-colors hover:bg-red-50 focus:bg-red-50 dark:text-red-400 dark:hover:bg-red-500/10 dark:focus:bg-red-500/10'
+            variant='destructive'
+            onClick={() => setOpen(true)}
+          >
             <LogOut className='size-4' />
             {t('Sign out')}
           </DropdownMenuItem>

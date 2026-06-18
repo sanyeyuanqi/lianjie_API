@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { CherryStudio } from '@lobehub/icons'
 import { ArrowRight, BookOpen } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { HeroTerminalDemo } from '../hero-terminal-demo'
 
@@ -42,6 +43,8 @@ const MoreIcon = () => (
 )
 
 export function Hero(props: HeroProps) {
+  const { t } = useTranslation()
+
   const renderDocsButton = () => {
     return (
       <Button
@@ -50,7 +53,7 @@ export function Hero(props: HeroProps) {
         render={<Link to='/docs' />}
       >
         <BookOpen className='text-muted-foreground/80 group-hover:text-foreground size-4 transition-colors duration-200' />
-        <span>接入文档</span>
+        <span>{t('home.hero.docs')}</span>
       </Button>
     )
   }
@@ -63,9 +66,9 @@ export function Hero(props: HeroProps) {
         className='absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(15,23,42,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.055)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_68%_50%_at_50%_20%,black_12%,transparent_100%)] bg-[size:4.5rem_4.5rem] opacity-70 dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] dark:opacity-40'
       />
 
-      <div className='mx-auto grid max-w-[1480px] grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-14 xl:gap-20'>
+      <div className='mx-auto grid max-w-[1480px] grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-x-14 lg:gap-y-16 xl:gap-x-16'>
         {/* Left Column: Title, description, action buttons and application support */}
-        <div className='flex flex-col items-start text-left lg:col-span-6 xl:col-span-5'>
+        <div className='flex max-w-3xl flex-col items-start text-left lg:col-span-6 xl:col-span-5'>
           {/* Top Pill Badge */}
           <div
             className='landing-animate-fade-up mb-6 inline-flex items-center gap-2 rounded-full border border-slate-200/80 bg-white/75 px-3.5 py-1.5 text-[11px] font-semibold text-slate-700 opacity-0 shadow-sm backdrop-blur dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-200'
@@ -75,24 +78,24 @@ export function Hero(props: HeroProps) {
               <span className='absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75' />
               <span className='relative inline-flex size-1.5 rounded-full bg-emerald-500' />
             </span>
-            <span>连界 API 智能网关</span>
+            <span>{t('home.hero.badge')}</span>
           </div>
 
           <h1
             className='landing-animate-fade-up max-w-3xl text-[clamp(2.8rem,5.2vw,5.35rem)] leading-[0.98] font-semibold tracking-tight text-slate-950 dark:text-white'
             style={{ animationDelay: '60ms' }}
           >
-            连接全球模型
+            {t('home.hero.title.line1')}
             <br />
             <span className='bg-gradient-to-r from-slate-950 via-cyan-600 to-emerald-500 bg-clip-text text-transparent dark:from-white dark:via-slate-300 dark:to-zinc-500'>
-              统一 AI 生产力入口
+              {t('home.hero.title.line2')}
             </span>
           </h1>
           <p
             className='landing-animate-fade-up mt-7 max-w-2xl text-base leading-8 text-slate-600 opacity-0 md:text-[16px] dark:text-slate-400'
             style={{ animationDelay: '120ms' }}
           >
-            以一套标准协议接入主流 AI 服务商，统一管理模型路由、密钥权限、额度计费与调用观测，让团队以更低成本构建稳定的智能应用。
+            {t('home.hero.description')}
           </p>
 
           <div
@@ -105,7 +108,7 @@ export function Hero(props: HeroProps) {
                   className='group h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(15,23,42,0.18)] hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200'
                   render={<Link to='/dashboard' />}
                 >
-                  前往控制台
+                  {t('home.hero.console')}
                   <ArrowRight className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
                 </Button>
                 {renderDocsButton()}
@@ -116,7 +119,7 @@ export function Hero(props: HeroProps) {
                   className='group h-11 rounded-lg bg-slate-950 px-5 text-sm font-semibold text-white shadow-[0_14px_28px_rgba(15,23,42,0.18)] hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200'
                   render={<Link to='/sign-up' />}
                 >
-                  开始接入
+                  {t('home.hero.start')}
                   <ArrowRight className='ml-1.5 size-4 transition-transform duration-200 group-hover:translate-x-0.5' />
                 </Button>
                 <Button
@@ -124,7 +127,7 @@ export function Hero(props: HeroProps) {
                   className='h-11 rounded-lg border-slate-200/80 bg-white/70 px-5 text-sm font-semibold text-slate-700 shadow-sm backdrop-blur hover:bg-white dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-200 dark:hover:bg-white/[0.09]'
                   render={<Link to='/pricing' />}
                 >
-                  模型与价格
+                  {t('home.hero.pricing')}
                 </Button>
                 {renderDocsButton()}
               </>
@@ -137,10 +140,10 @@ export function Hero(props: HeroProps) {
           >
             <div className='mb-4 flex flex-col gap-1'>
               <span className='text-[10px] font-bold tracking-[0.15em] text-slate-400 uppercase dark:text-slate-500'>
-                客户端与工作流
+                {t('home.hero.clients.title')}
               </span>
               <p className='text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
-                一套密钥适配常用客户端、SDK 与自动化流程，减少重复配置。
+                {t('home.hero.clients.description')}
               </p>
             </div>
             <div className='flex flex-wrap items-center gap-3'>
@@ -184,18 +187,17 @@ export function Hero(props: HeroProps) {
 
               <div className='group flex cursor-default items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/65 px-5 py-2.5 text-sm font-medium text-slate-500 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-400 dark:hover:bg-white/[0.09] dark:hover:text-white'>
                 <MoreIcon />
-                <span>更多集成</span>
+                <span>{t('home.hero.moreIntegrations')}</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Right Column: Hero Terminal API Demo */}
         <div
-          className='landing-animate-fade-up flex w-full justify-center opacity-0 lg:col-span-6 xl:col-span-7'
-          style={{ animationDelay: '320ms' }}
+          className='landing-animate-fade-up w-full opacity-0 lg:col-span-6 lg:pt-[55px] xl:col-span-7'
+          style={{ animationDelay: '260ms' }}
         >
-          <HeroTerminalDemo className='mt-8 max-w-[780px] lg:mt-0' />
+          <HeroTerminalDemo className='mx-auto w-full max-w-[760px] lg:mr-0' />
         </div>
       </div>
     </section>

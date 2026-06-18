@@ -64,28 +64,28 @@ export function SignOutDialog({ open, onOpenChange }: SignOutDialogProps) {
 
   return (
     <AlertDialog open={open} onOpenChange={onOpenChange}>
-      <AlertDialogContent className='max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-2xl border-stone-200/80 bg-stone-50/95 p-0 shadow-[0_18px_50px_rgba(28,25,23,0.14)] ring-stone-950/10 sm:max-w-md dark:border-stone-800/80 dark:bg-stone-950/95 dark:ring-white/10'>
-        <div className='flex gap-4 px-5 pt-5 pb-4 sm:px-6 sm:pt-6'>
-          <div className='flex size-10 shrink-0 items-center justify-center rounded-xl border border-stone-300/80 bg-stone-100 text-stone-950 shadow-[inset_0_1px_0_rgba(255,255,255,0.75)] dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100'>
+      <AlertDialogContent className='max-w-[calc(100%-2rem)] gap-0 overflow-hidden rounded-xl border border-slate-200/80 bg-white/96 p-0 shadow-[0_24px_80px_rgba(15,23,42,0.18),0_1px_0_rgba(255,255,255,0.85)_inset] sm:max-w-[25rem] dark:border-white/10 dark:bg-zinc-950/92 dark:shadow-[0_24px_90px_rgba(0,0,0,0.62),0_1px_0_rgba(255,255,255,0.08)_inset]'>
+        <div className='flex gap-4 px-5 pt-5 pb-5 sm:px-6 sm:pt-6'>
+          <div className='flex size-11 shrink-0 items-center justify-center rounded-full border border-slate-200 bg-slate-50 text-slate-900 shadow-sm dark:border-white/10 dark:bg-white/8 dark:text-slate-100'>
             <LogOut className='size-5' />
           </div>
-          <AlertDialogHeader className='min-w-0 gap-2 text-left'>
-            <AlertDialogTitle className='text-lg font-semibold tracking-normal text-stone-950 dark:text-stone-50'>
+          <AlertDialogHeader className='min-w-0 gap-1.5 pt-0.5 text-left'>
+            <AlertDialogTitle className='text-[1.05rem] leading-6 font-semibold tracking-normal text-slate-950 dark:text-slate-50'>
               {t('Sign out')}
             </AlertDialogTitle>
-            <AlertDialogDescription className='max-w-sm text-sm leading-6 text-stone-600 dark:text-stone-400'>
+            <AlertDialogDescription className='max-w-sm text-sm leading-6 text-slate-500 dark:text-slate-400'>
               {t(
                 'Are you sure you want to sign out? You will need to sign in again to access your account.'
               )}
             </AlertDialogDescription>
           </AlertDialogHeader>
         </div>
-        <AlertDialogFooter className='mx-0 mb-0 items-center justify-center gap-2 rounded-none border-stone-200/80 bg-stone-100/60 p-4 sm:justify-center dark:border-stone-800/80 dark:bg-stone-900/60'>
-          <AlertDialogCancel className='h-8 rounded-lg border-stone-300 bg-stone-50/80 px-4 font-medium text-stone-700 shadow-[0_1px_2px_rgba(28,25,23,0.04)] hover:border-stone-400 hover:bg-stone-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800'>
+        <AlertDialogFooter className='mx-0 mb-0 flex-row items-center justify-center gap-2 border-t border-slate-200/70 bg-slate-50/70 px-5 py-3 sm:px-6 dark:border-white/10 dark:bg-white/[0.03]'>
+          <AlertDialogCancel className='mt-0 h-9 rounded-lg border-slate-200 bg-white px-4 text-sm font-medium text-slate-600 shadow-none transition-colors hover:border-slate-300 hover:bg-slate-50 hover:text-slate-950 dark:border-white/10 dark:bg-white/6 dark:text-slate-300 dark:hover:bg-white/10 dark:hover:text-white'>
             {t('Cancel')}
           </AlertDialogCancel>
           <Button
-            className='h-8 rounded-lg border border-stone-900 bg-stone-950 px-4 font-medium text-stone-50 shadow-[0_6px_14px_rgba(28,25,23,0.18)] hover:bg-stone-800 dark:border-stone-200 dark:bg-stone-100 dark:text-stone-950 dark:hover:bg-stone-200'
+            className='h-9 rounded-lg border border-slate-950 bg-slate-950 px-4 text-sm font-semibold text-white shadow-[0_8px_18px_rgba(15,23,42,0.20)] transition-colors hover:bg-slate-800 dark:border-white/15 dark:bg-white/90 dark:text-slate-950 dark:hover:bg-white'
             onClick={handleSignOut}
           >
             {t('Sign out')}

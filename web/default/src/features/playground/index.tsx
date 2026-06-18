@@ -16,16 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { getUserModels, getUserGroups } from './api'
+import { DebugPanel } from './components/debug-panel'
+import { ModelConfigPanel } from './components/model-config-panel'
 import { PlaygroundChat } from './components/playground-chat'
 import { PlaygroundInput } from './components/playground-input'
 import { usePlaygroundState, useChatHandler } from './hooks'
 import { createUserMessage, createLoadingAssistantMessage } from './lib'
-import type { Message as MessageType } from './types'
+import { buildChatCompletionPayload } from './lib/payload-builder'
+import type { DebugData, Message as MessageType } from './types'
 
 export function Playground() {
   const { t } = useTranslation()
@@ -39,12 +43,64 @@ export function Playground() {
     setModels,
     setGroups,
     updateConfig,
+    updateParameterEnabled,
     clearMessages,
   } = usePlaygroundState()
+
+  const [debugData, setDebugData] = useState<DebugData>({
+    previewRequest: null,
+    previewTimestamp: null,
+    request: null,
+    response: null,
+    sseMessages: [],
+    timestamp: null,
+  })
+
+  const previewRequest = useMemo(
+    () => buildChatCompletionPayload(messages, config, parameterEnabled),
+    [messages, config, parameterEnabled]
+  )
+
+  const visibleDebugData = useMemo(
+    () => ({
+      ...debugData,
+      previewRequest,
+    }),
+    [debugData, previewRequest]
+  )
 
   const { sendChat, stopGeneration, isGenerating } = useChatHandler({
     config,
     parameterEnabled,
+    onDebugUpdate: (event) => {
+      setDebugData((prev) => {
+        if (event.type === 'request') {
+          return {
+            ...prev,
+            request: event.data as DebugData['request'],
+            response: null,
+            sseMessages: [],
+            timestamp: Date.now(),
+          }
+        }
+
+        if (event.type === 'sse') {
+          return {
+            ...prev,
+            response: null,
+            sseMessages: [...prev.sseMessages, String(event.data)],
+            timestamp: Date.now(),
+          }
+        }
+
+        return {
+          ...prev,
+          response: event.data,
+          sseMessages: [],
+          timestamp: Date.now(),
+        }
+      })
+    },
     onMessageUpdate: updateMessages,
   })
 
@@ -60,7 +116,7 @@ export function Playground() {
 
   // Load models
   const { data: modelsData, isLoading: isLoadingModels } = useQuery({
-    queryKey: ['playground-models'],
+    queryKey: ['playground-models', t],
     queryFn: async () => {
       try {
         return await getUserModels()
@@ -77,7 +133,7 @@ export function Playground() {
 
   // Load groups
   const { data: groupsData } = useQuery({
-    queryKey: ['playground-groups'],
+    queryKey: ['playground-groups', t],
     queryFn: async () => {
       try {
         return await getUserGroups()
@@ -129,12 +185,6 @@ export function Playground() {
 
     // Send chat request
     sendChat(newMessages)
-  }
-
-  const handleCopyMessage = (message: MessageType) => {
-    // Copy is handled in MessageActions component
-    // eslint-disable-next-line no-console
-    console.log('Message copied:', message.key)
   }
 
   const handleRegenerateMessage = (message: MessageType) => {
@@ -202,43 +252,75 @@ export function Playground() {
     toast.success(t('Cleared'))
   }
 
+  const handleParameterToggle = (key: keyof typeof parameterEnabled) => {
+    updateParameterEnabled(key, !parameterEnabled[key])
+  }
+
   return (
-    <div className='relative flex size-full flex-col overflow-hidden'>
+    <div className='relative flex size-full overflow-hidden'>
+      <ModelConfigPanel
+        config={config}
+        parameterEnabled={parameterEnabled}
+        onConfigChange={updateConfig}
+        onParameterToggle={handleParameterToggle}
+      />
+
       {/* Full-width scroll container: scrolling works even over side whitespace */}
-      <div className='flex flex-1 flex-col overflow-hidden'>
-        <PlaygroundChat
-          assistantName={assistantName}
-          messages={messages}
-          onCopyMessage={handleCopyMessage}
-          onRegenerateMessage={handleRegenerateMessage}
-          onEditMessage={handleEditMessage}
-          onDeleteMessage={handleDeleteMessage}
-          isGenerating={isGenerating}
-          editingKey={editingMessageKey}
-          onCancelEdit={handleEditOpenChange}
-          onSaveEdit={(newContent) => applyEdit(newContent, false)}
-          onSaveEditAndSubmit={(newContent) => applyEdit(newContent, true)}
-        />
+      <div className='relative flex min-w-0 flex-1 flex-col overflow-hidden'>
+        <div className='flex flex-1 flex-col overflow-hidden'>
+          <PlaygroundChat
+            assistantName={assistantName}
+            contentClassName='pb-80'
+            messages={messages}
+            onRegenerateMessage={handleRegenerateMessage}
+            onEditMessage={handleEditMessage}
+            onDeleteMessage={handleDeleteMessage}
+            isGenerating={isGenerating}
+            editingKey={editingMessageKey}
+            onCancelEdit={handleEditOpenChange}
+            onSaveEdit={(newContent) => applyEdit(newContent, false)}
+            onSaveEditAndSubmit={(newContent) => applyEdit(newContent, true)}
+          />
+        </div>
+
+        <h1
+          className={cn(
+            'text-foreground pointer-events-none absolute top-[calc(46%-5rem-150px)] left-1/2 z-10 -translate-x-1/2 text-center text-3xl font-semibold tracking-normal transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:text-4xl',
+            messages.length === 0
+              ? 'translate-y-0 opacity-100'
+              : '-translate-y-4 opacity-0'
+          )}
+        >
+          今天聊点什么？
+        </h1>
+
+        <div
+          className={cn(
+            'absolute left-1/2 z-10 mx-auto w-full max-w-4xl -translate-x-1/2 px-3 pb-3 transition-[top] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:px-0 md:pb-0',
+            messages.length === 0
+              ? 'top-[calc(46%-150px)]'
+              : 'top-[calc(100%-12.25rem)]'
+          )}
+        >
+          <PlaygroundInput
+            disabled={isGenerating}
+            groups={groups}
+            groupValue={config.group}
+            isGenerating={isGenerating}
+            isModelLoading={isLoadingModels}
+            modelValue={config.model}
+            models={models}
+            onGroupChange={(value) => updateConfig('group', value)}
+            onModelChange={(value) => updateConfig('model', value)}
+            onStop={stopGeneration}
+            onClearLocalMessages={handleClearLocalMessages}
+            hasMessages={messages.length > 0}
+            onSubmit={handleSendMessage}
+          />
+        </div>
       </div>
 
-      {/* Input area: center content and constrain to the same container width */}
-      <div className='mx-auto w-full max-w-4xl px-3 pb-3 md:px-0 md:pb-0'>
-        <PlaygroundInput
-          disabled={isGenerating}
-          groups={groups}
-          groupValue={config.group}
-          isGenerating={isGenerating}
-          isModelLoading={isLoadingModels}
-          modelValue={config.model}
-          models={models}
-          onGroupChange={(value) => updateConfig('group', value)}
-          onModelChange={(value) => updateConfig('model', value)}
-          onStop={stopGeneration}
-          onClearLocalMessages={handleClearLocalMessages}
-          hasMessages={messages.length > 0}
-          onSubmit={handleSendMessage}
-        />
-      </div>
+      <DebugPanel data={visibleDebugData} />
     </div>
   )
 }

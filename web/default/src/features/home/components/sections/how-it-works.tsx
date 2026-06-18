@@ -17,26 +17,29 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Settings, Zap, BarChart3 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { AnimateInView } from '@/components/animate-in-view'
 
 export function HowItWorks() {
+  const { t } = useTranslation()
+
   const steps = [
     {
       num: '1',
-      title: '接入服务商',
-      desc: '配置上游渠道、模型映射和密钥策略，快速形成统一入口。',
+      title: 'home.workflow.connect.title',
+      desc: 'home.workflow.connect.description',
       icon: <Settings className='size-6' strokeWidth={1.5} />,
     },
     {
       num: '2',
-      title: '分发业务流量',
-      desc: '业务系统通过标准 API 调用，由网关完成路由、限流与计费。',
+      title: 'home.workflow.distribute.title',
+      desc: 'home.workflow.distribute.description',
       icon: <Zap className='size-6' strokeWidth={1.5} />,
     },
     {
       num: '3',
-      title: '持续优化成本',
-      desc: '基于调用数据观察稳定性和费用表现，持续调整运营策略。',
+      title: 'home.workflow.optimize.title',
+      desc: 'home.workflow.optimize.description',
       icon: <BarChart3 className='size-6' strokeWidth={1.5} />,
     },
   ]
@@ -46,10 +49,10 @@ export function HowItWorks() {
       <div className='mx-auto max-w-[1480px]'>
         <AnimateInView className='mb-12 text-center md:mb-14'>
           <p className='mb-3 text-xs font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500'>
-            工作流程
+            {t('home.workflow.eyebrow')}
           </p>
           <h2 className='text-3xl font-semibold tracking-tight text-slate-950 md:text-5xl dark:text-white'>
-            三步完成 AI 网关落地
+            {t('home.workflow.heading')}
           </h2>
         </AnimateInView>
 
@@ -70,10 +73,10 @@ export function HowItWorks() {
                 </div>
               </div>
               <h3 className='mb-2 text-base font-semibold text-slate-950 dark:text-slate-100'>
-                {step.title}
+                {t(step.title)}
               </h3>
               <p className='mx-auto max-w-[240px] text-sm leading-relaxed text-slate-500 dark:text-slate-400'>
-                {step.desc}
+                {t(step.desc)}
               </p>
             </AnimateInView>
           ))}

@@ -49,17 +49,20 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
 
   const { avg_latency_ms, avg_tps, success_rate } = props.perf
 
+  let successRateClassName = 'text-emerald-600 dark:text-emerald-400'
   let statusColor = 'bg-emerald-500'
   if (success_rate < 99) {
+    successRateClassName = 'text-red-600 dark:text-red-400'
     statusColor = 'bg-red-500'
   } else if (success_rate < 99.9) {
+    successRateClassName = 'text-amber-600 dark:text-amber-400'
     statusColor = 'bg-amber-500'
   }
 
   return (
     <div
       className={cn(
-        'hidden w-[132px] grid-cols-[38px_48px_30px] gap-x-2 text-right tabular-nums min-[460px]:grid',
+        'hidden w-[190px] grid-cols-[38px_44px_58px_32px] gap-x-2 text-right tabular-nums min-[460px]:grid',
         props.className
       )}
     >
@@ -84,12 +87,30 @@ export const ModelPerfBadge = memo(function ModelPerfBadge(
         className='min-w-0'
       >
         <div className='text-muted-foreground/55 truncate text-[10px] leading-4'>
+          {t('Success rate')}
+        </div>
+        <div
+          className={cn(
+            'font-mono text-xs leading-4 whitespace-nowrap',
+            successRateClassName
+          )}
+        >
+          {success_rate.toFixed(1)}%
+        </div>
+      </div>
+      <div
+        title={`${t('Status short')}: ${success_rate.toFixed(1)}%`}
+        className='min-w-0'
+      >
+        <div className='text-muted-foreground/55 truncate text-[10px] leading-4'>
           {t('Status short')}
         </div>
-        <div className='flex h-4 items-center justify-end gap-0.5'>
-          <span className='bg-muted-foreground/10 h-2 w-1 rounded-full' />
-          <span className='bg-muted-foreground/15 h-2.5 w-1 rounded-full' />
-          <span className={cn('h-3 w-1 rounded-full', statusColor)} />
+        <div className='flex h-4 items-center justify-end'>
+          <span className='flex items-center gap-0.5'>
+            <span className='bg-muted-foreground/10 h-2 w-1 rounded-full' />
+            <span className='bg-muted-foreground/15 h-2.5 w-1 rounded-full' />
+            <span className={cn('h-3 w-1 rounded-full', statusColor)} />
+          </span>
         </div>
       </div>
     </div>

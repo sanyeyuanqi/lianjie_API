@@ -36,8 +36,11 @@ export function useStreamRequest() {
       payload: ChatCompletionRequest,
       onUpdate: (type: 'reasoning' | 'content', chunk: string) => void,
       onComplete: () => void,
-      onError: (error: string, errorCode?: string) => void
+      onError: (error: string, errorCode?: string) => void,
+      onDebugEvent?: (event: { type: 'start' | 'sse'; data: unknown }) => void
     ) => {
+      onDebugEvent?.({ type: 'start', data: payload })
+
       const source = new SSE(API_ENDPOINTS.CHAT_COMPLETIONS, {
         headers: getCommonHeaders(),
         method: 'POST',
@@ -69,6 +72,8 @@ export function useStreamRequest() {
       }
 
       source.addEventListener('message', (e: MessageEvent) => {
+        onDebugEvent?.({ type: 'sse', data: e.data })
+
         if (e.data === '[DONE]') {
           completeStream()
           return

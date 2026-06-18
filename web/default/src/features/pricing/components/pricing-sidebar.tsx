@@ -117,10 +117,10 @@ function FilterChip(props: {
       type='button'
       onClick={props.onClick}
       className={cn(
-        'group inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-xs font-medium transition-all',
+        'group inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-xs font-medium transition-colors',
         props.active
-          ? 'border-slate-950/20 bg-slate-950 text-white shadow-[0_8px_18px_rgba(15,23,42,0.16)] dark:border-white/20 dark:bg-white dark:text-slate-950'
-          : 'border-slate-200/80 bg-white/70 text-slate-500 shadow-sm hover:border-slate-300 hover:bg-white hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-400 dark:hover:bg-white/[0.09] dark:hover:text-white'
+          ? 'border-slate-950 bg-slate-950 text-white dark:border-white dark:bg-white dark:text-slate-950'
+          : 'border-slate-200/80 bg-white/45 text-slate-500 hover:border-slate-300 hover:bg-white/85 hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.035] dark:text-slate-400 dark:hover:bg-white/[0.075] dark:hover:text-white'
       )}
       title={props.option.label}
     >
@@ -131,10 +131,10 @@ function FilterChip(props: {
       {(props.option.suffix || props.option.count != null) && (
         <span
           className={cn(
-            'rounded-md px-1.5 py-0.5 text-[10px]',
+            'rounded-full px-1.5 py-0.5 text-[10px]',
             props.active
               ? 'bg-white/18 text-white dark:bg-black/10 dark:text-slate-950'
-              : 'bg-slate-100 text-slate-500 dark:bg-white/10 dark:text-slate-400'
+              : 'bg-slate-100/80 text-slate-500 dark:bg-white/10 dark:text-slate-400'
           )}
         >
           {props.option.suffix ?? props.option.count}
@@ -149,8 +149,8 @@ function FilterSection(props: FilterSectionProps) {
   const isAllActive = props.value === allOption?.value
 
   return (
-    <div className='rounded-2xl border border-slate-200/70 bg-white/42 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.7)] dark:border-white/10 dark:bg-white/[0.035]'>
-      <div className='flex items-center justify-between gap-3 pb-3'>
+    <section className='border-b border-slate-200/70 py-3 last:border-b-0 dark:border-white/10'>
+      <div className='mb-2.5 flex items-center justify-between gap-3'>
         <span className='text-sm font-semibold text-slate-950 dark:text-slate-100'>
           {props.title}
         </span>
@@ -164,7 +164,7 @@ function FilterSection(props: FilterSectionProps) {
           )}
         </div>
       </div>
-      <div className='flex flex-wrap gap-2'>
+      <div className='flex flex-wrap gap-1.5'>
         {options.map((option) => (
           <FilterChip
             key={option.value}
@@ -174,7 +174,7 @@ function FilterSection(props: FilterSectionProps) {
           />
         ))}
       </div>
-    </div>
+    </section>
   )
 }
 
@@ -206,7 +206,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
     {
       value: FILTER_ALL,
       label: t('All'),
-      count: groupModels.length,
     },
     ...props.vendors
       .map((vendor) => ({
@@ -237,7 +236,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
     {
       value: QUOTA_TYPES.ALL,
       label: t('All'),
-      count: tagModels.length,
     },
     {
       value: QUOTA_TYPES.TOKEN,
@@ -255,7 +253,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
     {
       value: FILTER_ALL,
       label: t('All'),
-      count: vendorModels.length,
     },
     ...availableTags.map((tag) => ({
       value: tag,
@@ -268,7 +265,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
     {
       value: ENDPOINT_TYPES.ALL,
       label: t('All'),
-      count: quotaModels.length,
     },
     ...Object.entries(endpointTypeLabels)
       .filter(([value]) => value !== ENDPOINT_TYPES.ALL)
@@ -288,12 +284,12 @@ export function PricingSidebar(props: PricingSidebarProps) {
       className={cn(
         props.compact
           ? 'p-0'
-          : 'rounded-3xl border border-white/70 bg-white/58 p-4 shadow-[0_24px_80px_rgba(15,23,42,0.08)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.045] dark:shadow-[0_24px_70px_rgba(0,0,0,0.32)]',
+          : 'rounded-2xl border border-slate-200/70 bg-white/58 px-4 py-3 shadow-[0_18px_50px_rgba(15,23,42,0.055)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.04] dark:shadow-[0_20px_60px_rgba(0,0,0,0.24)]',
         props.className
       )}
     >
-      <div className='mb-4 flex items-start justify-between gap-3'>
-        <div>
+      <div className='flex min-h-8 items-center justify-between gap-3 border-b border-slate-200/70 pb-3 dark:border-white/10'>
+        <div className='flex min-w-0 items-center'>
           <div className='flex items-center gap-2'>
             <h2 className='text-sm font-semibold tracking-tight text-slate-950 dark:text-slate-100'>
               {t('Filter')}
@@ -304,9 +300,6 @@ export function PricingSidebar(props: PricingSidebarProps) {
               </Badge>
             )}
           </div>
-          <p className='mt-1 text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
-            {t('Refine models by provider, group, type, and tags.')}
-          </p>
         </div>
         <Button
           type='button'
@@ -314,14 +307,14 @@ export function PricingSidebar(props: PricingSidebarProps) {
           size='sm'
           onClick={props.onClearFilters}
           disabled={!props.hasActiveFilters}
-          className='h-8 shrink-0 gap-1.5 rounded-full px-2.5 text-xs text-slate-500 hover:bg-slate-950/[0.04] hover:text-slate-950 disabled:opacity-35 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white'
+          className='h-7 shrink-0 gap-1.5 rounded-full px-2.5 text-xs text-slate-500 hover:bg-slate-950/[0.04] hover:text-slate-950 disabled:opacity-35 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-white'
         >
           <RotateCcw className='size-3.5' />
           {t('Reset')}
         </Button>
       </div>
 
-      <div className='space-y-3'>
+      <div>
         <FilterSection
           title={t('Groups')}
           value={props.groupFilter}

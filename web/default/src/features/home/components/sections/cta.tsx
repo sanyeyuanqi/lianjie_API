@@ -18,6 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
 import { ArrowRight } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
 import { AnimateInView } from '@/components/animate-in-view'
 
@@ -27,6 +28,8 @@ interface CTAProps {
 }
 
 export function CTA(props: CTAProps) {
+  const { t } = useTranslation()
+
   if (props.isAuthenticated) {
     return null
   }
@@ -38,21 +41,21 @@ export function CTA(props: CTAProps) {
         animation='scale-in'
       >
         <h2 className='text-3xl leading-tight font-semibold tracking-tight text-slate-950 md:text-5xl dark:text-white'>
-          准备好统一你的
+          {t('home.cta.heading.line1')}
           <br />
           <span className='bg-gradient-to-r from-slate-950 via-cyan-600 to-emerald-500 bg-clip-text text-transparent dark:from-white dark:via-slate-300 dark:to-zinc-500'>
-            AI 模型调用链路了吗？
+            {t('home.cta.heading.line2')}
           </span>
         </h2>
         <p className='mx-auto mt-5 max-w-2xl text-sm leading-7 text-slate-500 md:text-base dark:text-slate-400'>
-          用连界API承接模型接入、权限控制、成本核算和调用观测，让你的团队把精力放回产品体验本身。
+          {t('home.cta.description')}
         </p>
         <div className='mt-8 flex items-center justify-center gap-3'>
           <Button
             className='group rounded-lg bg-slate-950 text-white shadow-[0_14px_28px_rgba(15,23,42,0.18)] hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200'
             render={<Link to='/sign-up' />}
           >
-            开始接入
+            {t('home.hero.start')}
             <ArrowRight className='ml-1 size-3.5 transition-transform duration-200 group-hover:translate-x-0.5' />
           </Button>
           <Button
@@ -60,7 +63,7 @@ export function CTA(props: CTAProps) {
             className='rounded-lg border-slate-200/80 bg-white/70 text-slate-700 shadow-sm backdrop-blur hover:bg-white dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-200 dark:hover:bg-white/[0.09]'
             render={<Link to='/pricing' />}
           >
-            查看模型价格
+            {t('home.cta.pricing')}
           </Button>
         </div>
       </AnimateInView>

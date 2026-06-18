@@ -66,10 +66,10 @@ export function AnnouncementsPanel() {
       loading={loading}
       empty={!list.length}
       emptyMessage={t('No announcements at this time')}
-      height='h-72'
+      height='h-52'
       contentClassName='p-0'
     >
-      <ScrollArea className='h-72'>
+      <ScrollArea className='h-52'>
         <div>
           {list.map((item: AnnouncementItem, idx: number) => {
             const key = item.id ?? `announcement-${idx}`
@@ -79,7 +79,7 @@ export function AnnouncementsPanel() {
                 type='button'
                 onClick={() => handleAnnouncementClick(item)}
                 className={cn(
-                  'group hover:bg-muted/40 w-full px-3 py-3 text-left transition-colors sm:px-5 sm:py-3.5',
+                  'group hover:bg-muted/40 w-full px-3 py-2.5 text-left transition-colors sm:px-5 sm:py-3',
                   idx < list.length - 1 && 'border-border/60 border-b'
                 )}
               >

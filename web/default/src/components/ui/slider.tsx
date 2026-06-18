@@ -29,9 +29,13 @@ function Slider({
 }: SliderPrimitive.Root.Props) {
   const _values = Array.isArray(value)
     ? value
-    : Array.isArray(defaultValue)
+    : typeof value === 'number'
+      ? [value]
+      : Array.isArray(defaultValue)
       ? defaultValue
-      : [min, max]
+      : typeof defaultValue === 'number'
+        ? [defaultValue]
+        : [min]
 
   return (
     <SliderPrimitive.Root
@@ -44,7 +48,7 @@ function Slider({
       thumbAlignment='edge'
       {...props}
     >
-      <SliderPrimitive.Control className='relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-auto data-vertical:flex-col'>
+      <SliderPrimitive.Control className='relative flex w-full touch-none items-center select-none data-disabled:opacity-50 data-horizontal:h-7 data-vertical:h-full data-vertical:min-h-40 data-vertical:w-7 data-vertical:flex-col'>
         <SliderPrimitive.Track
           data-slot='slider-track'
           className='bg-muted relative grow overflow-hidden rounded-full select-none data-horizontal:h-1 data-horizontal:w-full data-vertical:h-full data-vertical:w-1'

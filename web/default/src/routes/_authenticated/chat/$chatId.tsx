@@ -20,6 +20,7 @@ import { useMemo } from 'react'
 import { Link, createFileRoute, redirect } from '@tanstack/react-router'
 import { Loader2, MessageCircleWarning } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { getFreshSidebarModuleEnabled } from '@/lib/nav-modules'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { useActiveChatKey } from '@/features/chat/hooks/use-active-chat-key'
@@ -31,6 +32,10 @@ import {
 
 export const Route = createFileRoute('/_authenticated/chat/$chatId')({
   loader: async ({ params }) => {
+    if (!(await getFreshSidebarModuleEnabled('chat', 'chat'))) {
+      throw redirect({ to: '/dashboard' })
+    }
+
     if (!Number.isInteger(Number(params.chatId))) {
       throw redirect({ to: '/dashboard' })
     }

@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import {
   DEFAULT_CONFIG,
   DEFAULT_PARAMETER_ENABLED,
@@ -95,8 +95,14 @@ export function useChatState() {
   )
   const [models, setModels] = useState<ModelOption[]>([])
   const [groups, setGroups] = useState<GroupOption[]>([])
+  const skipNextStorageSyncRef = useRef(false)
 
   const syncSessionsFromStorage = useCallback(() => {
+    if (skipNextStorageSyncRef.current) {
+      skipNextStorageSyncRef.current = false
+      return
+    }
+
     const savedSessions = loadChatSessions()
     const nextSessions =
       savedSessions.length > 0 ? savedSessions : [createChatSession()]
@@ -140,8 +146,7 @@ export function useChatState() {
         const newMessages =
           typeof updater === 'function' ? updater(prev) : updater
         const shouldNotifySessionsChanged =
-          !hasPendingAssistantMessage(newMessages) ||
-          (prev.length === 0 && newMessages.length > 0)
+          !hasPendingAssistantMessage(newMessages)
 
         saveChatMessages(newMessages)
         setSessions((prevSessions) => {
@@ -169,6 +174,7 @@ export function useChatState() {
 
           saveChatSessions(updatedSessions)
           if (shouldNotifySessionsChanged) {
+            skipNextStorageSyncRef.current = true
             notifyChatSessionsChanged()
           }
           return updatedSessions

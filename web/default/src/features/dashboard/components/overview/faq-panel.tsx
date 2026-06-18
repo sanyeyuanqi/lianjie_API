@@ -46,10 +46,10 @@ export function FAQPanel() {
       loading={loading}
       empty={!list.length}
       emptyMessage={t('No FAQ entries available')}
-      height='h-80'
+      height='h-72'
       contentClassName='p-0'
     >
-      <ScrollArea className='h-80'>
+      <ScrollArea className='h-72'>
         <Accordion className='w-full px-4 sm:px-5'>
           {list.map((item: FAQItem, idx: number) => {
             const key = item.id ?? `faq-${idx}`
@@ -60,7 +60,7 @@ export function FAQPanel() {
                 value={value}
                 className='border-border/60'
               >
-                <AccordionTrigger className='text-start hover:no-underline'>
+                <AccordionTrigger className='py-3 text-start hover:no-underline'>
                   <Markdown className='text-sm leading-relaxed font-semibold'>
                     {item.question}
                   </Markdown>

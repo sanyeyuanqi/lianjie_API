@@ -19,7 +19,11 @@ For commercial licensing, please contact support@quantumnous.com
 import { useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
-import { parseHeaderNavModulesFromStatus } from '@/lib/nav-modules'
+import {
+  isSidebarModuleEnabled,
+  isSidebarModuleEnabledFromStatus,
+  parseHeaderNavModulesFromStatus,
+} from '@/lib/nav-modules'
 import { useStatus } from '@/hooks/use-status'
 
 export type TopNavLink = {
@@ -36,6 +40,7 @@ export type TopNavLink = {
  * {
  *   home: true,
  *   console: true,
+ *   playground: { enabled: true, requireAuth: true },
  *   pricing: { enabled: true, requireAuth: false },
  *   rankings: { enabled: true, requireAuth: false },
  *   about: true
@@ -74,11 +79,37 @@ export function useTopNavLinks(): TopNavLink[] {
     links.push({ title: t('Model Square'), href: '/pricing', requiresAuth })
   }
 
+  // Creation Center
+  const playground = modules?.playground
+  if (playground && typeof playground === 'object' && playground.enabled) {
+    const statusRecord = status as Record<string, unknown> | null
+    const canUsePlayground = statusRecord
+      ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'playground')
+      : isSidebarModuleEnabled('chat', 'playground')
+    const canUseChat = statusRecord
+      ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'chat')
+      : isSidebarModuleEnabled('chat', 'chat')
+    const href = canUsePlayground ? '/playground' : canUseChat ? '/chat' : null
+    const requiresAuth = playground.requireAuth && !isAuthed
+    if (href) {
+      links.push({
+        title: t('Creation Center'),
+        href,
+        requiresAuth,
+      })
+    }
+  }
+
   // Rankings
   const rankings = modules?.rankings
   if (rankings && typeof rankings === 'object' && rankings.enabled) {
     const requiresAuth = rankings.requireAuth && !isAuthed
     links.push({ title: t('Rankings'), href: '/rankings', requiresAuth })
+  }
+
+  // Docs
+  if (modules?.docs !== false) {
+    links.push({ title: t('Docs'), href: '/docs' })
   }
 
   // About

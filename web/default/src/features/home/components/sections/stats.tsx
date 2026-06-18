@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useRef, useEffect, useCallback } from 'react'
+import { useTranslation } from 'react-i18next'
 
 interface CounterProps {
   end: number
@@ -94,11 +95,13 @@ interface StatItem {
 }
 
 export function Stats(_props: StatsProps) {
+  const { t } = useTranslation()
+
   const stats: StatItem[] = [
-    { end: 50, suffix: '+', label: '上游服务统一接入' },
-    { end: 100, suffix: '+', label: '模型与计费规则' },
-    { end: 50, suffix: '+', label: '兼容 API 路由' },
-    { end: 10, suffix: '+', label: '运营调度策略' },
+    { end: 50, suffix: '+', label: 'home.stats.upstream' },
+    { end: 100, suffix: '+', label: 'home.stats.billing' },
+    { end: 50, suffix: '+', label: 'home.stats.routes' },
+    { end: 10, suffix: '+', label: 'home.stats.operations' },
   ]
 
   return (
@@ -114,7 +117,7 @@ export function Stats(_props: StatsProps) {
                 <Counter end={s.end} suffix={s.suffix} decimals={s.decimals} />
               </span>
               <span className='mt-2 block text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
-                {s.label}
+                {t(s.label)}
               </span>
             </div>
           ))}

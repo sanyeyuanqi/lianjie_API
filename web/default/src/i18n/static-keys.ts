@@ -23,6 +23,7 @@ export const STATIC_I18N_KEYS = [
   'Home',
   'Console',
   'Model Square',
+  'Creation Center',
   'Rankings',
   'Docs',
   'About',

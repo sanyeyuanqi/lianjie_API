@@ -24,6 +24,7 @@ import {
   memo,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react'
 import { ChevronDownIcon } from 'lucide-react'
@@ -58,6 +59,7 @@ export type ReasoningProps = ComponentProps<typeof Collapsible> & {
   isStreaming?: boolean
   open?: boolean
   defaultOpen?: boolean
+  autoClose?: boolean
   onOpenChange?: (open: boolean) => void
   duration?: number
 }
@@ -71,6 +73,7 @@ export const Reasoning = memo(
     isStreaming = false,
     open,
     defaultOpen = true,
+    autoClose = true,
     onOpenChange,
     duration: durationProp,
     children,
@@ -86,14 +89,13 @@ export const Reasoning = memo(
       defaultProp: 0,
     })
 
-    const [hasAutoClosed, setHasAutoClosed] = useState(false)
     const [startTime, setStartTime] = useState<number | null>(null)
+    const wasStreamingRef = useRef(isStreaming)
 
     // Track duration when streaming starts and ends
     useEffect(() => {
       if (isStreaming) {
         if (startTime === null) {
-          // eslint-disable-next-line react-hooks/set-state-in-effect
           setStartTime(Date.now())
         }
       } else if (startTime !== null) {
@@ -102,18 +104,24 @@ export const Reasoning = memo(
       }
     }, [isStreaming, startTime, setDuration])
 
-    // Auto-open when streaming starts, auto-close when streaming ends (once only)
+    // Historical reasoning starts closed. Live reasoning opens while streaming
+    // and closes once that streaming phase finishes.
     useEffect(() => {
-      if (defaultOpen && !isStreaming && isOpen && !hasAutoClosed) {
-        // Add a small delay before closing to allow user to see the content
-        const timer = setTimeout(() => {
-          setIsOpen(false)
-          setHasAutoClosed(true)
-        }, AUTO_CLOSE_DELAY)
-
-        return () => clearTimeout(timer)
+      if (isStreaming) {
+        wasStreamingRef.current = true
+        setIsOpen(true)
+        return
       }
-    }, [isStreaming, isOpen, defaultOpen, setIsOpen, hasAutoClosed])
+
+      if (!autoClose || !wasStreamingRef.current) return
+
+      const timer = setTimeout(() => {
+        setIsOpen(false)
+        wasStreamingRef.current = false
+      }, AUTO_CLOSE_DELAY)
+
+      return () => clearTimeout(timer)
+    }, [isStreaming, autoClose, setIsOpen])
 
     const handleOpenChange = (newOpen: boolean) => {
       setIsOpen(newOpen)

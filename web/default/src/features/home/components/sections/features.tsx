@@ -26,6 +26,7 @@ import {
   Users,
   HeartHandshake,
 } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { AnimateInView } from '@/components/animate-in-view'
 
 interface FeaturesProps {
@@ -33,12 +34,14 @@ interface FeaturesProps {
 }
 
 export function Features(_props: FeaturesProps) {
+  const { t } = useTranslation()
+
   const features = [
     {
       id: 'fast',
       num: '01',
-      title: '统一模型接入',
-      desc: '把多家服务商收敛为统一协议，业务侧只维护一套调用方式。',
+      title: 'home.features.unified.title',
+      desc: 'home.features.unified.description',
       span: 'md:col-span-2',
       icon: <Zap className='size-4 text-blue-400' />,
       visual: (
@@ -59,8 +62,8 @@ export function Features(_props: FeaturesProps) {
     {
       id: 'secure',
       num: '02',
-      title: '权限与密钥治理',
-      desc: '按用户、分组和场景控制访问范围，让密钥流转更清晰。',
+      title: 'home.features.governance.title',
+      desc: 'home.features.governance.description',
       span: 'md:col-span-1',
       icon: <Shield className='size-4 text-emerald-400' />,
       visual: (
@@ -94,54 +97,58 @@ export function Features(_props: FeaturesProps) {
     {
       id: 'global',
       num: '03',
-      title: '智能路由策略',
-      desc: '围绕延迟、可用率和成本自动分配请求，保持服务稳定。',
+      title: 'home.features.routing.title',
+      desc: 'home.features.routing.description',
       span: 'md:col-span-1',
       icon: <Globe className='size-4 text-violet-400' />,
       visual: (
         <div className='mt-4 space-y-2'>
-          {['负载均衡', '速率限制', '成本跟踪'].map(
-            (step, i) => (
-              <div key={step} className='flex items-center gap-2'>
-                <div
-                  className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold ${
-                    i === 1
-                      ? 'border border-blue-500/30 bg-blue-500/20 text-blue-500'
-                      : 'border-border/40 bg-muted text-muted-foreground border'
-                  }`}
-                >
-                  {i + 1}
-                </div>
-                <div className='bg-border/40 h-px flex-1' />
-                <span className='text-muted-foreground text-xs'>{step}</span>
+          {[
+            'home.features.routing.loadBalancing',
+            'home.features.routing.rateLimiting',
+            'home.features.routing.costTracking',
+          ].map((step, i) => (
+            <div key={step} className='flex items-center gap-2'>
+              <div
+                className={`flex size-6 items-center justify-center rounded-full text-[10px] font-bold ${
+                  i === 1
+                    ? 'border border-blue-500/30 bg-blue-500/20 text-blue-500'
+                    : 'border-border/40 bg-muted text-muted-foreground border'
+                }`}
+              >
+                {i + 1}
               </div>
-            )
-          )}
+              <div className='bg-border/40 h-px flex-1' />
+              <span className='text-muted-foreground text-xs'>{t(step)}</span>
+            </div>
+          ))}
         </div>
       ),
     },
     {
       id: 'developer',
       num: '04',
-      title: '调用观测闭环',
-      desc: '记录用量、成本、错误和性能数据，为运营决策提供依据。',
+      title: 'home.features.observability.title',
+      desc: 'home.features.observability.description',
       span: 'md:col-span-2',
       icon: <Code className='size-4 text-amber-400' />,
       visual: (
         <div className='mt-4 flex items-center gap-3'>
           <div className='flex -space-x-2'>
-            {['API', 'SDK', 'CLI', '日志'].map((n) => (
-              <div
-                key={n}
-                className='border-background from-muted to-muted/60 text-muted-foreground flex size-8 items-center justify-center rounded-full border-2 bg-gradient-to-br text-[9px] font-bold'
-              >
-                {n}
-              </div>
-            ))}
+            {['API', 'SDK', 'CLI', 'home.features.observability.logs'].map(
+              (n) => (
+                <div
+                  key={n}
+                  className='border-background from-muted to-muted/60 text-muted-foreground flex size-8 items-center justify-center rounded-full border-2 bg-gradient-to-br text-[9px] font-bold'
+                >
+                  {t(n)}
+                </div>
+              )
+            )}
           </div>
           <div className='text-muted-foreground flex items-center gap-1.5 text-xs'>
             <Code className='size-3.5 text-blue-500' />
-            多协议兼容
+            {t('home.features.observability.multiProtocol')}
           </div>
         </div>
       ),
@@ -151,23 +158,23 @@ export function Features(_props: FeaturesProps) {
   const additionalFeatures = [
     {
       icon: <Gauge className='size-5' strokeWidth={1.5} />,
-      title: '高并发承载',
-      desc: '面向真实生产流量设计，支持队列、重试与熔断策略。',
+      title: 'home.features.capacity.title',
+      desc: 'home.features.capacity.description',
     },
     {
       icon: <DollarSign className='size-5' strokeWidth={1.5} />,
-      title: '精细化计费',
-      desc: '按模型、分组、渠道统计成本，额度消耗实时可见。',
+      title: 'home.features.billing.title',
+      desc: 'home.features.billing.description',
     },
     {
       icon: <Users className='size-5' strokeWidth={1.5} />,
-      title: '团队协作',
-      desc: '支持多角色、多分组管理，降低组织级接入成本。',
+      title: 'home.features.collaboration.title',
+      desc: 'home.features.collaboration.description',
     },
     {
       icon: <HeartHandshake className='size-5' strokeWidth={1.5} />,
-      title: '自托管可控',
-      desc: '核心链路掌握在自己手中，方便扩展和私有化部署。',
+      title: 'home.features.selfHosted.title',
+      desc: 'home.features.selfHosted.description',
     },
   ]
 
@@ -176,12 +183,12 @@ export function Features(_props: FeaturesProps) {
       <div className='mx-auto max-w-[1480px]'>
         <AnimateInView className='mb-12 max-w-2xl'>
           <p className='mb-3 text-xs font-semibold tracking-widest text-slate-400 uppercase dark:text-slate-500'>
-            核心能力
+            {t('home.features.eyebrow')}
           </p>
           <h2 className='text-3xl leading-tight font-semibold tracking-tight text-slate-950 md:text-5xl dark:text-white'>
-            从接入到治理，
+            {t('home.features.heading.line1')}
             <br />
-            让 AI 调用进入可运营状态
+            {t('home.features.heading.line2')}
           </h2>
         </AnimateInView>
 
@@ -199,11 +206,11 @@ export function Features(_props: FeaturesProps) {
                   {f.num}
                 </span>
                 <h3 className='text-sm font-semibold text-slate-950 dark:text-slate-100'>
-                  {f.title}
+                  {t(f.title)}
                 </h3>
               </div>
               <p className='text-sm leading-relaxed text-slate-500 dark:text-slate-400'>
-                {f.desc}
+                {t(f.desc)}
               </p>
               {f.visual}
             </AnimateInView>
@@ -223,10 +230,10 @@ export function Features(_props: FeaturesProps) {
                 {f.icon}
               </div>
               <h3 className='mb-1.5 text-sm font-semibold text-slate-950 dark:text-slate-100'>
-                {f.title}
+                {t(f.title)}
               </h3>
               <p className='mx-auto max-w-[200px] text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
-                {f.desc}
+                {t(f.desc)}
               </p>
             </AnimateInView>
           ))}

@@ -20,29 +20,47 @@ import { getStatus } from '@/lib/api'
 
 export type ModuleAccess = { enabled: boolean; requireAuth: boolean }
 
-export type HeaderNavModule = 'rankings' | 'pricing' | 'about'
+export type HeaderNavModule = 'rankings' | 'pricing' | 'playground' | 'about'
 
 export type HeaderNavModules = {
   home: boolean
   console: boolean
   pricing: ModuleAccess
+  playground: ModuleAccess
   rankings: ModuleAccess
   docs: boolean
   about: boolean
   [key: string]: boolean | ModuleAccess
 }
 
+type SidebarSectionConfig = {
+  enabled: boolean
+  [key: string]: boolean
+}
+
+type SidebarModulesAdminConfig = Record<string, SidebarSectionConfig>
+
 const DEFAULT_HEADER_NAV_MODULES: HeaderNavModules = {
   home: true,
   console: true,
   pricing: { enabled: true, requireAuth: false },
+  playground: { enabled: true, requireAuth: true },
   rankings: { enabled: true, requireAuth: false },
   docs: true,
   about: true,
 }
 
+const DEFAULT_SIDEBAR_MODULES: SidebarModulesAdminConfig = {
+  chat: {
+    enabled: true,
+    playground: true,
+    chat: true,
+  },
+}
+
 const DEFAULTS: Record<HeaderNavModule, ModuleAccess> = {
   pricing: DEFAULT_HEADER_NAV_MODULES.pricing,
+  playground: DEFAULT_HEADER_NAV_MODULES.playground,
   rankings: DEFAULT_HEADER_NAV_MODULES.rankings,
   about: {
     enabled: DEFAULT_HEADER_NAV_MODULES.about,
@@ -54,6 +72,7 @@ function cloneHeaderNavDefaults(): HeaderNavModules {
   return {
     ...DEFAULT_HEADER_NAV_MODULES,
     pricing: { ...DEFAULT_HEADER_NAV_MODULES.pricing },
+    playground: { ...DEFAULT_HEADER_NAV_MODULES.playground },
     rankings: { ...DEFAULT_HEADER_NAV_MODULES.rankings },
   }
 }
@@ -118,6 +137,10 @@ export function parseHeaderNavModules(raw: unknown): HeaderNavModules {
       result.pricing = parseAccess(value, result.pricing)
       return
     }
+    if (key === 'playground') {
+      result.playground = parseAccess(value, result.playground)
+      return
+    }
     if (key === 'rankings') {
       result.rankings = parseAccess(value, result.rankings)
       return
@@ -170,6 +193,41 @@ function cacheStatus(status: Record<string, unknown> | null): void {
   }
 }
 
+function parseSidebarModules(raw: unknown): SidebarModulesAdminConfig {
+  if (!raw || String(raw).trim() === '') return DEFAULT_SIDEBAR_MODULES
+
+  try {
+    const parsed =
+      typeof raw === 'object'
+        ? (raw as SidebarModulesAdminConfig)
+        : (JSON.parse(String(raw)) as SidebarModulesAdminConfig)
+    return {
+      ...DEFAULT_SIDEBAR_MODULES,
+      ...parsed,
+      chat: {
+        ...DEFAULT_SIDEBAR_MODULES.chat,
+        ...(parsed.chat ?? {}),
+      },
+    }
+  } catch {
+    return DEFAULT_SIDEBAR_MODULES
+  }
+}
+
+export function isSidebarModuleEnabledFromStatus(
+  status: Record<string, unknown> | null,
+  section: string,
+  module: string
+): boolean {
+  if (!status) return true
+
+  const config = parseSidebarModules(status.SidebarModulesAdmin)
+  const sectionConfig = config[section]
+  if (!sectionConfig) return true
+  if (sectionConfig.enabled === false) return false
+  return sectionConfig[module] !== false
+}
+
 export function getModuleAccessFromStatus(
   status: Record<string, unknown> | null,
   module: HeaderNavModule
@@ -206,23 +264,18 @@ export function isSidebarModuleEnabled(
   section: string,
   module: string
 ): boolean {
-  const status = getCachedStatus()
-  if (!status) return true
+  return isSidebarModuleEnabledFromStatus(getCachedStatus(), section, module)
+}
 
-  const raw = status.SidebarModulesAdmin
-  if (!raw || String(raw).trim() === '') return true
-
+export async function getFreshSidebarModuleEnabled(
+  section: string,
+  module: string
+): Promise<boolean> {
   try {
-    const parsed = JSON.parse(String(raw)) as Record<
-      string,
-      Record<string, boolean>
-    >
-    const sectionConfig = parsed[section]
-    if (!sectionConfig) return true
-    if (sectionConfig.enabled === false) return false
-    if (sectionConfig[module] === false) return false
-    return true
+    const status = (await getStatus()) as Record<string, unknown> | null
+    cacheStatus(status)
+    return isSidebarModuleEnabledFromStatus(status, section, module)
   } catch {
-    return true
+    return isSidebarModuleEnabled(section, module)
   }
 }
