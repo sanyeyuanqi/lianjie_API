@@ -17,7 +17,6 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { Link } from '@tanstack/react-router'
-import { CherryStudio } from '@lobehub/icons'
 import { ArrowRight, BookOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { Button } from '@/components/ui/button'
@@ -147,17 +146,6 @@ export function Hero(props: HeroProps) {
               </p>
             </div>
             <div className='flex flex-wrap items-center gap-3'>
-              {/* Cherry Studio */}
-              <a
-                href='https://cherry-ai.com'
-                target='_blank'
-                rel='noopener noreferrer'
-                className='group flex items-center gap-3 rounded-full border border-slate-200/80 bg-white/65 px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-300 dark:hover:bg-white/[0.09] dark:hover:text-white'
-              >
-                <CherryStudio.Color size={24} className='shrink-0' />
-                <span>Cherry Studio</span>
-              </a>
-
               {/* CC Switch */}
               <a
                 href='https://ccswitch.io'
@@ -182,7 +170,7 @@ export function Hero(props: HeroProps) {
                 >
                   CC
                 </span>
-                <span>CC Switch</span>
+                <span>CC Switch 一键接入</span>
               </a>
 
               <div className='group flex cursor-default items-center gap-2.5 rounded-full border border-slate-200/80 bg-white/65 px-5 py-2.5 text-sm font-medium text-slate-500 shadow-sm backdrop-blur transition-all duration-300 hover:-translate-y-0.5 hover:bg-white hover:text-slate-950 dark:border-white/10 dark:bg-white/[0.055] dark:text-slate-400 dark:hover:bg-white/[0.09] dark:hover:text-white'>
