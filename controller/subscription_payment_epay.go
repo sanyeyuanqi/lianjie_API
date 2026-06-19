@@ -1,10 +1,13 @@
 package controller
 
 import (
+	"bytes"
 	"fmt"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/Calcium-Ion/go-epay/epay"
@@ -112,7 +115,85 @@ func SubscriptionRequestEpay(c *gin.Context) {
 		common.ApiErrorMsg(c, "拉起支付失败")
 		return
 	}
+	checkoutURL, err := buildSubscriptionEpayCheckoutURL(callBackAddress, params)
+	if err != nil {
+		_ = model.ExpireSubscriptionOrder(tradeNo, model.PaymentProviderEpay)
+		common.ApiErrorMsg(c, "生成支付地址失败")
+		return
+	}
+	hostedPaymentURL, qrCode, initializeErr := initializeEpayCheckout(c.Request.Context(), uri, params)
+	if initializeErr == nil {
+		checkoutURL = hostedPaymentURL
+		if qrCode != "" {
+			params["qr_code"] = qrCode
+		}
+	}
+	params["checkout_url"] = checkoutURL
+	params["trade_no"] = tradeNo
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
+}
+
+func buildSubscriptionEpayCheckoutURL(baseURL string, params map[string]string) (string, error) {
+	checkoutURL, err := url.Parse(strings.TrimRight(baseURL, "/") + "/api/subscription/epay/checkout")
+	if err != nil {
+		return "", err
+	}
+
+	query := checkoutURL.Query()
+	for key, value := range params {
+		query.Set(key, value)
+	}
+	checkoutURL.RawQuery = query.Encode()
+	return checkoutURL.String(), nil
+}
+
+// SubscriptionEpayCheckout submits a verified subscription order to the
+// gateway when the browser opens the fallback payment page.
+func SubscriptionEpayCheckout(c *gin.Context) {
+	client := GetEpayClient()
+	if client == nil {
+		c.String(http.StatusNotFound, "payment unavailable")
+		return
+	}
+
+	params := make(map[string]string, len(c.Request.URL.Query()))
+	for key, values := range c.Request.URL.Query() {
+		if len(values) > 0 {
+			params[key] = values[0]
+		}
+	}
+	delete(params, "checkout_url")
+	delete(params, "qr_code")
+
+	verifyInfo, err := client.Verify(params)
+	if err != nil || !verifyInfo.VerifyStatus {
+		c.String(http.StatusBadRequest, "invalid payment request")
+		return
+	}
+
+	order := model.GetSubscriptionOrderByTradeNo(verifyInfo.ServiceTradeNo)
+	if order == nil ||
+		order.Status != common.TopUpStatusPending ||
+		order.PaymentProvider != model.PaymentProviderEpay ||
+		order.PaymentMethod != verifyInfo.Type {
+		c.String(http.StatusBadRequest, "invalid payment order")
+		return
+	}
+
+	gatewayURL := *client.BaseUrl
+	gatewayURL.Path = path.Join(gatewayURL.Path, epay.PurchaseUrl)
+
+	var page bytes.Buffer
+	err = epayCheckoutPage.Execute(&page, epayCheckoutPageData{
+		Action: gatewayURL.String(),
+		Params: params,
+	})
+	if err != nil {
+		c.String(http.StatusInternalServerError, "payment page unavailable")
+		return
+	}
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", page.Bytes())
 }
 
 func SubscriptionEpayNotify(c *gin.Context) {

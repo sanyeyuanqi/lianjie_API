@@ -204,7 +204,7 @@ export function CheckinCalendarCard({
 
   if (isLoading) {
     return (
-      <div className='bg-card overflow-hidden rounded-2xl border'>
+      <div className='bg-card h-full overflow-hidden rounded-2xl border'>
         <div className='p-6'>
           <div className='flex items-start justify-between gap-4'>
             <div className='flex items-center gap-3'>
@@ -253,65 +253,77 @@ export function CheckinCalendarCard({
         </div>
       </Dialog>
 
-      <div className='bg-card overflow-hidden rounded-2xl border'>
+      <div className='bg-card h-full overflow-hidden rounded-2xl border'>
         {/* Header */}
-        <div className='border-b p-4 sm:p-5 2xl:p-6'>
-          <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-5'>
-            <div className='flex h-auto min-w-0 flex-1 items-start gap-3 text-left'>
-              <div className='bg-primary/10 text-primary flex h-10 w-10 shrink-0 items-center justify-center rounded-xl sm:h-11 sm:w-11 2xl:h-12 2xl:w-12'>
-                <CalendarDays
-                  className='h-4 w-4 sm:h-5 sm:w-5'
-                  strokeWidth={2}
-                />
-              </div>
-              <div className='min-w-0 flex-1'>
-                <div className='flex flex-wrap items-center gap-1.5 sm:gap-2'>
-                  <h3 className='text-base font-semibold tracking-tight sm:text-lg 2xl:text-xl'>
-                    {t('Daily Check-in')}
-                  </h3>
-                  {checkedToday && (
-                    <div className='inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 sm:gap-1.5 sm:px-2.5 sm:text-xs dark:text-emerald-400'>
-                      <Sparkles className='h-2.5 w-2.5 sm:h-3 sm:w-3' />
-                      {t('Checked in')}
-                    </div>
-                  )}
+        <div className='border-b px-4 py-3 sm:px-5 sm:py-3.5 2xl:px-6 2xl:py-4'>
+          <div className='flex flex-col gap-3 xl:flex-row xl:flex-wrap xl:items-center xl:gap-5'>
+            <div className='flex min-w-0 flex-1 flex-col gap-3 sm:flex-row sm:items-center xl:basis-[560px]'>
+              <div className='flex min-w-0 items-start gap-3 text-left'>
+                <div className='bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-xl sm:h-10 sm:w-10'>
+                  <CalendarDays
+                    className='h-4 w-4 sm:h-[18px] sm:w-[18px]'
+                    strokeWidth={2}
+                  />
                 </div>
-                <p className='text-muted-foreground mt-1 line-clamp-2 text-xs sm:text-sm'>
-                  {checkedToday && todayAward !== undefined
-                    ? `${t('Today')} +${formatQuotaWithCurrency(todayAward)}`
-                    : t('Check in daily to receive random quota rewards')}
-                </p>
+                <div className='min-w-0'>
+                  <div className='flex flex-wrap items-center gap-1.5 sm:gap-2'>
+                    <h3 className='text-base font-semibold tracking-tight sm:text-lg 2xl:text-xl'>
+                      {t('Daily Check-in')}
+                    </h3>
+                    {checkedToday && (
+                      <div className='inline-flex items-center gap-1 rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-600 sm:gap-1.5 sm:px-2.5 sm:text-xs dark:text-emerald-400'>
+                        <Sparkles className='h-2.5 w-2.5 sm:h-3 sm:w-3' />
+                        {t('Checked in')}
+                      </div>
+                    )}
+                  </div>
+                  <p className='text-muted-foreground mt-1 line-clamp-2 text-xs sm:text-sm'>
+                    {checkedToday && todayAward !== undefined
+                      ? `${t('Today')} +${formatQuotaWithCurrency(todayAward)}`
+                      : t('Check in daily to receive random quota rewards')}
+                  </p>
+                </div>
+              </div>
+
+              <div className='grid w-full grid-cols-3 gap-2 sm:w-auto sm:min-w-[310px] sm:flex-none'>
+                <div className='bg-muted/30 rounded-xl border px-3 py-2 text-center'>
+                  <div className='text-sm font-semibold tracking-tight tabular-nums sm:text-base'>
+                    {checkinData?.stats?.total_checkins || 0}
+                  </div>
+                  <div className='text-muted-foreground mt-0.5 text-[10px] font-medium sm:text-xs'>
+                    {t('Total check-ins')}
+                  </div>
+                </div>
+                <div className='bg-muted/30 rounded-xl border px-3 py-2 text-center'>
+                  <div className='text-sm font-semibold tracking-tight tabular-nums sm:text-base'>
+                    {formatQuotaWithCurrency(monthlyQuota, { digitsLarge: 0 })}
+                  </div>
+                  <div className='text-muted-foreground mt-0.5 text-[10px] font-medium sm:text-xs'>
+                    {t('This month')}
+                  </div>
+                </div>
+                <div className='bg-muted/30 rounded-xl border px-3 py-2 text-center'>
+                  <div className='text-sm font-semibold tracking-tight tabular-nums sm:text-base'>
+                    {formatQuotaWithCurrency(
+                      checkinData?.stats?.total_quota || 0,
+                      {
+                        digitsLarge: 0,
+                      }
+                    )}
+                  </div>
+                  <div className='text-muted-foreground mt-0.5 text-[10px] font-medium sm:text-xs'>
+                    {t('Total earned')}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
 
-        {/* Stats */}
-        <div className='grid grid-cols-3 gap-px border-b'>
-          <div className='bg-card p-3 text-center sm:p-4 2xl:p-5'>
-            <div className='text-xl font-semibold tracking-tight tabular-nums sm:text-2xl'>
-              {checkinData?.stats?.total_checkins || 0}
-            </div>
-            <div className='text-muted-foreground mt-0.5 text-[10px] font-medium sm:mt-1 sm:text-xs'>
-              {t('Total check-ins')}
-            </div>
-          </div>
-          <div className='bg-card p-3 text-center sm:p-4 2xl:p-5'>
-            <div className='text-xl font-semibold tracking-tight tabular-nums sm:text-2xl'>
-              {formatQuotaWithCurrency(monthlyQuota, { digitsLarge: 0 })}
-            </div>
-            <div className='text-muted-foreground mt-0.5 text-[10px] font-medium sm:mt-1 sm:text-xs'>
-              {t('This month')}
-            </div>
-          </div>
-          <div className='bg-card p-3 text-center sm:p-4 2xl:p-5'>
-            <div className='text-xl font-semibold tracking-tight tabular-nums sm:text-2xl'>
-              {formatQuotaWithCurrency(checkinData?.stats?.total_quota || 0, {
-                digitsLarge: 0,
-              })}
-            </div>
-            <div className='text-muted-foreground mt-0.5 text-[10px] font-medium sm:mt-1 sm:text-xs'>
-              {t('Total earned')}
+            <div className='bg-muted/30 text-muted-foreground w-full shrink-0 rounded-lg border px-3 py-2 text-[11px] xl:ml-auto xl:w-auto xl:max-w-[320px] 2xl:text-xs'>
+              <ul className='list-disc space-y-0.5 pl-4'>
+                <li>{t('Check in daily to receive random quota rewards')}</li>
+                <li>{t('Rewards will be added directly to your balance')}</li>
+                <li>{t('Do not repeat check-in; only once per day')}</li>
+              </ul>
             </div>
           </div>
         </div>
@@ -390,7 +402,7 @@ export function CheckinCalendarCard({
                       isToday && 'hover:bg-primary/90',
                       isToday &&
                         checkinLoading &&
-                        'cursor-wait opacity-80 hover:bg-primary',
+                        'hover:bg-primary cursor-wait opacity-80',
                       isToday &&
                         !checkinLoading &&
                         checkedToday &&
@@ -401,7 +413,7 @@ export function CheckinCalendarCard({
                     )}
                   >
                     {isToday && dayObj.isCurrentMonth && !checkedToday ? (
-                      <span className='text-[11px] font-semibold leading-none text-primary-foreground sm:text-xs'>
+                      <span className='text-primary-foreground text-[11px] leading-none font-semibold sm:text-xs'>
                         {checkinLoading ? t('Loading...') : t('Check in now')}
                       </span>
                     ) : (
@@ -440,19 +452,6 @@ export function CheckinCalendarCard({
 
                 return dayButton
               })}
-            </div>
-
-            {/* Footer hint */}
-            <div className='text-muted-foreground border-t pt-3 text-center text-[11px] sm:pt-4 sm:text-xs'>
-              {t('You can only check in once per day')}
-            </div>
-
-            <div className='bg-muted/30 text-muted-foreground rounded-lg border p-3 text-xs 2xl:p-4'>
-              <ul className='list-disc space-y-1 pl-5'>
-                <li>{t('Check in daily to receive random quota rewards')}</li>
-                <li>{t('Rewards will be added directly to your balance')}</li>
-                <li>{t('Do not repeat check-in; only once per day')}</li>
-              </ul>
             </div>
           </div>
         </div>

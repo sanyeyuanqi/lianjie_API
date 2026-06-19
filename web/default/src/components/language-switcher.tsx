@@ -21,7 +21,7 @@ import {
   INTERFACE_LANGUAGE_OPTIONS,
   normalizeInterfaceLanguage,
 } from '@/i18n/languages'
-import { Languages, Check } from 'lucide-react'
+import { Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { api } from '@/lib/api'
@@ -33,6 +33,61 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+
+function TranslationIcon() {
+  return (
+    <svg
+      viewBox='0 0 32 32'
+      className='size-6'
+      aria-hidden='true'
+      fill='none'
+      xmlns='http://www.w3.org/2000/svg'
+    >
+      <rect
+        x='12'
+        y='11'
+        width='17'
+        height='17'
+        rx='4.5'
+        className='fill-white stroke-slate-950 dark:fill-zinc-900 dark:stroke-zinc-100'
+        strokeWidth='1.8'
+      />
+      <rect
+        x='3'
+        y='3'
+        width='17'
+        height='17'
+        rx='4.5'
+        className='fill-white stroke-slate-950 dark:fill-zinc-900 dark:stroke-zinc-100'
+        strokeWidth='1.8'
+      />
+      <text
+        x='11.5'
+        y='16.2'
+        textAnchor='middle'
+        className='fill-slate-950 text-[12px] font-semibold dark:fill-zinc-100'
+      >
+        A
+      </text>
+      <text
+        x='20.5'
+        y='24.5'
+        textAnchor='middle'
+        className='fill-slate-950 text-[11px] font-semibold dark:fill-zinc-100'
+      >
+        文
+      </text>
+      <path
+        d='M25.5 1.5c.45 2.25 1.75 3.55 4 4-2.25.45-3.55 1.75-4 4-.45-2.25-1.75-3.55-4-4 2.25-.45 3.55-1.75 4-4Z'
+        className='fill-slate-950 dark:fill-cyan-300'
+      />
+      <path
+        d='M5.5 22c.35 1.75 1.35 2.75 3.1 3.1-1.75.35-2.75 1.35-3.1 3.1-.35-1.75-1.35-2.75-3.1-3.1 1.75-.35 2.75-1.35 3.1-3.1Z'
+        className='fill-slate-950 dark:fill-cyan-300'
+      />
+    </svg>
+  )
+}
 
 export function LanguageSwitcher() {
   const { i18n, t } = useTranslation()
@@ -60,11 +115,11 @@ export function LanguageSwitcher() {
           <Button
             variant='ghost'
             size='icon'
-            className='h-8 w-8 rounded-md text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-zinc-500 dark:hover:bg-zinc-800/70 dark:hover:text-zinc-200'
+            className='h-8 w-8 rounded-lg text-slate-950 hover:bg-slate-100 dark:text-zinc-100 dark:hover:bg-zinc-800/70'
           />
         }
       >
-        <Languages className='size-[1.05rem]' />
+        <TranslationIcon />
         <span className='sr-only'>{t('Change language')}</span>
       </DropdownMenuTrigger>
       <DropdownMenuContent

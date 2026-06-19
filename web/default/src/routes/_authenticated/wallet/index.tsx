@@ -32,7 +32,10 @@ export const Route = createFileRoute('/_authenticated/wallet/')({
 function RouteComponent() {
   const { show_history } = Route.useSearch()
   return (
-    <div data-wallet-fullscreen className='min-h-0 flex-1'>
+    <div
+      data-wallet-fullscreen
+      className='flex min-h-0 flex-1 flex-col overflow-hidden'
+    >
       <Wallet initialShowHistory={show_history} />
     </div>
   )

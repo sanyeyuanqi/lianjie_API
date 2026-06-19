@@ -166,6 +166,12 @@ export function usePayment() {
               url: checkoutUrl,
               qrValue,
               paymentMethod: paymentType,
+              tradeNo:
+                typeof paymentData.trade_no === 'string'
+                  ? paymentData.trade_no
+                  : typeof paymentData.out_trade_no === 'string'
+                    ? paymentData.out_trade_no
+                    : undefined,
             }
           }
         }

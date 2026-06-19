@@ -39,8 +39,11 @@ function SubscriptionsContent() {
           {t('Subscription Management')}
         </SectionPageLayout.Title>
         <SectionPageLayout.Actions>
-          <div className='flex items-center gap-2'>
-            <Alert variant='default' className='hidden px-3 py-2 sm:flex'>
+          <div className='flex flex-wrap items-center justify-end gap-2'>
+            <Alert
+              variant='default'
+              className='hidden min-h-9 w-auto shrink px-3 py-2 sm:flex'
+            >
               <Info className='h-4 w-4' />
               <AlertDescription className='text-xs'>
                 {t(

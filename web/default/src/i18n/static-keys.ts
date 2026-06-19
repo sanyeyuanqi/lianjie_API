@@ -292,6 +292,7 @@ export const STATIC_I18N_KEYS = [
   'No Reset',
   'Remaining',
   'Received',
+  'Reset Quota',
   'Payment initiated',
   'Payment page opened',
 
@@ -493,6 +494,7 @@ export const STATIC_I18N_KEYS = [
   'Untitled',
   'Open in new tab',
   'Failed to load',
+  'Recharge successful',
   'Expired at',
   'Cancelled at',
 ] as const

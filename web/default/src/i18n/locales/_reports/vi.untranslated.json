@@ -1,10 +1,16 @@
 {
+  "0 means unlimited. The value is converted to quota units when saved.": "0 means unlimited. The value is converted to quota units when saved.",
+  "AI creation and chat workspace.": "AI creation and chat workspace.",
   "Fill in the required fields. Advanced limits are optional.": "Fill in the required fields. Advanced limits are optional.",
   "Leave empty to allow all IPs. Use one IP or CIDR per line.": "Leave empty to allow all IPs. Use one IP or CIDR per line.",
   "Leave empty to allow all models.": "Leave empty to allow all models.",
   "Name the key and choose where it can be used.": "Name the key and choose where it can be used.",
   "Optional model and IP restrictions.": "Optional model and IP restrictions.",
+  "Require login to view creation center": "Require login to view creation center",
+  "Scan QR code to pay": "Scan QR code to pay",
   "Select a chat preset from the sidebar.": "Select a chat preset from the sidebar.",
   "Try another group if the current group fails.": "Try another group if the current group fails.",
-  "Update name, quota, or access limits.": "Update name, quota, or access limits."
+  "Update name, quota, or access limits.": "Update name, quota, or access limits.",
+  "Use your payment app to scan and complete the payment": "Use your payment app to scan and complete the payment",
+  "Visitors must authenticate before accessing the creation center.": "Visitors must authenticate before accessing the creation center."
 }

@@ -206,6 +206,11 @@ export function Wallet(props: WalletProps) {
     }
   }
 
+  const handlePaymentSuccess = useCallback(async () => {
+    setPaymentCheckout(null)
+    await fetchUser()
+  }, [fetchUser])
+
   // Handle redemption
   const handleRedeem = async () => {
     if (!redemptionCode) return
@@ -267,24 +272,15 @@ export function Wallet(props: WalletProps) {
       <SectionPageLayout>
         <SectionPageLayout.Title>{t('Wallet')}</SectionPageLayout.Title>
         <SectionPageLayout.Content>
-          <div
-            className={
-              checkinEnabled
-                ? 'grid w-full gap-4 sm:gap-5 xl:grid-cols-2 xl:items-start'
-                : 'flex w-full flex-col gap-4 sm:gap-5'
-            }
-          >
-            <div className='flex min-w-0 flex-col gap-4 sm:gap-5'>
-              <WalletStatsCard user={user} loading={userLoading} />
+          <div className='flex w-full flex-col gap-4 sm:gap-5'>
+            <div className='grid gap-4 sm:gap-5 xl:grid-cols-[minmax(0,0.82fr)_minmax(420px,1.18fr)]'>
+              <div className='flex min-w-0 flex-col gap-4 sm:gap-5 xl:h-full'>
+                <WalletStatsCard user={user} loading={userLoading} />
 
-              <div
-                className={
-                  showSubscriptionPanel
-                    ? 'grid gap-4 2xl:grid-cols-[minmax(0,1fr)_minmax(360px,0.8fr)] 2xl:items-start'
-                    : 'grid gap-4'
-                }
-              >
-                <div id='wallet-add-funds' className='scroll-mt-4'>
+                <div
+                  id='wallet-add-funds'
+                  className='min-w-0 scroll-mt-4 xl:flex-1'
+                >
                   <RechargeFormCard
                     topupInfo={topupInfo}
                     presetAmounts={presetAmounts}
@@ -319,34 +315,41 @@ export function Wallet(props: WalletProps) {
                     enableWaffoPancakeTopup={
                       topupInfo?.enable_waffo_pancake_topup
                     }
+                    onPaymentSuccess={handlePaymentSuccess}
                   />
                 </div>
+              </div>
 
+              <div className='flex min-w-0 flex-col gap-4 sm:gap-5 xl:h-full'>
+                <AffiliateRewardsCard
+                  user={user}
+                  affiliateLink={affiliateLink}
+                  onTransfer={() => setTransferDialogOpen(true)}
+                  complianceConfirmed={
+                    topupInfo?.payment_compliance_confirmed !== false
+                  }
+                  loading={affiliateLoading}
+                />
+
+                {checkinEnabled && (
+                  <div className='min-w-0 xl:flex-1'>
+                    <CheckinCalendarCard
+                      checkinEnabled={checkinEnabled}
+                      turnstileEnabled={turnstileEnabled}
+                      turnstileSiteKey={turnstileSiteKey}
+                    />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {showSubscriptionPanel && (
+              <div className='min-w-0'>
                 <SubscriptionPlansCard
                   topupInfo={topupInfo}
                   onAvailabilityChange={handleSubscriptionAvailabilityChange}
                   userQuota={user?.quota}
                   onPurchaseSuccess={fetchUser}
-                />
-              </div>
-
-              <AffiliateRewardsCard
-                user={user}
-                affiliateLink={affiliateLink}
-                onTransfer={() => setTransferDialogOpen(true)}
-                complianceConfirmed={
-                  topupInfo?.payment_compliance_confirmed !== false
-                }
-                loading={affiliateLoading}
-              />
-            </div>
-
-            {checkinEnabled && (
-              <div className='min-w-0 self-start'>
-                <CheckinCalendarCard
-                  checkinEnabled={checkinEnabled}
-                  turnstileEnabled={turnstileEnabled}
-                  turnstileSiteKey={turnstileSiteKey}
                 />
               </div>
             )}

@@ -34,6 +34,7 @@ type TitledCardProps = {
   children?: ReactNode
   className?: string
   headerClassName?: string
+  headerContentClassName?: string
   contentClassName?: string
   iconClassName?: string
   titleClassName?: string
@@ -48,6 +49,7 @@ export function TitledCard({
   children,
   className,
   headerClassName,
+  headerContentClassName,
   contentClassName,
   iconClassName,
   titleClassName,
@@ -58,7 +60,12 @@ export function TitledCard({
       <CardHeader
         className={cn('border-b p-3 !pb-3 sm:p-5 sm:!pb-5', headerClassName)}
       >
-        <div className='flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between'>
+        <div
+          className={cn(
+            'flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between',
+            headerContentClassName
+          )}
+        >
           <div className='flex min-w-0 items-center gap-3'>
             {icon != null && (
               <div

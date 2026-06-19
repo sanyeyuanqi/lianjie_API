@@ -32,6 +32,25 @@ func TestBuildEpayCheckoutURL(t *testing.T) {
 	}
 }
 
+func TestBuildSubscriptionEpayCheckoutURL(t *testing.T) {
+	params := map[string]string{
+		"out_trade_no": "SUBUSR1NO123",
+		"money":        "1.00",
+		"sign":         "test-signature",
+		"type":         "alipay",
+	}
+
+	checkoutURL, err := buildSubscriptionEpayCheckoutURL("https://pay.example.com/", params)
+	require.NoError(t, err)
+
+	parsed, err := url.Parse(checkoutURL)
+	require.NoError(t, err)
+	require.Equal(t, "/api/subscription/epay/checkout", parsed.Path)
+	for key, value := range params {
+		require.Equal(t, value, parsed.Query().Get(key))
+	}
+}
+
 func TestEpayCheckoutPagePostsToGateway(t *testing.T) {
 	var page bytes.Buffer
 	err := epayCheckoutPage.Execute(&page, epayCheckoutPageData{

@@ -25,14 +25,16 @@ export function SubscriptionsPrimaryButtons() {
   const { t } = useTranslation()
   const { setOpen, complianceConfirmed } = useSubscriptions()
   return (
-    <div className='flex gap-2'>
+    <div className='flex shrink-0 items-center justify-end gap-2'>
       <Button
-        size='sm'
+        size='default'
         onClick={() => setOpen('create')}
         disabled={!complianceConfirmed}
+        aria-label={t('Create Plan')}
+        className='h-9 min-w-[92px] gap-1.5 rounded-lg px-3 text-sm font-semibold shadow-sm'
       >
-        <Plus className='h-4 w-4' />
-        {t('Create Plan')}
+        <Plus className='size-4' />
+        <span className='leading-none'>{t('Create Plan')}</span>
       </Button>
     </div>
   )

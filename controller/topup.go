@@ -362,6 +362,7 @@ func RequestEpay(c *gin.Context) {
 		}
 	}
 	params["checkout_url"] = checkoutURL
+	params["trade_no"] = tradeNo
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
 }
 
