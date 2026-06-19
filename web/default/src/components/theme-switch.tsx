@@ -48,7 +48,7 @@ export function ThemeSwitch() {
           <Button
             variant='ghost'
             size='icon'
-            className='h-8 w-8 rounded-md text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-zinc-500 dark:hover:bg-zinc-800/70 dark:hover:text-zinc-200'
+            className='h-8 w-8 rounded-md text-slate-700 hover:bg-slate-100 hover:text-slate-950 dark:text-zinc-100 dark:hover:bg-white/15 dark:hover:text-white'
           />
         }
       >

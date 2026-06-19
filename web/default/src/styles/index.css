@@ -38,6 +38,30 @@ For commercial licensing, please contact support@quantumnous.com
     font-weight: var(--shiki-dark-font-weight) !important;
     text-decoration: var(--shiki-dark-text-decoration) !important;
   }
+
+  /* Admin-provided legal HTML may contain light-theme inline colors. Inline
+   * styles outrank utility classes, so remap the known legal-document palette
+   * in dark mode while preserving the document's spacing and structure. */
+  .dark .legal-html-content,
+  .dark .legal-html-content [style*='color:#111827'] {
+    color: var(--foreground) !important;
+  }
+
+  .dark .legal-html-content [style*='color:#6b7280'] {
+    color: var(--muted-foreground) !important;
+  }
+
+  .dark .legal-html-content [style*='background:#f9fafb'] {
+    background: color-mix(in oklab, var(--muted) 72%, transparent) !important;
+  }
+
+  .dark .legal-html-content [style*='background:#ffffff'] {
+    background: var(--card) !important;
+  }
+
+  .dark .legal-html-content [style*='border:1px solid #e5e7eb'] {
+    border-color: var(--border) !important;
+  }
 }
 
 @layer base {

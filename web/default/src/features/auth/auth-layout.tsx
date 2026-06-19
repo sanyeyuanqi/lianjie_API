@@ -738,7 +738,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
     ? 'radial-gradient(circle at 82% 43%,rgba(255,255,255,0.045),rgba(255,255,255,0) 22%),linear-gradient(180deg,#030303 0%,#070707 48%,#030303 100%)'
     : 'radial-gradient(circle at 78% 36%,rgba(255,255,255,0.82),rgba(255,255,255,0) 28%),linear-gradient(135deg,#edf6ff 0%,#f3f8ff 48%,#f8fbff 100%)'
   const navPanelClass = isDark
-    ? 'border-white/12 bg-zinc-950/72 shadow-[0_14px_38px_rgba(0,0,0,0.84),0_0_0_1px_rgba(255,255,255,0.03),inset_0_1px_0_rgba(255,255,255,0.08)] [&_[data-slot=button]]:text-zinc-500 [&_[data-slot=button]]:hover:bg-zinc-800/70 [&_[data-slot=button]]:hover:text-zinc-200'
+    ? 'border-white/18 bg-zinc-950/72 shadow-[0_14px_38px_rgba(0,0,0,0.84),0_0_0_1px_rgba(255,255,255,0.05),inset_0_1px_0_rgba(255,255,255,0.10)] [&_[data-slot=button]]:bg-white/[0.06] [&_[data-slot=button]]:text-zinc-100 [&_[data-slot=button]]:transition-colors [&_[data-slot=button]]:hover:bg-white/15 [&_[data-slot=button]]:hover:text-white [&_[data-slot=button]]:focus-visible:bg-white/15 [&_[data-slot=button]]:focus-visible:text-white'
     : 'border-indigo-200/45 bg-white/45 shadow-[0_10px_30px_rgba(99,102,241,0.10),inset_0_1px_0_rgba(255,255,255,0.72)] [&_[data-slot=button]]:text-slate-600 [&_[data-slot=button]]:hover:bg-white/70 [&_[data-slot=button]]:hover:text-indigo-950'
   const chipStyle = isDark
     ? {

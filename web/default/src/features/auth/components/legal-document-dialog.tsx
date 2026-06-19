@@ -120,7 +120,7 @@ export function LegalDocumentDialog({
           </Button>
         </div>
       ) : isHtml ? (
-        <div className='[&_a]:text-primary [&_:first-child]:mt-0 [&_a:hover]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse'>
+        <div className='legal-html-content [&_a]:text-primary [&_:first-child]:mt-0 [&_a:hover]:underline [&_img]:max-w-full [&_table]:w-full [&_table]:border-collapse'>
           <div
             className='prose prose-neutral dark:prose-invert max-w-none'
             dangerouslySetInnerHTML={{ __html: rawContent }}

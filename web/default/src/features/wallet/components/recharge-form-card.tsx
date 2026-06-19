@@ -655,7 +655,13 @@ export function RechargeFormCard({
                 {showQrView ? (
                   <>
                     <div className='to-muted/20 dark:from-background dark:to-muted/20 rounded-2xl border bg-gradient-to-b from-white p-4 shadow-inner'>
-                      <div className='mx-auto flex size-[13rem] items-center justify-center rounded-2xl bg-white p-3 shadow-[0_12px_30px_rgba(15,23,42,0.12)] ring-1 ring-black/5'>
+                      <div
+                        className={
+                          showQrCode
+                            ? 'mx-auto flex size-[13rem] items-center justify-center rounded-2xl bg-white p-3 shadow-[0_12px_30px_rgba(15,23,42,0.12)] ring-1 ring-black/5'
+                            : 'mx-auto flex size-[13rem] items-center justify-center rounded-2xl bg-slate-50/90 p-3 shadow-inner ring-1 ring-black/5 dark:bg-white/[0.06] dark:ring-white/10'
+                        }
+                      >
                         {showQrCode ? (
                           <QRCodeSVG
                             value={paymentCheckout!.qrValue!}
@@ -663,12 +669,12 @@ export function RechargeFormCard({
                           />
                         ) : (
                           <div
-                            className='text-muted-foreground flex flex-col items-center gap-3'
+                            className='flex flex-col items-center gap-3 text-slate-600 dark:text-zinc-200'
                             role='status'
                             aria-live='polite'
                           >
-                            <span className='border-muted flex size-16 items-center justify-center rounded-full border'>
-                              <Loader2 className='text-foreground size-8 animate-spin' />
+                            <span className='flex size-14 items-center justify-center rounded-full bg-slate-200/70 ring-1 ring-slate-300/80 dark:bg-white/[0.08] dark:ring-white/15'>
+                              <Loader2 className='size-7 animate-spin text-slate-700 dark:text-white' />
                             </span>
                             <span className='text-sm font-medium'>
                               {t('Loading...')}
