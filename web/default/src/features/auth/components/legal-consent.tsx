@@ -65,7 +65,11 @@ export function LegalConsent({
           id='legal-consent'
           checked={checked}
           onCheckedChange={handleChange}
-          className='mt-0.5'
+          className={cn(
+            'mt-0.5 size-5 rounded-md dark:border-white/35',
+            checked &&
+              'border-slate-700 bg-slate-700 text-white shadow-sm dark:border-white/80 dark:bg-slate-700 dark:text-white dark:ring-2 dark:ring-white/20 [&_[data-slot=checkbox-indicator]]:text-white [&_[data-slot=checkbox-indicator]>svg]:size-4 [&_[data-slot=checkbox-indicator]>svg]:text-white [&_[data-slot=checkbox-indicator]>svg]:stroke-[3]'
+          )}
         />
         <Label
           htmlFor='legal-consent'

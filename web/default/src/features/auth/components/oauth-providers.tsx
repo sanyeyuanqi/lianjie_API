@@ -17,15 +17,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import type { ReactNode } from 'react'
+import { Globe2, ShieldCheck } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import {
   IconDiscord,
   IconGithub,
   IconLinuxDo,
+  IconTelegram,
   IconWeChat,
 } from '@/assets/brand-icons'
 import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip'
 import { useOAuthLogin } from '../hooks/use-oauth-login'
 import type { SystemStatus } from '../types'
 
@@ -35,6 +42,8 @@ type OAuthProvidersProps = {
   className?: string
   onWeChatLogin?: () => void
   isWeChatLoading?: boolean
+  showDivider?: boolean
+  onBeforeLogin?: () => boolean
 }
 
 type ProviderButton = {
@@ -42,6 +51,7 @@ type ProviderButton = {
   label: string
   onClick: () => void
   icon?: ReactNode
+  className?: string
   disabled?: boolean
 }
 
@@ -51,6 +61,8 @@ export function OAuthProviders({
   className,
   onWeChatLogin,
   isWeChatLoading = false,
+  showDivider = true,
+  onBeforeLogin,
 }: OAuthProvidersProps) {
   const { t } = useTranslation()
   const {
@@ -73,6 +85,8 @@ export function OAuthProviders({
       label: t('Continue with WeChat'),
       onClick: onWeChatLogin,
       icon: <IconWeChat className='h-4 w-4' />,
+      className:
+        'border-emerald-500/20 bg-emerald-500/10 text-emerald-600 hover:bg-emerald-500/18 dark:text-emerald-400',
       disabled: isWeChatLoading,
     })
   }
@@ -83,6 +97,8 @@ export function OAuthProviders({
       label: githubButtonText || t('Continue with GitHub'),
       onClick: handleGitHubLogin,
       icon: <IconGithub className='h-4 w-4' />,
+      className:
+        'border-foreground/15 bg-foreground/[0.06] text-foreground hover:bg-foreground/[0.11]',
       disabled: githubButtonDisabled,
     })
   }
@@ -93,6 +109,8 @@ export function OAuthProviders({
       label: t('Continue with Discord'),
       onClick: handleDiscordLogin,
       icon: <IconDiscord className='h-4 w-4' />,
+      className:
+        'border-indigo-500/20 bg-indigo-500/10 text-indigo-600 hover:bg-indigo-500/18 dark:text-indigo-400',
     })
   }
 
@@ -101,6 +119,9 @@ export function OAuthProviders({
       key: 'oidc',
       label: t('Continue with OIDC'),
       onClick: handleOIDCLogin,
+      icon: <ShieldCheck className='h-5 w-5' />,
+      className:
+        'border-sky-500/20 bg-sky-500/10 text-sky-600 hover:bg-sky-500/18 dark:text-sky-400',
     })
   }
 
@@ -110,6 +131,8 @@ export function OAuthProviders({
       label: t('Continue with LinuxDO'),
       onClick: handleLinuxDOLogin,
       icon: <IconLinuxDo className='h-4 w-4' />,
+      className:
+        'border-amber-500/20 bg-amber-500/10 text-amber-700 hover:bg-amber-500/18 dark:text-amber-300',
     })
   }
 
@@ -118,6 +141,9 @@ export function OAuthProviders({
       key: 'telegram',
       label: t('Continue with Telegram'),
       onClick: handleTelegramLogin,
+      icon: <IconTelegram className='h-5 w-5' />,
+      className:
+        'border-cyan-500/20 bg-cyan-500/10 text-cyan-600 hover:bg-cyan-500/18 dark:text-cyan-400',
     })
   }
 
@@ -129,6 +155,9 @@ export function OAuthProviders({
         key: `custom-${provider.slug}`,
         label: t('Continue with {{name}}', { name: provider.name }),
         onClick: () => handleCustomOAuthLogin(provider),
+        icon: <Globe2 className='h-5 w-5' />,
+        className:
+          'border-violet-500/20 bg-violet-500/10 text-violet-600 hover:bg-violet-500/18 dark:text-violet-400',
       })
     }
   }
@@ -137,31 +166,53 @@ export function OAuthProviders({
 
   return (
     <div className={cn('space-y-3', className)}>
-      <div className='relative'>
-        <div className='absolute inset-0 flex items-center'>
-          <span className='w-full border-t' />
+      {showDivider && (
+        <div className='relative'>
+          <div className='absolute inset-0 flex items-center'>
+            <span className='w-full border-t' />
+          </div>
+          <div className='relative flex justify-center text-xs uppercase'>
+            <span className='bg-background text-muted-foreground px-2'>
+              {t('Or continue with')}
+            </span>
+          </div>
         </div>
-        <div className='relative flex justify-center text-xs uppercase'>
-          <span className='bg-background text-muted-foreground px-2'>
-            {t('Or continue with')}
-          </span>
-        </div>
-      </div>
+      )}
 
-      <div className='flex flex-col gap-2'>
+      <div className='mx-auto flex max-w-[14.25rem] flex-wrap items-center justify-center gap-3'>
         {providerButtons.map(
-          ({ key, label, onClick, icon, disabled: extraDisabled }) => (
-            <Button
-              key={key}
-              variant='outline'
-              type='button'
-              disabled={disabled || isLoading || extraDisabled}
-              onClick={onClick}
-              className='h-11 w-full justify-center gap-2 rounded-lg'
-            >
-              {icon}
-              {label}
-            </Button>
+          ({
+            key,
+            label,
+            onClick,
+            icon,
+            className: providerClassName,
+            disabled: extraDisabled,
+          }) => (
+            <Tooltip key={key}>
+              <TooltipTrigger
+                render={
+                  <Button
+                    variant='outline'
+                    type='button'
+                    size='icon'
+                    aria-label={label}
+                    disabled={disabled || isLoading || extraDisabled}
+                    onClick={() => {
+                      if (onBeforeLogin && !onBeforeLogin()) return
+                      onClick()
+                    }}
+                    className={cn(
+                      'size-12 rounded-xl shadow-sm transition-[color,background-color,border-color,box-shadow] duration-200 hover:shadow-md disabled:opacity-55 [&_svg]:size-7',
+                      providerClassName
+                    )}
+                  />
+                }
+              >
+                {icon}
+              </TooltipTrigger>
+              <TooltipContent>{label}</TooltipContent>
+            </Tooltip>
           )
         )}
       </div>
