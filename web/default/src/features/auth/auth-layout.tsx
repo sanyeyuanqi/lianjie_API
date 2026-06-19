@@ -49,6 +49,13 @@ type Particle = {
 type GlobeNode = {
   lat: number
   lng: number
+  label: string
+}
+
+type GlobeNodeLabel = {
+  canvas: HTMLCanvasElement
+  width: number
+  height: number
 }
 
 function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
@@ -103,31 +110,70 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
     }
 
     const NODES: GlobeNode[] = [
-      { lat: 40, lng: -74 },
-      { lat: 51, lng: 0 },
-      { lat: 35, lng: 139 },
-      { lat: 31, lng: 121 },
-      { lat: 37, lng: -122 },
-      { lat: 1, lng: 103 },
-      { lat: -33, lng: 151 },
-      { lat: 48, lng: 2 },
-      { lat: 52, lng: 13 },
-      { lat: 25, lng: 55 },
-      { lat: 19, lng: 72 },
-      { lat: 37, lng: 127 },
-      { lat: 22, lng: 114 },
-      { lat: 25, lng: 121 },
-      { lat: 13, lng: 100 },
-      { lat: -6, lng: 106 },
-      { lat: 49, lng: -123 },
-      { lat: 43, lng: -79 },
-      { lat: 34, lng: -118 },
-      { lat: 19, lng: -99 },
-      { lat: -23, lng: -46 },
-      { lat: -34, lng: -58 },
-      { lat: 59, lng: 18 },
-      { lat: 41, lng: 29 },
+      { lat: 40, lng: -74, label: 'New York' },
+      { lat: 51, lng: 0, label: 'London' },
+      { lat: 35, lng: 139, label: 'Tokyo' },
+      { lat: 31, lng: 121, label: 'Shanghai' },
+      { lat: 37, lng: -122, label: 'San Francisco' },
+      { lat: 1, lng: 103, label: 'Singapore' },
+      { lat: -33, lng: 151, label: 'Sydney' },
+      { lat: 48, lng: 2, label: 'Paris' },
+      { lat: 52, lng: 13, label: 'Berlin' },
+      { lat: 25, lng: 55, label: 'Dubai' },
+      { lat: 19, lng: 72, label: 'Mumbai' },
+      { lat: 37, lng: 127, label: 'Seoul' },
+      { lat: 22, lng: 114, label: 'Hong Kong' },
+      { lat: 25, lng: 121, label: 'Taipei' },
+      { lat: 13, lng: 100, label: 'Bangkok' },
+      { lat: -6, lng: 106, label: 'Jakarta' },
+      { lat: 49, lng: -123, label: 'Vancouver' },
+      { lat: 43, lng: -79, label: 'Toronto' },
+      { lat: 34, lng: -118, label: 'Los Angeles' },
+      { lat: 19, lng: -99, label: 'Mexico City' },
+      { lat: -23, lng: -46, label: 'Sao Paulo' },
+      { lat: -34, lng: -58, label: 'Buenos Aires' },
+      { lat: 59, lng: 18, label: 'Stockholm' },
+      { lat: 41, lng: 29, label: 'Istanbul' },
     ]
+    const labelFont = '600 10px "Public Sans", Inter, system-ui, sans-serif'
+    const labelCache = new Map<string, GlobeNodeLabel>()
+
+    function getNodeLabel(label: string) {
+      const cached = labelCache.get(label)
+      if (cached) return cached
+
+      const ratio = Math.min(window.devicePixelRatio || 1, 1.25)
+      const paddingX = 5
+      const paddingY = 3
+      const scratch = document.createElement('canvas')
+      const scratchCtx = scratch.getContext('2d')!
+      scratchCtx.font = labelFont
+      const textWidth = Math.ceil(scratchCtx.measureText(label).width)
+      const width = textWidth + paddingX * 2
+      const height = 10 + paddingY * 2
+      const labelCanvas = document.createElement('canvas')
+      labelCanvas.width = width * ratio
+      labelCanvas.height = height * ratio
+      labelCanvas.style.width = `${width}px`
+      labelCanvas.style.height = `${height}px`
+      const labelCtx = labelCanvas.getContext('2d')!
+      labelCtx.setTransform(ratio, 0, 0, ratio, 0, 0)
+      labelCtx.font = labelFont
+      labelCtx.textAlign = 'center'
+      labelCtx.textBaseline = 'middle'
+      labelCtx.fillStyle = isDark ? 'rgba(3,7,18,0.48)' : 'rgba(255,255,255,0.66)'
+      labelCtx.beginPath()
+      labelCtx.roundRect(0, 0, width, height, 5)
+      labelCtx.fill()
+      labelCtx.fillStyle = isDark ? '#e0f2fe' : '#312e81'
+      labelCtx.shadowColor = isDark ? 'rgba(0,0,0,0.58)' : 'rgba(255,255,255,0.76)'
+      labelCtx.shadowBlur = 3
+      labelCtx.fillText(label, width / 2, height / 2)
+
+      const nextLabel = { canvas: labelCanvas, width, height }
+      labelCache.set(label, nextLabel)
+      return nextLabel
+    }
     const ARCS: [number, number][] = [
       [0, 1],
       [0, 4],
@@ -372,20 +418,32 @@ function GlobeCanvas({ tone }: { tone: 'light' | 'dark' }) {
         }
       })
 
-      NODES.forEach(({ lat, lng }) => {
+      NODES.forEach(({ lat, lng, label }) => {
         const p = project(lat, lng, rot)
         const s = toScreen(p)
         if (!s.visible || s.b < 0.5) return
+        const nodeX = s.sx
+        const nodeY = s.sy
         const pulse = (Math.sin(t * 0.05 + lat) + 1) / 2
         ctx.beginPath()
-        ctx.arc(s.sx, s.sy, 3 + pulse * 4, 0, Math.PI * 2)
+        ctx.arc(nodeX, nodeY, 3 + pulse * 4, 0, Math.PI * 2)
         ctx.strokeStyle = `rgba(${colors.node.join(',')},${0.28 * s.b})`
         ctx.lineWidth = 1
         ctx.stroke()
         ctx.beginPath()
-        ctx.arc(s.sx, s.sy, 2.5, 0, Math.PI * 2)
+        ctx.arc(nodeX, nodeY, 2.5, 0, Math.PI * 2)
         ctx.fillStyle = `rgba(${colors.node.join(',')},${0.9 * s.b})`
         ctx.fill()
+
+        const labelOpacity = Math.min(0.92, 0.42 + s.b * 0.62)
+        const nodeLabel = getNodeLabel(label)
+        const labelX = nodeX - nodeLabel.width / 2
+        const labelY = nodeY + 15 - nodeLabel.height / 2
+        ctx.save()
+        ctx.globalAlpha = labelOpacity
+        ctx.imageSmoothingEnabled = true
+        ctx.drawImage(nodeLabel.canvas, labelX, labelY, nodeLabel.width, nodeLabel.height)
+        ctx.restore()
       })
 
       drawRingLayer('front')

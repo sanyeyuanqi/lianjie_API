@@ -26,12 +26,10 @@ import { CheckinCalendarCard } from '@/features/profile/components/checkin-calen
 import { AffiliateRewardsCard } from './components/affiliate-rewards-card'
 import { BillingHistoryDialog } from './components/dialogs/billing-history-dialog'
 import { CreemConfirmDialog } from './components/dialogs/creem-confirm-dialog'
-import { PaymentConfirmDialog } from './components/dialogs/payment-confirm-dialog'
 import { TransferDialog } from './components/dialogs/transfer-dialog'
 import { RechargeFormCard } from './components/recharge-form-card'
 import { SubscriptionPlansCard } from './components/subscription-plans-card'
 import { WalletStatsCard } from './components/wallet-stats-card'
-import { DEFAULT_DISCOUNT_RATE } from './constants'
 import {
   useTopupInfo,
   usePayment,
@@ -51,6 +49,7 @@ import type {
   PaymentMethod,
   PresetAmount,
   CreemProduct,
+  PaymentCheckoutResult,
 } from './types'
 
 interface WalletProps {
@@ -66,7 +65,8 @@ export function Wallet(props: WalletProps) {
   const [selectedPaymentMethod, setSelectedPaymentMethod] =
     useState<PaymentMethod>()
   const [paymentLoading, setPaymentLoading] = useState<string | null>(null)
-  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false)
+  const [paymentCheckout, setPaymentCheckout] =
+    useState<PaymentCheckoutResult | null>(null)
   const [transferDialogOpen, setTransferDialogOpen] = useState(false)
   const [billingDialogOpen, setBillingDialogOpen] = useState(false)
   const [redemptionCode, setRedemptionCode] = useState('')
@@ -170,6 +170,7 @@ export function Wallet(props: WalletProps) {
   // Handle payment method selection
   const handlePaymentMethodSelect = async (method: PaymentMethod) => {
     setSelectedPaymentMethod(method)
+    setPaymentCheckout(null)
     setPaymentLoading(method.type)
 
     try {
@@ -179,9 +180,8 @@ export function Wallet(props: WalletProps) {
         return
       }
 
-      // Calculate payment amount and show confirmation dialog
+      // Calculate payment amount and reveal confirmation details in the same dialog.
       await calculatePaymentAmount(topupAmount, method.type)
-      setConfirmDialogOpen(true)
     } finally {
       setPaymentLoading(null)
     }
@@ -192,12 +192,16 @@ export function Wallet(props: WalletProps) {
     if (!selectedPaymentMethod) return
 
     const isPancake = isWaffoPancakePayment(selectedPaymentMethod.type)
-    const success = isPancake
+    const checkout = isPancake
       ? await processWaffoPancakePayment(topupAmount)
       : await processPayment(topupAmount, selectedPaymentMethod.type)
 
-    if (success) {
-      setConfirmDialogOpen(false)
+    if (checkout && typeof checkout === 'object' && 'type' in checkout) {
+      setPaymentCheckout(checkout)
+      return
+    }
+
+    if (checkout) {
       await fetchUser()
     }
   }
@@ -251,11 +255,6 @@ export function Wallet(props: WalletProps) {
     }
   }
 
-  // Get discount rate for current topup amount
-  const getDiscountRate = useCallback(() => {
-    return topupInfo?.discount?.[topupAmount] || DEFAULT_DISCOUNT_RATE
-  }, [topupInfo, topupAmount])
-
   const handleSubscriptionAvailabilityChange = useCallback(
     (available: boolean) => {
       setShowSubscriptionPanel(available)
@@ -295,7 +294,11 @@ export function Wallet(props: WalletProps) {
                     onTopupAmountChange={handleTopupAmountChange}
                     paymentAmount={paymentAmount}
                     calculating={calculating}
+                    selectedPaymentMethod={selectedPaymentMethod}
                     onPaymentMethodSelect={handlePaymentMethodSelect}
+                    onPaymentConfirm={handlePaymentConfirm}
+                    confirmProcessing={processing || pancakeProcessing}
+                    paymentCheckout={paymentCheckout}
                     paymentLoading={paymentLoading}
                     redemptionCode={redemptionCode}
                     onRedemptionCodeChange={setRedemptionCode}
@@ -350,19 +353,6 @@ export function Wallet(props: WalletProps) {
           </div>
         </SectionPageLayout.Content>
       </SectionPageLayout>
-
-      <PaymentConfirmDialog
-        open={confirmDialogOpen}
-        onOpenChange={setConfirmDialogOpen}
-        onConfirm={handlePaymentConfirm}
-        topupAmount={topupAmount}
-        paymentAmount={paymentAmount}
-        paymentMethod={selectedPaymentMethod}
-        calculating={calculating}
-        processing={processing || pancakeProcessing}
-        discountRate={getDiscountRate()}
-        usdExchangeRate={effectiveUsdExchangeRate}
-      />
 
       <TransferDialog
         open={transferDialogOpen}

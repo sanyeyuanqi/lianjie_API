@@ -1,10 +1,16 @@
 package controller
 
 import (
+	"bytes"
+	"context"
 	"fmt"
+	"html/template"
+	"io"
 	"net/http"
 	"net/url"
+	"path"
 	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -130,6 +136,84 @@ type EpayRequest struct {
 
 type AmountRequest struct {
 	Amount int64 `json:"amount"`
+}
+
+var epayCheckoutPage = template.Must(template.New("epay-checkout").Parse(`<!doctype html>
+<html lang="zh-CN">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>正在打开支付页面</title></head>
+<body>
+<form id="epay-checkout" method="post" action="{{.Action}}">
+{{range $key, $value := .Params}}<input type="hidden" name="{{$key}}" value="{{$value}}">{{end}}
+<noscript><button type="submit">继续支付</button></noscript>
+</form>
+<script>document.getElementById('epay-checkout').submit()</script>
+</body>
+</html>`))
+
+type epayCheckoutPageData struct {
+	Action string
+	Params map[string]string
+}
+
+func buildEpayCheckoutURL(baseURL string, params map[string]string) (string, error) {
+	checkoutURL, err := url.Parse(strings.TrimRight(baseURL, "/") + "/api/user/epay/checkout")
+	if err != nil {
+		return "", err
+	}
+
+	query := checkoutURL.Query()
+	for key, value := range params {
+		query.Set(key, value)
+	}
+	checkoutURL.RawQuery = query.Encode()
+	return checkoutURL.String(), nil
+}
+
+func initializeEpayCheckout(ctx context.Context, gatewayURL string, params map[string]string) (string, string, error) {
+	form := url.Values{}
+	for key, value := range params {
+		form.Set(key, value)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, gatewayURL, strings.NewReader(form.Encode()))
+	if err != nil {
+		return "", "", err
+	}
+	req.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+	req.Header.Set("User-Agent", "Mozilla/5.0")
+
+	httpClient := &http.Client{Timeout: 15 * time.Second}
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		return "", "", err
+	}
+	defer resp.Body.Close()
+	_, _ = io.CopyN(io.Discard, resp.Body, 1<<20)
+
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusBadRequest {
+		return "", "", fmt.Errorf("payment gateway returned status %d", resp.StatusCode)
+	}
+
+	paymentURL := resp.Request.URL
+	if paymentURL == nil || paymentURL.String() == gatewayURL {
+		return "", "", fmt.Errorf("payment gateway did not return a hosted checkout URL")
+	}
+
+	qrURL := *paymentURL
+	switch strings.TrimRight(qrURL.Path, "/") {
+	case "/cashier-pc":
+		orderNo := qrURL.Query().Get("orderNo")
+		if orderNo == "" {
+			return paymentURL.String(), "", fmt.Errorf("hosted checkout URL is missing orderNo")
+		}
+		qrURL.Path = "/cashier"
+		qrURL.RawQuery = url.Values{"orderNo": []string{orderNo}}.Encode()
+		return paymentURL.String(), qrURL.String(), nil
+	case "/cashier":
+		return paymentURL.String(), paymentURL.String(), nil
+	default:
+		return paymentURL.String(), "", nil
+	}
 }
 
 func GetEpayClient() *epay.Client {
@@ -262,7 +346,70 @@ func RequestEpay(c *gin.Context) {
 		return
 	}
 	logger.LogInfo(c.Request.Context(), fmt.Sprintf("易支付 充值订单创建成功 user_id=%d trade_no=%s payment_method=%s amount=%d money=%.2f uri=%q params=%q", id, tradeNo, req.PaymentMethod, req.Amount, payMoney, uri, common.GetJsonString(params)))
+	checkoutURL, err := buildEpayCheckoutURL(callBackAddress, params)
+	if err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("易支付 生成结账地址失败 user_id=%d trade_no=%s error=%q", id, tradeNo, err.Error()))
+		c.JSON(http.StatusOK, gin.H{"message": "error", "data": "生成支付地址失败"})
+		return
+	}
+	hostedPaymentURL, qrCode, initializeErr := initializeEpayCheckout(c.Request.Context(), uri, params)
+	if initializeErr != nil {
+		logger.LogWarn(c.Request.Context(), fmt.Sprintf("易支付 初始化网关收银台失败 user_id=%d trade_no=%s error=%q", id, tradeNo, initializeErr.Error()))
+	} else {
+		checkoutURL = hostedPaymentURL
+		if qrCode != "" {
+			params["qr_code"] = qrCode
+		}
+	}
+	params["checkout_url"] = checkoutURL
 	c.JSON(http.StatusOK, gin.H{"message": "success", "data": params, "url": uri})
+}
+
+func EpayCheckout(c *gin.Context) {
+	client := GetEpayClient()
+	if client == nil || !isEpayTopUpEnabled() {
+		c.String(http.StatusNotFound, "payment unavailable")
+		return
+	}
+
+	params := make(map[string]string, len(c.Request.URL.Query()))
+	for key, values := range c.Request.URL.Query() {
+		if len(values) > 0 {
+			params[key] = values[0]
+		}
+	}
+	delete(params, "checkout_url")
+
+	verifyInfo, err := client.Verify(params)
+	if err != nil || !verifyInfo.VerifyStatus {
+		c.String(http.StatusBadRequest, "invalid payment request")
+		return
+	}
+
+	topUp := model.GetTopUpByTradeNo(verifyInfo.ServiceTradeNo)
+	if topUp == nil ||
+		topUp.Status != common.TopUpStatusPending ||
+		topUp.PaymentProvider != model.PaymentProviderEpay ||
+		topUp.PaymentMethod != verifyInfo.Type {
+		c.String(http.StatusBadRequest, "invalid payment order")
+		return
+	}
+
+	gatewayURL := *client.BaseUrl
+	gatewayURL.Path = path.Join(gatewayURL.Path, epay.PurchaseUrl)
+
+	var page bytes.Buffer
+	err = epayCheckoutPage.Execute(&page, epayCheckoutPageData{
+		Action: gatewayURL.String(),
+		Params: params,
+	})
+	if err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("易支付 渲染结账页面失败 trade_no=%s error=%q", topUp.TradeNo, err.Error()))
+		c.String(http.StatusInternalServerError, "payment page unavailable")
+		return
+	}
+
+	c.Data(http.StatusOK, "text/html; charset=utf-8", page.Bytes())
 }
 
 // tradeNo lock

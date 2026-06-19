@@ -27,11 +27,8 @@ import {
   requestStripePayment,
   isApiSuccess,
 } from '../api'
-import {
-  isStripePayment,
-  isWaffoPancakePayment,
-  submitPaymentForm,
-} from '../lib'
+import { isStripePayment, isWaffoPancakePayment } from '../lib'
+import type { PaymentCheckoutResult } from '../types'
 
 // ============================================================================
 // Payment Hook
@@ -75,9 +72,53 @@ export function usePayment() {
     []
   )
 
+  const buildPaymentUrl = useCallback(
+    (url: string, params: Record<string, unknown>) => {
+      const query = new URLSearchParams()
+      Object.entries(params).forEach(([key, value]) => {
+        if (value === undefined || value === null) return
+        query.set(key, String(value))
+      })
+
+      try {
+        const paymentUrl = new URL(url, window.location.origin)
+        query.forEach((value, key) => paymentUrl.searchParams.set(key, value))
+        return paymentUrl.toString()
+      } catch (_error) {
+        const separator = url.includes('?') ? '&' : '?'
+        return `${url}${separator}${query.toString()}`
+      }
+    },
+    []
+  )
+
+  const getQrValue = useCallback(
+    (url: string, params: Record<string, unknown>) => {
+      const directQrFields = [
+        'qr_code',
+        'qrcode',
+        'code_url',
+        'pay_url',
+        'payment_url',
+        'checkout_url',
+      ]
+      for (const field of directQrFields) {
+        const value = params[field]
+        if (typeof value === 'string' && value.trim()) {
+          return value.trim()
+        }
+      }
+      return buildPaymentUrl(url, params)
+    },
+    [buildPaymentUrl]
+  )
+
   // Process payment
   const processPayment = useCallback(
-    async (topupAmount: number, paymentType: string) => {
+    async (
+      topupAmount: number,
+      paymentType: string
+    ): Promise<PaymentCheckoutResult | null> => {
       try {
         setProcessing(true)
 
@@ -96,35 +137,48 @@ export function usePayment() {
 
         if (!isApiSuccess(response)) {
           toast.error(response.message || i18next.t('Payment request failed'))
-          return false
+          return null
         }
 
         // Handle Stripe payment
         if (isStripe && response.data?.pay_link) {
           window.open(response.data.pay_link as string, '_blank')
           toast.success(i18next.t('Redirecting to payment page...'))
-          return true
+          return {
+            type: 'redirect',
+            url: response.data.pay_link as string,
+            paymentMethod: paymentType,
+          }
         }
 
         // Handle non-Stripe payment
         if (!isStripe && response.data) {
+          const paymentData = response.data as Record<string, unknown>
           const url = (response as unknown as { url?: string }).url
           if (url) {
-            submitPaymentForm(url, response.data)
-            toast.success(i18next.t('Redirecting to payment page...'))
-            return true
+            const qrValue = getQrValue(url, paymentData)
+            const checkoutUrl =
+              typeof paymentData.checkout_url === 'string'
+                ? paymentData.checkout_url
+                : buildPaymentUrl(url, paymentData)
+            return {
+              type: 'qr',
+              url: checkoutUrl,
+              qrValue,
+              paymentMethod: paymentType,
+            }
           }
         }
 
-        return false
+        return null
       } catch (_error) {
         toast.error(i18next.t('Payment request failed'))
-        return false
+        return null
       } finally {
         setProcessing(false)
       }
     },
-    []
+    [buildPaymentUrl, getQrValue]
   )
 
   return {

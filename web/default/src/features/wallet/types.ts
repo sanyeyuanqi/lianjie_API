@@ -38,6 +38,12 @@ export type AmountResponse = ApiResponse<string>
 export type PaymentResponse = ApiResponse<Record<string, unknown>> & {
   url?: string
 }
+export interface PaymentCheckoutResult {
+  type: 'qr' | 'redirect'
+  url: string
+  qrValue?: string
+  paymentMethod: string
+}
 export type StripePaymentResponse = ApiResponse<{ pay_link: string }>
 export type AffiliateCodeResponse = ApiResponse<string>
 export type AffiliateTransferResponse = ApiResponse

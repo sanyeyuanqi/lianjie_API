@@ -25,6 +25,7 @@ import {
   Receipt,
   WalletCards,
 } from 'lucide-react'
+import { QRCodeSVG } from 'qrcode.react'
 import { useTranslation } from 'react-i18next'
 import { formatNumber } from '@/lib/format'
 import { cn } from '@/lib/utils'
@@ -51,6 +52,7 @@ import {
 } from '../lib'
 import type {
   PaymentMethod,
+  PaymentCheckoutResult,
   PresetAmount,
   TopupInfo,
   CreemProduct,
@@ -67,7 +69,11 @@ interface RechargeFormCardProps {
   onTopupAmountChange: (amount: number) => void
   paymentAmount: number
   calculating: boolean
-  onPaymentMethodSelect: (method: PaymentMethod) => void
+  selectedPaymentMethod?: PaymentMethod
+  onPaymentMethodSelect: (method: PaymentMethod) => void | Promise<void>
+  onPaymentConfirm?: () => void
+  confirmProcessing?: boolean
+  paymentCheckout?: PaymentCheckoutResult | null
   paymentLoading: string | null
   redemptionCode: string
   onRedemptionCodeChange: (code: string) => void
@@ -97,7 +103,11 @@ export function RechargeFormCard({
   onTopupAmountChange,
   paymentAmount,
   calculating,
+  selectedPaymentMethod,
   onPaymentMethodSelect,
+  onPaymentConfirm,
+  confirmProcessing,
+  paymentCheckout,
   paymentLoading,
   redemptionCode,
   onRedemptionCodeChange,
@@ -148,10 +158,60 @@ export function RechargeFormCard({
     (enableWaffoTopup && hasWaffoPaymentMethods && !!onWaffoMethodSelect)
   const minTopup = getMinTopupAmount(topupInfo)
   const redemptionEnabled = topupInfo?.enable_redemption !== false
+  const showQrCode = Boolean(
+    paymentCheckout?.type === 'qr' && paymentCheckout.qrValue
+  )
+  const showQrView = Boolean(confirmProcessing || showQrCode)
+  const selectedPaymentAmountLabel = selectedPaymentMethod
+    ? `${selectedPaymentMethod.name}支付金额`
+    : t('You Pay')
+  const rmbPaymentAmount = new Intl.NumberFormat('zh-CN', {
+    style: 'currency',
+    currency: 'CNY',
+    currencyDisplay: 'narrowSymbol',
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(paymentAmount)
 
   const handlePaymentMethodSelect = (method: PaymentMethod) => {
-    setPaymentDialogOpen(false)
     onPaymentMethodSelect(method)
+  }
+
+  const getPreferredPaymentMethod = () => {
+    const methods = topupInfo?.pay_methods || []
+    const availableMethods = methods.filter(
+      (method) => (method.min_topup || 0) <= topupAmount
+    )
+
+    if (
+      selectedPaymentMethod &&
+      (selectedPaymentMethod.min_topup || 0) <= topupAmount
+    ) {
+      return selectedPaymentMethod
+    }
+
+    return (
+      availableMethods.find((method) => {
+        const methodType = method.type.toLowerCase()
+        const methodName = method.name.toLowerCase()
+        return (
+          methodType.includes('wx') ||
+          methodType.includes('wechat') ||
+          method.name.includes('微信') ||
+          methodName.includes('wechat')
+        )
+      }) ||
+      availableMethods[0] ||
+      methods[0]
+    )
+  }
+
+  const handleOpenPaymentDialog = () => {
+    const preferredMethod = getPreferredPaymentMethod()
+    if (preferredMethod && hasStandardPaymentMethods) {
+      onPaymentMethodSelect(preferredMethod)
+    }
+    setPaymentDialogOpen(true)
   }
 
   const handleWaffoPaymentSelect = (method: WaffoPayMethod, index: number) => {
@@ -265,7 +325,7 @@ export function RechargeFormCard({
                             className={cn(
                               'border-border/70 bg-background hover:border-border/70 hover:bg-background dark:hover:bg-background relative flex h-[68px] flex-col items-start overflow-hidden rounded-lg px-3 py-2.5 text-left whitespace-normal shadow-none transition-colors sm:h-[74px]',
                               selectedPreset === preset.value
-                                ? 'border-primary bg-primary/5 text-primary ring-primary/15 hover:border-primary hover:bg-primary/5 hover:text-primary ring-1 dark:border-white dark:bg-white dark:text-slate-950 dark:ring-white/25 dark:hover:border-white dark:hover:bg-white dark:hover:text-slate-950'
+                                ? 'text-foreground hover:text-foreground border-emerald-700 bg-emerald-50/70 hover:border-emerald-700 hover:bg-emerald-50/70 dark:border-emerald-500 dark:bg-emerald-500/10 dark:text-white dark:hover:border-emerald-500 dark:hover:bg-emerald-500/10'
                                 : ''
                             )}
                             onClick={() => onSelectPreset(preset)}
@@ -275,7 +335,7 @@ export function RechargeFormCard({
                                 {formatNumber(displayValue)}
                               </div>
                               {selectedPreset === preset.value ? (
-                                <CheckCircle2 className='text-primary mt-0.5 h-4 w-4 shrink-0 dark:text-slate-700' />
+                                <CheckCircle2 className='mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400' />
                               ) : hasDiscount ? (
                                 <div className='text-[11px] leading-none font-medium text-emerald-600'>
                                   {getDiscountLabel(discount)}
@@ -311,7 +371,7 @@ export function RechargeFormCard({
                   >
                     {t('Custom Amount')}
                   </Label>
-                  <div className='bg-muted/25 grid gap-2 rounded-lg border p-2 sm:grid-cols-[minmax(0,1fr)_minmax(132px,160px)] lg:max-w-[760px] lg:grid-cols-[minmax(260px,1fr)_minmax(136px,164px)_auto] lg:items-center'>
+                  <div className='bg-muted/25 grid grid-cols-[minmax(0,1fr)_minmax(112px,0.72fr)] gap-2 rounded-lg border p-2 sm:grid-cols-[minmax(0,1fr)_minmax(132px,160px)] lg:max-w-[760px] lg:grid-cols-[minmax(260px,1fr)_minmax(136px,164px)_auto] lg:items-center'>
                     <Input
                       id='topup-amount'
                       type='number'
@@ -319,7 +379,7 @@ export function RechargeFormCard({
                       onChange={(e) => handleAmountChange(e.target.value)}
                       min={minTopup}
                       placeholder={`Minimum ${minTopup}`}
-                      className='bg-background h-10 text-base sm:text-lg'
+                      className='bg-background h-10 min-w-0 text-base sm:text-lg'
                     />
                     <div className='bg-background flex min-h-10 items-center justify-between gap-2 rounded-md border px-3'>
                       <span className='text-muted-foreground truncate text-xs'>
@@ -335,11 +395,11 @@ export function RechargeFormCard({
                     </div>
                     <Button
                       type='button'
-                      className='h-10 min-w-28 gap-2 px-5 shadow-sm sm:col-span-2 lg:col-span-1'
+                      className='col-span-2 h-10 min-w-28 gap-2 px-5 shadow-sm lg:col-span-1'
                       disabled={
                         calculating || !!paymentLoading || !canOpenPaymentDialog
                       }
-                      onClick={() => setPaymentDialogOpen(true)}
+                      onClick={handleOpenPaymentDialog}
                     >
                       {paymentLoading ? (
                         <Loader2 className='h-4 w-4 animate-spin' />
@@ -444,13 +504,17 @@ export function RechargeFormCard({
       <Dialog
         open={paymentDialogOpen}
         onOpenChange={setPaymentDialogOpen}
-        title={t('Payment Method')}
-        description={t('Choose an amount and payment method')}
+        title={showQrView ? t('Scan QR code to pay') : t('Payment Method')}
+        description={
+          showQrView
+            ? t('Use your payment app to scan and complete the payment')
+            : t('Choose an amount and payment method')
+        }
         contentClassName='max-sm:w-[calc(100vw-1.5rem)] sm:max-w-md'
         contentHeight='auto'
         bodyClassName='space-y-4'
       >
-        {hasStandardPaymentMethods && (
+        {hasStandardPaymentMethods && !showQrView && (
           <div className='space-y-2.5'>
             <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
               {t('Payment Method')}
@@ -459,26 +523,47 @@ export function RechargeFormCard({
               {topupInfo?.pay_methods?.map((method) => {
                 const minTopup = method.min_topup || 0
                 const disabled = minTopup > topupAmount
+                const isSelected = selectedPaymentMethod?.type === method.type
 
                 const button = (
                   <Button
                     key={method.type}
                     variant='outline'
+                    aria-pressed={isSelected}
                     onClick={() => handlePaymentMethodSelect(method)}
                     disabled={disabled || !!paymentLoading}
-                    className='bg-background hover:bg-muted/50 h-11 min-w-0 justify-start gap-2 rounded-lg px-3'
+                    className={cn(
+                      'bg-background hover:bg-muted/50 focus-visible:ring-ring/20 h-12 min-w-0 justify-start gap-2.5 rounded-xl px-3 text-left shadow-none transition-colors focus-visible:ring-2',
+                      isSelected &&
+                        'border-foreground/20 bg-muted/60 text-foreground hover:bg-muted/70 shadow-[inset_0_1px_0_rgba(255,255,255,0.58)] dark:border-white/10 dark:bg-white/10 dark:shadow-none dark:hover:bg-white/20'
+                    )}
                   >
                     {paymentLoading === method.type ? (
-                      <Loader2 className='h-4 w-4 animate-spin' />
+                      <span className='bg-background/80 flex size-7 shrink-0 items-center justify-center rounded-lg border'>
+                        <Loader2 className='h-4 w-4 animate-spin' />
+                      </span>
                     ) : (
-                      getPaymentIcon(
-                        method.type,
-                        'h-4 w-4',
-                        method.icon,
-                        method.name
-                      )
+                      <span
+                        className={cn(
+                          'bg-background/80 text-muted-foreground flex size-7 shrink-0 items-center justify-center rounded-lg border',
+                          isSelected &&
+                            'bg-background text-foreground border-transparent shadow-sm dark:bg-black/20'
+                        )}
+                      >
+                        {getPaymentIcon(
+                          method.type,
+                          'h-4 w-4',
+                          method.icon,
+                          method.name
+                        )}
+                      </span>
                     )}
-                    <span className='truncate'>{method.name}</span>
+                    <span className='min-w-0 flex-1 truncate text-left font-medium'>
+                      {method.name}
+                    </span>
+                    {isSelected && (
+                      <CheckCircle2 className='text-foreground/70 h-4 w-4 shrink-0' />
+                    )}
                   </Button>
                 )
 
@@ -498,6 +583,109 @@ export function RechargeFormCard({
                 )
               })}
             </div>
+          </div>
+        )}
+
+        {selectedPaymentMethod && (
+          <div className='space-y-3 border-t pt-4'>
+            {showQrView ? (
+              <>
+                <div className='to-muted/20 dark:from-background dark:to-muted/20 rounded-2xl border bg-gradient-to-b from-white p-4 shadow-inner'>
+                  <div className='mx-auto flex size-[13rem] items-center justify-center rounded-2xl bg-white p-3 shadow-[0_12px_30px_rgba(15,23,42,0.12)] ring-1 ring-black/5'>
+                    {showQrCode ? (
+                      <QRCodeSVG value={paymentCheckout!.qrValue!} size={184} />
+                    ) : (
+                      <div
+                        className='text-muted-foreground flex flex-col items-center gap-3'
+                        role='status'
+                        aria-live='polite'
+                      >
+                        <span className='border-muted flex size-16 items-center justify-center rounded-full border'>
+                          <Loader2 className='text-foreground size-8 animate-spin' />
+                        </span>
+                        <span className='text-sm font-medium'>
+                          {t('Loading...')}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                <div className='bg-muted/20 rounded-xl border px-4 py-3'>
+                  <div className='flex items-center justify-between text-sm'>
+                    <span className='text-muted-foreground'>
+                      {t('Topup Amount')}
+                    </span>
+                    <span className='font-medium'>{rmbPaymentAmount}</span>
+                  </div>
+                </div>
+                {showQrCode ? (
+                  <Button
+                    className='h-10 w-full rounded-xl bg-slate-950 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200'
+                    render={
+                      <a
+                        href={paymentCheckout!.url}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                      >
+                        <ExternalLink className='mr-2 h-4 w-4' />
+                        {t('Open payment page')}
+                      </a>
+                    }
+                  />
+                ) : (
+                  <Button
+                    disabled
+                    className='h-10 w-full rounded-xl text-sm font-semibold'
+                  >
+                    <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    {t('Open payment page')}
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <div className='border-border/80 bg-background/95 overflow-hidden rounded-2xl border shadow-sm'>
+                  <div className='grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 px-4 py-3.5 text-sm'>
+                    <span className='text-muted-foreground min-w-0 truncate'>
+                      {t('Topup Amount')}
+                    </span>
+                    <span className='text-muted-foreground shrink-0 text-right tabular-nums'>
+                      {formatCurrency(topupAmount * usdExchangeRate)}$
+                    </span>
+                  </div>
+                  <div className='border-border/60 grid grid-cols-[minmax(0,1fr)_auto] items-center gap-3 border-t px-4 py-3.5 text-sm'>
+                    <span className='text-muted-foreground min-w-0 truncate'>
+                      {selectedPaymentAmountLabel}
+                    </span>
+                    <span className='text-muted-foreground shrink-0 text-right tabular-nums'>
+                      {formatCurrency(paymentAmount)}R
+                    </span>
+                  </div>
+                </div>
+                <div className='grid grid-cols-[0.85fr_1.15fr] gap-2'>
+                  <Button
+                    type='button'
+                    variant='outline'
+                    className='h-10 rounded-xl'
+                    disabled={confirmProcessing}
+                    onClick={() => setPaymentDialogOpen(false)}
+                  >
+                    {t('Cancel')}
+                  </Button>
+                  <Button
+                    type='button'
+                    className='h-10 rounded-xl bg-slate-950 text-sm font-semibold text-white hover:bg-slate-800'
+                    disabled={confirmProcessing || calculating}
+                    onClick={onPaymentConfirm}
+                  >
+                    {confirmProcessing && (
+                      <Loader2 className='mr-2 h-4 w-4 animate-spin' />
+                    )}
+                    {t('Confirm Payment')}
+                  </Button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
