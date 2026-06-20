@@ -207,7 +207,7 @@ export function SubscriptionPlansCard({
   const planPurchaseCountMap = useMemo(() => {
     const map = new Map<number, number>()
     for (const sub of allSubscriptions) {
-      const planId = sub?.subscription?.plan_id
+      const planId = Number(sub?.subscription?.plan_id || 0)
       if (!planId) continue
       map.set(planId, (map.get(planId) || 0) + 1)
     }
@@ -218,7 +218,7 @@ export function SubscriptionPlansCard({
     const map = new Map<number, PlanRecord['plan']>()
     for (const item of plans) {
       if (item?.plan?.id) {
-        map.set(item.plan.id, item.plan)
+        map.set(Number(item.plan.id), item.plan)
       }
     }
     return map
@@ -423,7 +423,8 @@ export function SubscriptionPlansCard({
               >
                 {activeSubscriptions.map((record) => {
                   const sub = record.subscription
-                  const plan = record.plan || planMap.get(sub.plan_id)
+                  const subPlanId = Number(sub.plan_id || 0)
+                  const plan = record.plan || planMap.get(subPlanId)
                   const total = Number(sub.amount_total || 0)
                   const used = Number(sub.amount_used || 0)
                   const remaining = Math.max(total - used, 0)
@@ -449,7 +450,7 @@ export function SubscriptionPlansCard({
                         <div className='mb-3 flex items-start justify-between gap-3 border-b pb-3'>
                           <div className='min-w-0'>
                             <h4 className='truncate font-semibold'>
-                              {plan?.title || `#${sub.plan_id}`}
+                              {plan?.title || `#${subPlanId || sub.plan_id}`}
                             </h4>
                             {plan?.subtitle && (
                               <p className='text-muted-foreground truncate text-xs'>
