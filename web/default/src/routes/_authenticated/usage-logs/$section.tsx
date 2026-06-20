@@ -53,6 +53,16 @@ type UsageLogsSearch = {
   endTime?: number
 }
 
+function compactUsageLogsSearch(value: UsageLogsSearch): UsageLogsSearch {
+  return Object.fromEntries(
+    Object.entries(value).filter(([, item]) => {
+      if (item === undefined || item === '') return false
+      if (Array.isArray(item) && item.length === 0) return false
+      return true
+    })
+  ) as UsageLogsSearch
+}
+
 export const Route = createFileRoute('/_authenticated/usage-logs/$section')({
   beforeLoad: ({ params, search }) => {
     if (!isUsageLogsSectionId(params.section)) {
@@ -63,34 +73,57 @@ export const Route = createFileRoute('/_authenticated/usage-logs/$section')({
     }
     // type 仅 common 使用，非 common 时清掉 URL 里的 type
     const rawSearch = search as Record<string, unknown>
+    const commonOnlyKeys = [
+      'type',
+      'model',
+      'token',
+      'group',
+      'username',
+      'requestId',
+      'upstreamRequestId',
+    ] as const
     const hasTypeSearch =
       asStringArray(rawSearch.type).length > 0 ||
       (rawSearch.type != null && rawSearch.type !== '')
-    if (params.section !== 'common' && hasTypeSearch) {
+    const hasCommonOnlySearch =
+      params.section !== 'common' &&
+      commonOnlyKeys.some((key) => {
+        const value = rawSearch[key]
+        return value != null && value !== ''
+      })
+    if (params.section !== 'common' && (hasTypeSearch || hasCommonOnlySearch)) {
+      const cleanedSearch = { ...search } as Record<string, unknown>
+      commonOnlyKeys.forEach((key) => {
+        cleanedSearch[key] = undefined
+      })
       throw redirect({
         to: '/usage-logs/$section',
         params: { section: params.section },
-        search: { ...search, type: undefined },
+        search: cleanedSearch,
         replace: true,
       })
     }
   },
-  validateSearch: (search): UsageLogsSearch =>
-    compactSearch({
-      page: asNumber(search.page, 1),
-      pageSize: asNumber(search.pageSize),
-      type: asEnumArray(search.type, logTypeValues),
-      filter: asString(search.filter),
-      model: asString(search.model),
-      token: asString(search.token),
-      channel: asString(search.channel),
-      group: asString(search.group),
-      username: asString(search.username),
-      requestId: asString(search.requestId),
-      upstreamRequestId: asString(search.upstreamRequestId),
-      startTime: asNumber(search.startTime),
-      endTime: asNumber(search.endTime),
-    }),
+  validateSearch: (search): UsageLogsSearch => {
+    const type = asEnumArray(search.type, logTypeValues)
+    return compactUsageLogsSearch(
+      compactSearch({
+        page: asNumber(search.page, 1),
+        pageSize: asNumber(search.pageSize),
+        type: type.length > 0 ? type : undefined,
+        filter: asString(search.filter),
+        model: asString(search.model),
+        token: asString(search.token),
+        channel: asString(search.channel),
+        group: asString(search.group),
+        username: asString(search.username),
+        requestId: asString(search.requestId),
+        upstreamRequestId: asString(search.upstreamRequestId),
+        startTime: asNumber(search.startTime),
+        endTime: asNumber(search.endTime),
+      })
+    )
+  },
   component: lazyRouteComponent(
     () => import('@/features/usage-logs'),
     'UsageLogs'
