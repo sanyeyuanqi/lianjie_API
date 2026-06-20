@@ -16,11 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import {
   asEnumArray,
   asNumber,
@@ -28,6 +24,7 @@ import {
   asStringArray,
   compactSearch,
 } from '@/lib/route-search'
+import { UsageLogs } from '@/features/usage-logs'
 
 const USAGE_LOGS_SECTION_IDS = ['common', 'drawing', 'task'] as const
 const USAGE_LOGS_DEFAULT_SECTION = USAGE_LOGS_SECTION_IDS[0]
@@ -124,8 +121,5 @@ export const Route = createFileRoute('/_authenticated/usage-logs/$section')({
       })
     )
   },
-  component: lazyRouteComponent(
-    () => import('@/features/usage-logs'),
-    'UsageLogs'
-  ),
+  component: UsageLogs,
 })

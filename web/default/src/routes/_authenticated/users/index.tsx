@@ -16,11 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
 import {
@@ -29,6 +25,7 @@ import {
   asString,
   compactSearch,
 } from '@/lib/route-search'
+import { Users } from '@/features/users'
 
 const USER_STATUSES = ['-1', '1', '2'] as const
 const USER_ROLES = ['1', '10', '100'] as const
@@ -60,5 +57,5 @@ export const Route = createFileRoute('/_authenticated/users/')({
       role: asEnumArray(search.role, USER_ROLES),
       group: asString(search.group),
     }),
-  component: lazyRouteComponent(() => import('@/features/users'), 'Users'),
+  component: Users,
 })

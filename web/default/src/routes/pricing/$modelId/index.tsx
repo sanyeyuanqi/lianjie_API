@@ -16,11 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { getFreshModuleAccess } from '@/lib/nav-modules'
 import {
@@ -29,6 +25,7 @@ import {
   asOptionalString,
   compactSearch,
 } from '@/lib/route-search'
+import { ModelDetails } from '@/features/pricing/components/model-details'
 
 const TOKEN_UNITS = ['M', 'K'] as const
 const PRICING_VIEWS = ['card', 'table'] as const
@@ -74,8 +71,5 @@ export const Route = createFileRoute('/pricing/$modelId/')({
       }
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/pricing/components/model-details'),
-    'ModelDetails'
-  ),
+  component: ModelDetails,
 })

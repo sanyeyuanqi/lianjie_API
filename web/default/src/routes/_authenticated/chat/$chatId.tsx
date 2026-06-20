@@ -16,12 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { getFreshSidebarModuleEnabled } from '@/lib/nav-modules'
+import { ChatPresetRoute } from '@/features/chat/chat-preset-route'
 
 export const Route = createFileRoute('/_authenticated/chat/$chatId')({
   loader: async ({ params }) => {
@@ -33,8 +30,5 @@ export const Route = createFileRoute('/_authenticated/chat/$chatId')({
       throw redirect({ to: '/dashboard' })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/chat/chat-preset-route'),
-    'ChatPresetRoute'
-  ),
+  component: ChatPresetRoute,
 })

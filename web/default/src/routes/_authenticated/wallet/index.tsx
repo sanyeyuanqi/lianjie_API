@@ -16,15 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
 import { asBoolean, compactSearch } from '@/lib/route-search'
-
-const Wallet = lazy(() =>
-  import('@/features/wallet').then((module) => ({
-    default: module.Wallet,
-  }))
-)
+import { Wallet } from '@/features/wallet'
 
 export const Route = createFileRoute('/_authenticated/wallet/')({
   component: RouteComponent,
@@ -41,9 +35,7 @@ function RouteComponent() {
       data-wallet-fullscreen
       className='flex min-h-0 flex-1 flex-col overflow-hidden'
     >
-      <Suspense fallback={null}>
-        <Wallet initialShowHistory={show_history} />
-      </Suspense>
+      <Wallet initialShowHistory={show_history} />
     </div>
   )
 }

@@ -16,16 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense } from 'react'
 import { createFileRoute, redirect } from '@tanstack/react-router'
 import { getFreshSidebarModuleEnabled } from '@/lib/nav-modules'
 import { Main } from '@/components/layout/components/main'
-
-const Playground = lazy(() =>
-  import('@/features/playground').then((module) => ({
-    default: module.Playground,
-  }))
-)
+import { Playground } from '@/features/playground'
 
 export const Route = createFileRoute('/_authenticated/playground/')({
   beforeLoad: async () => {
@@ -45,9 +39,7 @@ export const Route = createFileRoute('/_authenticated/playground/')({
 function PlaygroundPage() {
   return (
     <Main className='p-0'>
-      <Suspense fallback={null}>
-        <Playground />
-      </Suspense>
+      <Playground />
     </Main>
   )
 }

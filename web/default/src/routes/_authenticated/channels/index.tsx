@@ -16,11 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
 import {
@@ -29,6 +25,7 @@ import {
   asStringArray,
   compactSearch,
 } from '@/lib/route-search'
+import { Channels } from '@/features/channels'
 
 type ChannelsSearch = {
   page?: number
@@ -60,8 +57,5 @@ export const Route = createFileRoute('/_authenticated/channels/')({
       group: asStringArray(search.group),
       model: asString(search.model),
     }),
-  component: lazyRouteComponent(
-    () => import('@/features/channels'),
-    'Channels'
-  ),
+  component: Channels,
 })

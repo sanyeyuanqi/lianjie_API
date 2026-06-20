@@ -16,14 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { getFreshModuleAccess } from '@/lib/nav-modules'
 import { asEnum, compactSearch } from '@/lib/route-search'
+import { Rankings } from '@/features/rankings'
 
 const RANKING_PERIODS = ['today', 'week', 'month', 'year', 'all'] as const
 type RankingsSearch = {
@@ -50,8 +47,5 @@ export const Route = createFileRoute('/rankings/')({
       }
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/rankings'),
-    'Rankings'
-  ),
+  component: Rankings,
 })

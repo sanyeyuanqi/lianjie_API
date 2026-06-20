@@ -16,11 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { SecuritySettings } from '@/features/system-settings/security'
 
 const SECURITY_SECTION_IDS = ['rate-limit', 'sensitive-words', 'ssrf'] as const
 const SECURITY_DEFAULT_SECTION = SECURITY_SECTION_IDS[0]
@@ -37,8 +34,5 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/system-settings/security'),
-    'SecuritySettings'
-  ),
+  component: SecuritySettings,
 })

@@ -16,13 +16,10 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
+import { Subscriptions } from '@/features/subscriptions'
 
 export const Route = createFileRoute('/_authenticated/subscriptions/')({
   beforeLoad: () => {
@@ -31,8 +28,5 @@ export const Route = createFileRoute('/_authenticated/subscriptions/')({
       throw redirect({ to: '/403' })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/subscriptions'),
-    'Subscriptions'
-  ),
+  component: Subscriptions,
 })

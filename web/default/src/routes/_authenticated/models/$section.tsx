@@ -16,11 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
 import {
@@ -29,6 +25,7 @@ import {
   asStringArray,
   compactSearch,
 } from '@/lib/route-search'
+import { Models } from '@/features/models'
 
 const MODELS_SECTION_IDS = ['metadata', 'deployments'] as const
 const MODELS_DEFAULT_SECTION = MODELS_SECTION_IDS[0]
@@ -76,5 +73,5 @@ export const Route = createFileRoute('/_authenticated/models/$section')({
       dFilter: asString(search.dFilter),
       dStatus: asStringArray(search.dStatus),
     }),
-  component: lazyRouteComponent(() => import('@/features/models'), 'Models'),
+  component: Models,
 })

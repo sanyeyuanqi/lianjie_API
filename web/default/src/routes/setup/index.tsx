@@ -16,12 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { getSetupStatus } from '@/features/setup/api'
+import { SetupWizard } from '@/features/setup/setup-wizard'
 
 export const Route = createFileRoute('/setup/')({
   beforeLoad: async () => {
@@ -37,8 +34,5 @@ export const Route = createFileRoute('/setup/')({
       throw redirect({ to: '/' })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/setup'),
-    'SetupWizard'
-  ),
+  component: SetupWizard,
 })

@@ -16,11 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { BillingSettings } from '@/features/system-settings/billing'
 
 const BILLING_SECTION_IDS = [
   'quota',
@@ -44,8 +41,5 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/system-settings/billing'),
-    'BillingSettings'
-  ),
+  component: BillingSettings,
 })

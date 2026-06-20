@@ -16,13 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, lazyRouteComponent } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import {
   asEnumArray,
   asNumber,
   asString,
   compactSearch,
 } from '@/lib/route-search'
+import { ApiKeys } from '@/features/keys'
 import { API_KEY_STATUS_OPTIONS } from '@/features/keys/constants'
 
 const API_KEY_STATUS_VALUES = API_KEY_STATUS_OPTIONS.map(
@@ -45,5 +46,5 @@ export const Route = createFileRoute('/_authenticated/keys/')({
       filter: asString(search.filter),
       token: asString(search.token),
     }),
-  component: lazyRouteComponent(() => import('@/features/keys'), 'ApiKeys'),
+  component: ApiKeys,
 })

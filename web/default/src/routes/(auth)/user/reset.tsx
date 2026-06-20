@@ -16,15 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense } from 'react'
 import { createFileRoute, useSearch } from '@tanstack/react-router'
-import type { ResetPasswordSearchParams } from '@/features/auth/reset-password-confirm'
-
-const ResetPasswordConfirm = lazy(() =>
-  import('@/features/auth/reset-password-confirm').then((module) => ({
-    default: module.ResetPasswordConfirm,
-  }))
-)
+import {
+  ResetPasswordConfirm,
+  type ResetPasswordSearchParams,
+} from '@/features/auth/reset-password-confirm'
 
 export const Route = createFileRoute('/(auth)/user/reset')({
   component: UserResetPassword,
@@ -35,9 +31,5 @@ function UserResetPassword() {
     from: '/(auth)/user/reset',
   }) as ResetPasswordSearchParams
 
-  return (
-    <Suspense fallback={null}>
-      <ResetPasswordConfirm email={search?.email} token={search?.token} />
-    </Suspense>
-  )
+  return <ResetPasswordConfirm email={search?.email} token={search?.token} />
 }

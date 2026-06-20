@@ -16,23 +16,17 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { asOptionalString, compactSearch } from '@/lib/route-search'
+import { SignIn } from '@/features/auth/sign-in'
 
 type SignInSearch = {
   redirect?: string
 }
 
 export const Route = createFileRoute('/(auth)/sign-in')({
-  component: lazyRouteComponent(
-    () => import('@/features/auth/sign-in'),
-    'SignIn'
-  ),
+  component: SignIn,
   validateSearch: (search): SignInSearch =>
     compactSearch({
       redirect: asOptionalString(search.redirect),

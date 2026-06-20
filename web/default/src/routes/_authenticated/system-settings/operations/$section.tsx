@@ -16,11 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { OperationsSettings } from '@/features/system-settings/operations'
 
 const OPERATIONS_SECTION_IDS = [
   'behavior',
@@ -45,8 +42,5 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/system-settings/operations'),
-    'OperationsSettings'
-  ),
+  component: OperationsSettings,
 })

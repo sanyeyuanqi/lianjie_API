@@ -16,11 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { ContentSettings } from '@/features/system-settings/content'
 
 const CONTENT_SECTION_IDS = [
   'dashboard',
@@ -45,8 +42,5 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/system-settings/content'),
-    'ContentSettings'
-  ),
+  component: ContentSettings,
 })

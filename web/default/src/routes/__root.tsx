@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense, useEffect, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { type QueryClient } from '@tanstack/react-query'
 import {
   createRootRouteWithContext,
@@ -25,17 +25,12 @@ import {
 } from '@tanstack/react-router'
 import { ThemeCustomizationProvider } from '@/context/theme-customization-provider'
 import { useSystemConfig } from '@/hooks/use-system-config'
+import { Toaster } from '@/components/ui/sonner'
 import { NavigationProgress } from '@/components/navigation-progress'
 import { saveAffiliateCode } from '@/features/auth/lib/storage'
 import { GeneralError } from '@/features/errors/general-error'
 import { NotFoundError } from '@/features/errors/not-found-error'
 import { getSetupStatus } from '@/features/setup/api'
-
-const Toaster = lazy(() =>
-  import('@/components/ui/sonner').then((module) => ({
-    default: module.Toaster,
-  }))
-)
 
 function RootComponent() {
   // Load system configuration (logo, system name, etc.) from backend
@@ -59,9 +54,7 @@ function RootComponent() {
       <NavigationProgress />
       <Outlet />
       {toasterReady ? (
-        <Suspense fallback={null}>
-          <Toaster closeButton duration={5000} position='top-right' />
-        </Suspense>
+        <Toaster closeButton duration={5000} position='top-right' />
       ) : null}
     </ThemeCustomizationProvider>
   )

@@ -16,11 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, lazyRouteComponent } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { AuthenticatedErrorRoute } from '@/features/errors/authenticated-error-route'
 
 export const Route = createFileRoute('/_authenticated/errors/$error')({
-  component: lazyRouteComponent(
-    () => import('@/features/errors/authenticated-error-route'),
-    'AuthenticatedErrorRoute'
-  ),
+  component: AuthenticatedErrorRoute,
 })

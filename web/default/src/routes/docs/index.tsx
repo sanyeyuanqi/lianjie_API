@@ -16,8 +16,9 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, lazyRouteComponent } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
+import { ApiDocs } from '@/features/api-docs'
 
 export const Route = createFileRoute('/docs/')({
-  component: lazyRouteComponent(() => import('@/features/api-docs'), 'ApiDocs'),
+  component: ApiDocs,
 })

@@ -16,18 +16,11 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense, useEffect } from 'react'
+import { useEffect } from 'react'
 import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { getSelf } from '@/lib/api'
-
-const AuthenticatedLayout = lazy(() =>
-  import('@/components/layout/components/authenticated-layout').then(
-    (module) => ({
-      default: module.AuthenticatedLayout,
-    })
-  )
-)
+import { AuthenticatedLayout } from '@/components/layout/components/authenticated-layout'
 
 // 内存中的验证标记，避免同一会话中重复验证
 let sessionVerified = false
@@ -76,11 +69,7 @@ function AuthenticatedRouteComponent() {
     })
   }, [navigate])
 
-  return (
-    <Suspense fallback={null}>
-      <AuthenticatedLayout />
-    </Suspense>
-  )
+  return <AuthenticatedLayout />
 }
 
 export const Route = createFileRoute('/_authenticated')({

@@ -16,42 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense } from 'react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
+import { Markdown } from '@/components/ui/markdown'
 import { PublicLayout } from '@/components/layout/components/public-layout'
+import { CTA } from './components/sections/cta'
+import { Features } from './components/sections/features'
 import { Hero } from './components/sections/hero'
+import { HowItWorks } from './components/sections/how-it-works'
+import { Stats } from './components/sections/stats'
 import { useHomePageContent } from './hooks'
-
-const Markdown = lazy(() =>
-  import('@/components/ui/markdown').then((module) => ({
-    default: module.Markdown,
-  }))
-)
-
-const Stats = lazy(() =>
-  import('./components/sections/stats').then((module) => ({
-    default: module.Stats,
-  }))
-)
-
-const Features = lazy(() =>
-  import('./components/sections/features').then((module) => ({
-    default: module.Features,
-  }))
-)
-
-const HowItWorks = lazy(() =>
-  import('./components/sections/how-it-works').then((module) => ({
-    default: module.HowItWorks,
-  }))
-)
-
-const CTA = lazy(() =>
-  import('./components/sections/cta').then((module) => ({
-    default: module.CTA,
-  }))
-)
 
 export function Home() {
   const { t } = useTranslation()
@@ -81,15 +55,7 @@ export function Home() {
             />
           ) : (
             <div className='container mx-auto py-8'>
-              <Suspense
-                fallback={
-                  <div className='text-muted-foreground py-8 text-sm'>
-                    {t('Loading...')}
-                  </div>
-                }
-              >
-                <Markdown className='custom-home-content'>{content}</Markdown>
-              </Suspense>
+              <Markdown className='custom-home-content'>{content}</Markdown>
             </div>
           )}
         </main>
@@ -106,15 +72,11 @@ export function Home() {
             isAuthenticated={isAuthenticated}
             className='pt-24 pb-8 md:pt-28 md:pb-10 lg:pt-[7.5rem] lg:pb-10'
           />
-          <Suspense fallback={null}>
-            <Stats className='pb-14 md:pb-16' />
-          </Suspense>
+          <Stats className='pb-14 md:pb-16' />
         </section>
-        <Suspense fallback={null}>
-          <Features />
-          <HowItWorks />
-          <CTA isAuthenticated={isAuthenticated} />
-        </Suspense>
+        <Features />
+        <HowItWorks />
+        <CTA isAuthenticated={isAuthenticated} />
       </main>
     </PublicLayout>
   )

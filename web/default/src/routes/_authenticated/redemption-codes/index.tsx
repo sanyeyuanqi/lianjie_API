@@ -16,11 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
 import {
@@ -29,6 +25,7 @@ import {
   asString,
   compactSearch,
 } from '@/lib/route-search'
+import { Redemptions } from '@/features/redemption-codes'
 import { REDEMPTION_STATUS_VALUES } from '@/features/redemption-codes/constants'
 
 type RedemptionsSearch = {
@@ -55,8 +52,5 @@ export const Route = createFileRoute('/_authenticated/redemption-codes/')({
       filter: asString(search.filter),
       status: asEnumArray(search.status, REDEMPTION_STATUS_VALUES),
     }),
-  component: lazyRouteComponent(
-    () => import('@/features/redemption-codes'),
-    'Redemptions'
-  ),
+  component: Redemptions,
 })
