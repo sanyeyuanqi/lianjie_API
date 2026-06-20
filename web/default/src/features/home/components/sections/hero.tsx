@@ -19,6 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { Link } from '@tanstack/react-router'
 import { ArrowRight, BookOpen } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { HeroTerminalDemo } from '../hero-terminal-demo'
 
@@ -58,14 +59,19 @@ export function Hero(props: HeroProps) {
   }
 
   return (
-    <section className='relative z-10 overflow-hidden px-6 pt-24 pb-14 md:px-8 md:pt-32 md:pb-20 lg:pt-36 lg:pb-24'>
+    <section
+      className={cn(
+        'relative z-10 overflow-hidden px-6 pt-20 pb-10 md:px-8 md:pt-28 md:pb-14 lg:pt-[7.5rem] lg:pb-16',
+        props.className
+      )}
+    >
       <div className='pointer-events-none absolute top-20 left-1/2 -z-10 h-[42rem] w-[92rem] -translate-x-1/2 rounded-full bg-white/50 blur-3xl dark:bg-white/[0.035]' />
       <div
         aria-hidden
         className='absolute inset-0 -z-10 bg-[linear-gradient(to_right,rgba(15,23,42,0.055)_1px,transparent_1px),linear-gradient(to_bottom,rgba(15,23,42,0.055)_1px,transparent_1px)] [mask-image:radial-gradient(ellipse_68%_50%_at_50%_20%,black_12%,transparent_100%)] bg-[size:4.5rem_4.5rem] opacity-70 dark:bg-[linear-gradient(to_right,rgba(255,255,255,0.07)_1px,transparent_1px),linear-gradient(to_bottom,rgba(255,255,255,0.07)_1px,transparent_1px)] dark:opacity-40'
       />
 
-      <div className='mx-auto grid max-w-[1480px] grid-cols-1 items-start gap-12 lg:grid-cols-12 lg:gap-x-14 lg:gap-y-16 xl:gap-x-16'>
+      <div className='mx-auto grid max-w-[1480px] grid-cols-1 items-start gap-10 lg:grid-cols-12 lg:gap-x-14 lg:gap-y-12 xl:gap-x-16'>
         {/* Left Column: Title, description, action buttons and application support */}
         <div className='flex max-w-3xl flex-col items-start text-left lg:col-span-6 xl:col-span-5'>
           {/* Top Pill Badge */}
@@ -81,7 +87,7 @@ export function Hero(props: HeroProps) {
           </div>
 
           <h1
-            className='landing-animate-fade-up max-w-3xl text-[clamp(2.8rem,5.2vw,5.35rem)] leading-[0.98] font-semibold tracking-tight text-slate-950 dark:text-white'
+            className='landing-animate-fade-up max-w-3xl text-[clamp(2.65rem,4.9vw,4.95rem)] leading-[0.98] font-semibold tracking-tight text-slate-950 dark:text-white'
             style={{ animationDelay: '60ms' }}
           >
             {t('home.hero.title.line1')}
@@ -91,14 +97,14 @@ export function Hero(props: HeroProps) {
             </span>
           </h1>
           <p
-            className='landing-animate-fade-up mt-7 max-w-2xl text-base leading-8 text-slate-600 opacity-0 md:text-[16px] dark:text-slate-400'
+            className='landing-animate-fade-up mt-6 max-w-2xl text-base leading-7 text-slate-600 opacity-0 md:text-[16px] dark:text-slate-400'
             style={{ animationDelay: '120ms' }}
           >
             {t('home.hero.description')}
           </p>
 
           <div
-            className='landing-animate-fade-up mt-8 flex flex-wrap items-center gap-3 opacity-0'
+            className='landing-animate-fade-up mt-7 flex flex-wrap items-center gap-3 opacity-0'
             style={{ animationDelay: '180ms' }}
           >
             {props.isAuthenticated ? (
@@ -134,7 +140,7 @@ export function Hero(props: HeroProps) {
           </div>
 
           <div
-            className='landing-animate-fade-up mt-11 w-full max-w-2xl opacity-0'
+            className='landing-animate-fade-up mt-8 w-full max-w-2xl opacity-0'
             style={{ animationDelay: '240ms' }}
           >
             <div className='mb-4 flex flex-col gap-1'>
@@ -182,7 +188,7 @@ export function Hero(props: HeroProps) {
         </div>
 
         <div
-          className='landing-animate-fade-up w-full opacity-0 lg:col-span-6 lg:pt-[55px] xl:col-span-7'
+          className='landing-animate-fade-up w-full opacity-0 lg:col-span-6 lg:pt-9 xl:col-span-7'
           style={{ animationDelay: '260ms' }}
         >
           <HeroTerminalDemo className='mx-auto w-full max-w-[760px] lg:mr-0' />

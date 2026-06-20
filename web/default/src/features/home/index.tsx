@@ -63,8 +63,13 @@ export function Home() {
     <PublicLayout showMainContainer={false}>
       <main className='relative isolate overflow-hidden bg-[linear-gradient(180deg,#f8fafc_0%,#eef4ff_34%,#f7f7fb_72%,#ffffff_100%)] dark:bg-[linear-gradient(180deg,#050505_0%,#0a0a0b_42%,#111113_100%)]'>
         <div className='pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_18%_12%,rgba(14,165,233,0.13),transparent_30%),radial-gradient(circle_at_76%_18%,rgba(16,185,129,0.10),transparent_28%),radial-gradient(circle_at_50%_72%,rgba(245,158,11,0.08),transparent_32%)] dark:bg-[radial-gradient(circle_at_18%_12%,rgba(148,163,184,0.10),transparent_32%),radial-gradient(circle_at_76%_20%,rgba(255,255,255,0.055),transparent_28%)]' />
-        <Hero isAuthenticated={isAuthenticated} />
-        <Stats />
+        <section className='relative z-10 flex min-h-[100svh] flex-col'>
+          <Hero
+            isAuthenticated={isAuthenticated}
+            className='pt-24 pb-8 md:pt-28 md:pb-10 lg:pt-[7.5rem] lg:pb-10'
+          />
+          <Stats className='pb-14 md:pb-16' />
+        </section>
         <Features />
         <HowItWorks />
         <CTA isAuthenticated={isAuthenticated} />

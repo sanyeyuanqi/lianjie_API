@@ -18,6 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useRef, useEffect, useCallback } from 'react'
 import { useTranslation } from 'react-i18next'
+import { getLobeIcon } from '@/lib/lobe-icon'
+import { cn } from '@/lib/utils'
 
 interface CounterProps {
   end: number
@@ -94,7 +96,30 @@ interface StatItem {
   decimals?: number
 }
 
-export function Stats(_props: StatsProps) {
+interface ProviderItem {
+  model: string
+  vendor: string
+  icon: string
+}
+
+function renderProviderIcon(icon: string, size: number) {
+  if (icon.startsWith('/')) {
+    return (
+      <img
+        src={icon}
+        alt=''
+        className='size-[78%] rounded-lg object-contain'
+        width={size}
+        height={size}
+        draggable={false}
+      />
+    )
+  }
+
+  return getLobeIcon(icon, size)
+}
+
+export function Stats(props: StatsProps) {
   const { t } = useTranslation()
 
   const stats: StatItem[] = [
@@ -104,25 +129,70 @@ export function Stats(_props: StatsProps) {
     { end: 10, suffix: '+', label: 'home.stats.operations' },
   ]
 
+  const providers: ProviderItem[] = [
+    { model: 'GPT', vendor: 'OpenAI', icon: 'OpenAI' },
+    { model: 'Claude', vendor: 'Anthropic', icon: 'Claude.Color' },
+    { model: 'Gemini', vendor: 'Google', icon: 'Gemini.Color' },
+    { model: 'DeepSeek', vendor: 'DeepSeek', icon: 'DeepSeek.Color' },
+    { model: 'Qwen', vendor: 'Alibaba Cloud', icon: 'Qwen.Color' },
+    { model: 'Kimi', vendor: 'Moonshot AI', icon: '/model-icons/kimi.png' },
+    { model: 'Llama', vendor: 'Meta', icon: 'Meta.Color' },
+    { model: 'Mistral', vendor: 'Mistral AI', icon: 'Mistral.Color' },
+    { model: 'Doubao', vendor: 'ByteDance', icon: 'Doubao.Color' },
+    { model: 'Hunyuan', vendor: 'Tencent', icon: 'Hunyuan.Color' },
+    { model: 'ERNIE', vendor: 'Baidu', icon: 'Wenxin.Color' },
+    { model: 'GLM', vendor: 'Zhipu AI', icon: 'Zhipu.Color' },
+  ]
+
+  const scrollingProviders = [...providers, ...providers]
+
   return (
-    <div className='relative z-10 px-6 md:px-8'>
-      <div className='mx-auto max-w-[1480px] rounded-[1.75rem] border border-white/70 bg-white/64 px-6 py-6 shadow-[0_30px_110px_rgba(15,23,42,0.10)] backdrop-blur-2xl md:px-8 md:py-8 dark:border-white/10 dark:bg-white/[0.055] dark:shadow-[0_28px_90px_rgba(0,0,0,0.42)]'>
-        <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+    <section
+      className={cn(
+        'relative z-10 mt-8 px-6 md:mt-10 md:px-8 lg:mt-12',
+        props.className
+      )}
+    >
+      <div className='mx-auto max-w-[1480px]'>
+        <div className='relative overflow-hidden [mask-image:linear-gradient(90deg,transparent,black_7%,black_93%,transparent)]'>
+          <div className='home-provider-marquee flex w-max gap-4 pr-4 md:gap-5 md:pr-5 lg:gap-6 lg:pr-6'>
+            {scrollingProviders.map((provider, index) => (
+              <article
+                key={`${provider.vendor}-${provider.model}-${index}`}
+                className='flex min-h-[4.75rem] w-[13rem] shrink-0 items-center justify-center gap-3 rounded-2xl border border-slate-200/70 bg-white/60 px-4 py-3 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.72),0_12px_34px_rgba(15,23,42,0.06)] backdrop-blur-xl transition-colors duration-200 hover:bg-white/80 md:w-[13.75rem] dark:border-white/10 dark:bg-white/[0.045] dark:hover:bg-white/[0.075]'
+              >
+                <span className='flex size-10 shrink-0 items-center justify-center rounded-xl border border-slate-200/65 bg-white/70 text-slate-900 dark:border-white/10 dark:bg-white/[0.06] dark:text-white'>
+                  {renderProviderIcon(provider.icon, 22)}
+                </span>
+                <span className='min-w-0 text-left'>
+                  <span className='block truncate text-sm font-semibold text-slate-950 dark:text-white'>
+                    {provider.model}
+                  </span>
+                  <span className='mt-0.5 block truncate text-xs font-medium text-slate-500 dark:text-slate-400'>
+                    {provider.vendor}
+                  </span>
+                </span>
+              </article>
+            ))}
+          </div>
+        </div>
+
+        <div className='mt-10 grid grid-cols-2 gap-5 md:mt-12 md:grid-cols-4 md:gap-6 lg:mt-14'>
           {stats.map((s) => (
-            <div
+            <article
               key={s.label}
-              className='rounded-2xl border border-slate-200/70 bg-white/46 px-4 py-6 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.8)] dark:border-white/10 dark:bg-black/20'
+              className='flex min-h-[6.25rem] flex-col items-center justify-center rounded-2xl border border-slate-200/70 bg-white/70 px-5 py-4 text-center shadow-[inset_0_1px_0_rgba(255,255,255,0.78),0_14px_42px_rgba(15,23,42,0.07)] backdrop-blur-xl transition-colors duration-200 hover:bg-white/86 md:min-h-[6.75rem] md:px-6 md:py-4 dark:border-white/10 dark:bg-white/[0.055] dark:hover:bg-white/[0.08]'
             >
-              <span className='text-2xl font-semibold tracking-tight text-slate-950 md:text-4xl dark:text-white'>
+              <span className='block text-2xl font-semibold tracking-tight text-slate-950 md:text-3xl dark:text-white'>
                 <Counter end={s.end} suffix={s.suffix} decimals={s.decimals} />
               </span>
-              <span className='mt-2 block text-xs leading-relaxed text-slate-500 dark:text-slate-400'>
+              <span className='mt-2 block text-xs leading-relaxed font-medium text-slate-500 dark:text-slate-400'>
                 {t(s.label)}
               </span>
-            </div>
+            </article>
           ))}
         </div>
       </div>
-    </div>
+    </section>
   )
 }
