@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	"strconv"
 	"strings"
 	"time"
@@ -39,6 +40,7 @@ func InitOptionMap() {
 	common.OptionMap["PasswordLoginEnabled"] = strconv.FormatBool(common.PasswordLoginEnabled)
 	common.OptionMap["PasswordRegisterEnabled"] = strconv.FormatBool(common.PasswordRegisterEnabled)
 	common.OptionMap["EmailVerificationEnabled"] = strconv.FormatBool(common.EmailVerificationEnabled)
+	common.OptionMap["PasswordResetCountdownSeconds"] = strconv.Itoa(common.PasswordResetCountdownSeconds)
 	common.OptionMap["GitHubOAuthEnabled"] = strconv.FormatBool(common.GitHubOAuthEnabled)
 	common.OptionMap["LinuxDOOAuthEnabled"] = strconv.FormatBool(common.LinuxDOOAuthEnabled)
 	common.OptionMap["TelegramOAuthEnabled"] = strconv.FormatBool(common.TelegramOAuthEnabled)
@@ -259,6 +261,13 @@ func UpdateOptionsBulk(values map[string]string) error {
 }
 
 func updateOptionMap(key string, value string) (err error) {
+	if key == "PasswordResetCountdownSeconds" {
+		seconds, parseErr := strconv.Atoi(value)
+		if parseErr != nil || seconds < 1 || seconds > 86400 {
+			return fmt.Errorf("重置邮件发送倒计时必须是 1 到 86400 秒之间的整数")
+		}
+	}
+
 	common.OptionMapRWMutex.Lock()
 	defer common.OptionMapRWMutex.Unlock()
 	common.OptionMap[key] = value
@@ -376,6 +385,8 @@ func updateOptionMap(key string, value string) (err error) {
 	switch key {
 	case "EmailDomainWhitelist":
 		common.EmailDomainWhitelist = strings.Split(value, ",")
+	case "PasswordResetCountdownSeconds":
+		common.PasswordResetCountdownSeconds, _ = strconv.Atoi(value)
 	case "SMTPServer":
 		common.SMTPServer = value
 	case "SMTPPort":

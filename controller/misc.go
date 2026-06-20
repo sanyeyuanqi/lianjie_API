@@ -2,6 +2,7 @@ package controller
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"strings"
@@ -49,30 +50,31 @@ func GetStatus(c *gin.Context) {
 	legalSetting := system_setting.GetLegalSettings()
 
 	data := gin.H{
-		"version":                     common.Version,
-		"start_time":                  common.StartTime,
-		"email_verification":          common.EmailVerificationEnabled,
-		"github_oauth":                common.GitHubOAuthEnabled,
-		"github_client_id":            common.GitHubClientId,
-		"discord_oauth":               system_setting.GetDiscordSettings().Enabled,
-		"discord_client_id":           system_setting.GetDiscordSettings().ClientId,
-		"linuxdo_oauth":               common.LinuxDOOAuthEnabled,
-		"linuxdo_client_id":           common.LinuxDOClientId,
-		"linuxdo_minimum_trust_level": common.LinuxDOMinimumTrustLevel,
-		"telegram_oauth":              common.TelegramOAuthEnabled,
-		"telegram_bot_name":           common.TelegramBotName,
-		"theme":                       system_setting.GetThemeSettings().Frontend,
-		"system_name":                 common.SystemName,
-		"logo":                        common.Logo,
-		"footer_html":                 common.Footer,
-		"wechat_qrcode":               common.WeChatAccountQRCodeImageURL,
-		"wechat_login":                common.WeChatAuthEnabled,
-		"server_address":              system_setting.ServerAddress,
-		"turnstile_check":             common.TurnstileCheckEnabled,
-		"turnstile_site_key":          common.TurnstileSiteKey,
-		"image_captcha_enabled":       common.ImageCaptchaEnabled,
-		"docs_link":                   operation_setting.GetGeneralSetting().DocsLink,
-		"quota_per_unit":              common.QuotaPerUnit,
+		"version":                          common.Version,
+		"start_time":                       common.StartTime,
+		"email_verification":               common.EmailVerificationEnabled,
+		"password_reset_countdown_seconds": common.PasswordResetCountdownSeconds,
+		"github_oauth":                     common.GitHubOAuthEnabled,
+		"github_client_id":                 common.GitHubClientId,
+		"discord_oauth":                    system_setting.GetDiscordSettings().Enabled,
+		"discord_client_id":                system_setting.GetDiscordSettings().ClientId,
+		"linuxdo_oauth":                    common.LinuxDOOAuthEnabled,
+		"linuxdo_client_id":                common.LinuxDOClientId,
+		"linuxdo_minimum_trust_level":      common.LinuxDOMinimumTrustLevel,
+		"telegram_oauth":                   common.TelegramOAuthEnabled,
+		"telegram_bot_name":                common.TelegramBotName,
+		"theme":                            system_setting.GetThemeSettings().Frontend,
+		"system_name":                      common.SystemName,
+		"logo":                             common.Logo,
+		"footer_html":                      common.Footer,
+		"wechat_qrcode":                    common.WeChatAccountQRCodeImageURL,
+		"wechat_login":                     common.WeChatAuthEnabled,
+		"server_address":                   system_setting.ServerAddress,
+		"turnstile_check":                  common.TurnstileCheckEnabled,
+		"turnstile_site_key":               common.TurnstileSiteKey,
+		"image_captcha_enabled":            common.ImageCaptchaEnabled,
+		"docs_link":                        operation_setting.GetGeneralSetting().DocsLink,
+		"quota_per_unit":                   common.QuotaPerUnit,
 		// 兼容旧前端：保留 display_in_currency，同时提供新的 quota_display_type
 		"display_in_currency":           operation_setting.IsCurrencyDisplay(),
 		"quota_display_type":            operation_setting.GetQuotaDisplayType(),
@@ -312,19 +314,29 @@ func SendPasswordResetEmail(c *gin.Context) {
 		})
 		return
 	}
-	if model.IsEmailAlreadyTaken(email) {
-		code := common.GenerateVerificationCode(0)
-		common.RegisterVerificationCodeWithKey(email, code, common.PasswordResetPurpose)
-		link := fmt.Sprintf("%s/user/reset?email=%s&token=%s", system_setting.ServerAddress, email, code)
-		subject := fmt.Sprintf("%s密码重置", common.SystemName)
-		content := fmt.Sprintf("<p>您好，你正在进行%s密码重置。</p>"+
-			"<p>点击 <a href='%s'>此处</a> 进行密码重置。</p>"+
-			"<p>如果链接无法点击，请尝试点击下面的链接或将其复制到浏览器中打开：<br> %s </p>"+
-			"<p>重置链接 %d 分钟内有效，如果不是本人操作，请忽略。</p>", common.SystemName, link, link, common.VerificationValidMinutes)
-		err := common.SendEmail(subject, email, content)
-		if err != nil {
-			logger.LogError(c.Request.Context(), fmt.Sprintf("failed to send password reset email to %s: %s", email, err.Error()))
-		}
+	emailErr := model.EnsureEmailAvailable(email, 0)
+	if emailErr == nil {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "该邮箱尚未注册",
+		})
+		return
+	}
+	if !errors.Is(emailErr, model.ErrEmailAlreadyTaken) {
+		common.ApiError(c, emailErr)
+		return
+	}
+
+	code := common.GenerateVerificationCode(0)
+	common.RegisterVerificationCodeWithKey(email, code, common.PasswordResetPurpose)
+	link := fmt.Sprintf("%s/user/reset?email=%s&token=%s", system_setting.ServerAddress, email, code)
+	subject := fmt.Sprintf("%s密码重置", common.SystemName)
+	content := fmt.Sprintf("<p>您好，你正在进行%s密码重置。</p>"+
+		"<p>点击 <a href='%s'>此处</a> 进行密码重置。</p>"+
+		"<p>如果链接无法点击，请尝试点击下面的链接或将其复制到浏览器中打开：<br> %s </p>"+
+		"<p>重置链接 %d 分钟内有效，如果不是本人操作，请忽略。</p>", common.SystemName, link, link, common.VerificationValidMinutes)
+	if err := common.SendEmail(subject, email, content); err != nil {
+		logger.LogError(c.Request.Context(), fmt.Sprintf("failed to send password reset email to %s: %s", email, err.Error()))
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"success": true,

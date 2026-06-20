@@ -106,6 +106,7 @@ export async function sendPasswordResetEmail(
 ): Promise<ApiResponse> {
   const res = await api.get('/api/reset_password', {
     params: { email, turnstile, captcha_token: captchaToken ?? '' },
+    skipBusinessError: true,
   })
   return res.data
 }

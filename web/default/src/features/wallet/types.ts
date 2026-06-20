@@ -264,6 +264,10 @@ export interface TopupRecord {
   id: number
   /** User ID */
   user_id: number
+  /** Username (admin billing history only) */
+  username?: string
+  /** User-facing display name (admin billing history only) */
+  display_name?: string
   /** Topup amount (quota) */
   amount: number
   /** Payment amount (actual money paid) */

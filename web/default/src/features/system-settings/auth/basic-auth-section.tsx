@@ -30,6 +30,7 @@ import {
   FormLabel,
   FormMessage,
 } from '@/components/ui/form'
+import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import {
   SettingsControlChildren,
@@ -48,6 +49,7 @@ const basicAuthSchema = z.object({
   PasswordLoginEnabled: z.boolean(),
   PasswordRegisterEnabled: z.boolean(),
   EmailVerificationEnabled: z.boolean(),
+  PasswordResetCountdownSeconds: z.number().int().min(1).max(86400),
   RegisterEnabled: z.boolean(),
   EmailDomainRestrictionEnabled: z.boolean(),
   EmailAliasRestrictionEnabled: z.boolean(),
@@ -83,7 +85,7 @@ export function BasicAuthSection({ defaultValues }: BasicAuthSectionProps) {
   useResetForm(form, formDefaults)
 
   const onSubmit = async (data: BasicAuthFormValues) => {
-    const updates: Array<{ key: string; value: string | boolean }> = []
+    const updates: Array<{ key: string; value: string | number | boolean }> = []
 
     Object.entries(data).forEach(([key, value]) => {
       if (key === 'EmailDomainWhitelist') {
@@ -107,7 +109,10 @@ export function BasicAuthSection({ defaultValues }: BasicAuthSectionProps) {
   }
 
   const authOptions: Array<{
-    name: keyof Omit<BasicAuthFormValues, 'EmailDomainWhitelist'>
+    name: keyof Omit<
+      BasicAuthFormValues,
+      'EmailDomainWhitelist' | 'PasswordResetCountdownSeconds'
+    >
     title: string
     description: string
   }> = [
@@ -176,6 +181,34 @@ export function BasicAuthSection({ defaultValues }: BasicAuthSectionProps) {
               ))}
             </SettingsControlChildren>
           </SettingsControlGroup>
+
+          <FormField
+            control={form.control}
+            name='PasswordResetCountdownSeconds'
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>{t('Password reset resend countdown')}</FormLabel>
+                <FormControl>
+                  <Input
+                    type='number'
+                    min={1}
+                    max={86400}
+                    step={1}
+                    {...field}
+                    onChange={(event) =>
+                      field.onChange(parseInt(event.target.value, 10) || 1)
+                    }
+                  />
+                </FormControl>
+                <FormDescription>
+                  {t(
+                    'Minimum interval before a password reset email can be sent again, in seconds.'
+                  )}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
 
           <FormField
             control={form.control}

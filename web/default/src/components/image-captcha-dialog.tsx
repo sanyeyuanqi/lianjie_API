@@ -33,6 +33,7 @@ interface ImageCaptchaDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   onVerified: (token: string) => void
+  showSuccessToast?: boolean
 }
 
 type CaptchaPoint = { x: number; y: number }
@@ -52,6 +53,7 @@ export function ImageCaptchaDialog({
   open,
   onOpenChange,
   onVerified,
+  showSuccessToast = true,
 }: ImageCaptchaDialogProps) {
   const { t } = useTranslation()
   const [captcha, setCaptcha] = useState<ImageCaptchaData | null>(null)
@@ -98,7 +100,9 @@ export function ImageCaptchaDialog({
       if (!response.success || !token) {
         throw new Error(response.message || t('CAPTCHA verification failed'))
       }
-      toast.success(t('Verification successful'))
+      if (showSuccessToast) {
+        toast.success(t('Verification successful'))
+      }
       onVerified(token)
       onOpenChange(false)
     } catch (error) {
@@ -161,9 +165,7 @@ export function ImageCaptchaDialog({
             onClick={() => void loadCaptcha()}
             aria-label={t('Refresh CAPTCHA')}
           >
-            <RotateCcw
-              className={loading ? 'size-4 animate-spin' : 'size-4'}
-            />
+            <RotateCcw className={loading ? 'size-4 animate-spin' : 'size-4'} />
           </Button>
         )}
       </div>

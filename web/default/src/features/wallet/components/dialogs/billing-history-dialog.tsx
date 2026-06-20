@@ -145,7 +145,7 @@ export function BillingHistoryDialog({
           </div>
 
           {/* Records List */}
-          <ScrollArea className='max-h-[min(54vh,520px)] pr-3 sm:pr-4'>
+          <ScrollArea className='h-[min(54vh,520px)] overflow-hidden pr-3 sm:pr-4'>
             {loading ? (
               <div className='space-y-3'>
                 {Array.from({ length: 5 }).map((_, i) => (
@@ -180,6 +180,7 @@ export function BillingHistoryDialog({
               <div className='space-y-3'>
                 {records.map((record) => {
                   const statusConfig = getStatusConfig(record.status)
+                  const userNickname = record.display_name || record.username
                   return (
                     <div
                       key={record.id}
@@ -205,12 +206,22 @@ export function BillingHistoryDialog({
                               )}
                             </Button>
                             {isAdmin && record.user_id != null && (
-                              <StatusBadge
-                                label={`${t('User ID')}: ${record.user_id}`}
-                                variant='neutral'
-                                size='sm'
-                                copyText={String(record.user_id)}
-                              />
+                              <>
+                                <StatusBadge
+                                  label={`${t('User ID')}: ${record.user_id}`}
+                                  variant='neutral'
+                                  size='sm'
+                                  copyText={String(record.user_id)}
+                                />
+                                {userNickname && (
+                                  <StatusBadge
+                                    label={`${t('Display Name')}: ${userNickname}`}
+                                    variant='neutral'
+                                    size='sm'
+                                    copyText={userNickname}
+                                  />
+                                )}
+                              </>
                             )}
                           </div>
                           <div className='text-muted-foreground text-xs'>

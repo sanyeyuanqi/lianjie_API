@@ -25,6 +25,7 @@ import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useCountdown } from '@/hooks/use-countdown'
+import { useStatus } from '@/hooks/use-status'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -43,8 +44,10 @@ import {
   PASSWORD_RESET_COUNTDOWN,
 } from '@/features/auth/constants'
 import { useTurnstile } from '@/features/auth/hooks/use-turnstile'
-import { isImageCaptchaEnabled } from '@/features/auth/lib/status'
-import { useStatus } from '@/hooks/use-status'
+import {
+  getStatusValue,
+  isImageCaptchaEnabled,
+} from '@/features/auth/lib/status'
 
 export function ForgotPasswordForm({
   className,
@@ -55,6 +58,19 @@ export function ForgotPasswordForm({
   const [isImageCaptchaOpen, setIsImageCaptchaOpen] = useState(false)
   const [pendingEmail, setPendingEmail] = useState('')
   const { status } = useStatus()
+  const configuredCountdown = Number(
+    getStatusValue(
+      status,
+      'password_reset_countdown_seconds',
+      PASSWORD_RESET_COUNTDOWN
+    )
+  )
+  const passwordResetCountdown =
+    Number.isInteger(configuredCountdown) &&
+    configuredCountdown >= 1 &&
+    configuredCountdown <= 86400
+      ? configuredCountdown
+      : PASSWORD_RESET_COUNTDOWN
 
   const {
     isTurnstileEnabled,
@@ -67,7 +83,7 @@ export function ForgotPasswordForm({
     secondsLeft,
     isActive,
     start: startCountdown,
-  } = useCountdown({ initialSeconds: PASSWORD_RESET_COUNTDOWN })
+  } = useCountdown({ initialSeconds: passwordResetCountdown })
 
   const form = useForm<z.infer<typeof forgotPasswordFormSchema>>({
     resolver: zodResolver(forgotPasswordFormSchema),
@@ -95,7 +111,8 @@ export function ForgotPasswordForm({
         startCountdown()
         toast.success(t('Reset email sent, please check your inbox'))
       } else {
-        toast.error(res?.message || t('Failed to send reset email'))
+        const message = res?.message || t('Failed to send reset email')
+        toast.error(message)
       }
     } catch (_error) {
       // Errors are handled by global interceptor
@@ -170,6 +187,7 @@ export function ForgotPasswordForm({
 
       <ImageCaptchaDialog
         open={isImageCaptchaOpen}
+        showSuccessToast={false}
         onOpenChange={(open) => {
           setIsImageCaptchaOpen(open)
           if (!open) setPendingEmail('')

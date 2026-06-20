@@ -1,4 +1,11 @@
 {
+  "CAPTCHA requests are too frequent. Please try again later.": "CAPTCHA requests are too frequent. Please try again later.",
+  "Failed to load CAPTCHA": "Failed to load CAPTCHA",
+  "Icons to click in order": "Icons to click in order",
+  "Limit how often one IP can load or verify image CAPTCHA challenges": "Limit how often one IP can load or verify image CAPTCHA challenges",
+  "Limit login, registration, password reset, OAuth, and other sensitive API requests by IP": "Limit login, registration, password reset, OAuth, and other sensitive API requests by IP",
+  "Require a self-hosted click CAPTCHA before password sign-in or registration": "Require a self-hosted click CAPTCHA before password sign-in or registration",
+  "Too many requests. Please try again later.": "Too many requests. Please try again later.",
   "0 means unlimited. The value is converted to quota units when saved.": "0 means unlimited. The value is converted to quota units when saved.",
   "AI creation and chat workspace.": "AI creation and chat workspace.",
   "Fill in the required fields. Advanced limits are optional.": "Fill in the required fields. Advanced limits are optional.",
