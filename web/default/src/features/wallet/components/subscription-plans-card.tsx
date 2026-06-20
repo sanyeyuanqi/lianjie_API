@@ -40,17 +40,18 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import {
-  dotColorMap,
-  textColorMap,
-} from '@/components/status-badge'
+import { dotColorMap, textColorMap } from '@/components/status-badge'
 import {
   getPublicPlans,
   getSelfSubscriptionFull,
   updateBillingPreference,
 } from '@/features/subscriptions/api'
 import { SubscriptionPurchaseDialog } from '@/features/subscriptions/components/dialogs/subscription-purchase-dialog'
-import { formatDuration, formatResetPeriod } from '@/features/subscriptions/lib'
+import {
+  formatDuration,
+  formatResetPeriod,
+  formatTimestamp,
+} from '@/features/subscriptions/lib'
 import type {
   PlanRecord,
   UserSubscriptionRecord,
@@ -95,8 +96,9 @@ export function SubscriptionPlansCard({
   onPurchaseSuccess,
 }: SubscriptionPlansCardProps) {
   const { t } = useTranslation()
-  const [planGridElement, setPlanGridElement] =
-    useState<HTMLDivElement | null>(null)
+  const [planGridElement, setPlanGridElement] = useState<HTMLDivElement | null>(
+    null
+  )
   const [planGridColumns, setPlanGridColumns] = useState(1)
   const planGridClassName = 'grid grid-cols-1 gap-3 2xl:gap-4'
   const planGridStyle = useMemo<CSSProperties>(
@@ -211,6 +213,16 @@ export function SubscriptionPlansCard({
     }
     return map
   }, [allSubscriptions])
+
+  const planMap = useMemo(() => {
+    const map = new Map<number, PlanRecord['plan']>()
+    for (const item of plans) {
+      if (item?.plan?.id) {
+        map.set(item.plan.id, item.plan)
+      }
+    }
+    return map
+  }, [plans])
 
   useEffect(() => {
     onAvailabilityChange?.(isAvailable)
@@ -390,110 +402,205 @@ export function SubscriptionPlansCard({
           </div>
         </div>
 
-        {plans.length > 0 ? (
-          <div
-            ref={setPlanGridElement}
-            className={planGridClassName}
-            style={planGridStyle}
-          >
-            {plans.map((p) => {
-              const plan = p?.plan
-              if (!plan) return null
-              const totalAmount = Number(plan.total_amount || 0)
-              const resetQuota = formatQuota(totalAmount)
-              const resetQuotaDisplay = resetQuota.startsWith('$')
-                ? `${resetQuota.slice(1)}$`
-                : resetQuota
-              const price = Number(plan.price_amount || 0).toFixed(2)
-              const limit = Number(plan.max_purchase_per_user || 0)
-              const count = planPurchaseCountMap.get(plan.id) || 0
-              const reached = limit > 0 && count >= limit
-
-              const benefits = [
-                `${t('Validity Period')}: ${formatDuration(plan, t)}`,
-                formatResetPeriod(plan, t) !== t('No Reset')
-                  ? `${t('Quota Reset')}: ${formatResetPeriod(plan, t)}`
-                  : null,
-                totalAmount > 0
-                  ? `${t('Reset Quota')}: ${resetQuotaDisplay}`
-                  : `${t('Reset Quota')}: ${t('Unlimited')}`,
-                limit > 0 ? `${t('Purchase Limit')}: ${limit}` : null,
-                plan.upgrade_group
-                  ? `${t('Upgrade Group')}: ${plan.upgrade_group}`
-                  : null,
-              ].filter(Boolean) as string[]
-
-              return (
-                <Card
-                  key={plan.id}
-                  className='bg-background/95 gap-0 overflow-hidden rounded-xl border py-0 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg dark:hover:border-white/20'
+        <div className='space-y-5'>
+          {hasActive && (
+            <section className='space-y-3'>
+              <div className='flex items-center justify-between gap-3'>
+                <h4 className='text-sm font-semibold'>
+                  {t('My Subscription Plans')}
+                </h4>
+                <span
+                  className={cn('text-xs font-medium', textColorMap.success)}
                 >
-                  <CardContent className='flex h-full flex-col p-4 sm:p-5'>
-                    <div className='mb-3 flex items-start justify-between gap-3 border-b pb-3'>
-                      <div className='min-w-0'>
-                        <h4 className='truncate font-semibold'>
-                          {plan.title || t('Subscription Plans')}
-                        </h4>
-                        {plan.subtitle && (
-                          <p className='text-muted-foreground truncate text-xs'>
-                            {plan.subtitle}
-                          </p>
-                        )}
-                      </div>
-                      <div className='flex shrink-0 items-center gap-2'>
-                        <span className='text-primary text-xl font-bold tabular-nums sm:text-2xl'>
-                          {price}
-                        </span>
-                      </div>
-                    </div>
+                  {activeSubscriptions.length} {t('active')}
+                </span>
+              </div>
 
-                    <div className='flex-1 space-y-2 py-3'>
-                      {benefits.map((label) => (
-                        <div
-                          key={label}
-                          className='text-muted-foreground flex items-center gap-2 text-xs leading-5'
-                        >
-                          <Check className='text-primary h-3.5 w-3.5 shrink-0' />
-                          <span>{label}</span>
+              <div
+                ref={setPlanGridElement}
+                className={planGridClassName}
+                style={planGridStyle}
+              >
+                {activeSubscriptions.map((record) => {
+                  const sub = record.subscription
+                  const plan = record.plan || planMap.get(sub.plan_id)
+                  const total = Number(sub.amount_total || 0)
+                  const used = Number(sub.amount_used || 0)
+                  const remaining = Math.max(total - used, 0)
+                  const quotaDisplay =
+                    total > 0 ? formatQuota(remaining) : t('Unlimited')
+
+                  const details = [
+                    `${t('Status')}: ${t('Active')}`,
+                    `${t('End')}: ${formatTimestamp(sub.end_time)}`,
+                    sub.next_reset_time
+                      ? `${t('Next reset')}: ${formatTimestamp(sub.next_reset_time)}`
+                      : null,
+                    total > 0 ? `${t('Used')}: ${formatQuota(used)}` : null,
+                    sub.source ? `${t('Source')}: ${sub.source}` : null,
+                  ].filter(Boolean) as string[]
+
+                  return (
+                    <Card
+                      key={sub.id}
+                      className='border-primary/45 bg-primary/5 gap-0 overflow-hidden rounded-xl py-0 shadow-sm'
+                    >
+                      <CardContent className='flex h-full flex-col p-4 sm:p-5'>
+                        <div className='mb-3 flex items-start justify-between gap-3 border-b pb-3'>
+                          <div className='min-w-0'>
+                            <h4 className='truncate font-semibold'>
+                              {plan?.title || `#${sub.plan_id}`}
+                            </h4>
+                            {plan?.subtitle && (
+                              <p className='text-muted-foreground truncate text-xs'>
+                                {plan.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className='shrink-0 text-right'>
+                            <div className='text-muted-foreground text-[11px] font-medium'>
+                              {t('Remaining')}
+                            </div>
+                            <div className='text-primary text-xl font-bold tabular-nums sm:text-2xl'>
+                              {quotaDisplay}
+                            </div>
+                          </div>
                         </div>
-                      ))}
-                    </div>
 
-                    <Separator className='mb-3' />
+                        <div className='flex-1 space-y-2 py-3'>
+                          {details.map((label) => (
+                            <div
+                              key={label}
+                              className='text-muted-foreground flex items-center gap-2 text-xs leading-5'
+                            >
+                              <Check className='text-primary h-3.5 w-3.5 shrink-0' />
+                              <span>{label}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            </section>
+          )}
 
-                    {reached ? (
-                      <Tooltip>
-                        <TooltipTrigger render={<div />}>
-                          <Button variant='outline' className='w-full' disabled>
-                            {t('Limit Reached')}
+          <section className='space-y-3'>
+            {hasActive && (
+              <h4 className='text-sm font-semibold'>{t('Available Plans')}</h4>
+            )}
+
+            {plans.length > 0 ? (
+              <div
+                ref={setPlanGridElement}
+                className={planGridClassName}
+                style={planGridStyle}
+              >
+                {plans.map((p) => {
+                  const plan = p?.plan
+                  if (!plan) return null
+                  const totalAmount = Number(plan.total_amount || 0)
+                  const resetQuota = formatQuota(totalAmount)
+                  const resetQuotaDisplay = resetQuota.startsWith('$')
+                    ? `${resetQuota.slice(1)}$`
+                    : resetQuota
+                  const price = Number(plan.price_amount || 0).toFixed(2)
+                  const limit = Number(plan.max_purchase_per_user || 0)
+                  const count = planPurchaseCountMap.get(plan.id) || 0
+                  const reached = limit > 0 && count >= limit
+
+                  const benefits = [
+                    `${t('Validity Period')}: ${formatDuration(plan, t)}`,
+                    formatResetPeriod(plan, t) !== t('No Reset')
+                      ? `${t('Quota Reset')}: ${formatResetPeriod(plan, t)}`
+                      : null,
+                    totalAmount > 0
+                      ? `${t('Reset Quota')}: ${resetQuotaDisplay}`
+                      : `${t('Reset Quota')}: ${t('Unlimited')}`,
+                    limit > 0 ? `${t('Purchase Limit')}: ${limit}` : null,
+                    plan.upgrade_group
+                      ? `${t('Upgrade Group')}: ${plan.upgrade_group}`
+                      : null,
+                  ].filter(Boolean) as string[]
+
+                  return (
+                    <Card
+                      key={plan.id}
+                      className='bg-background/95 gap-0 overflow-hidden rounded-xl border py-0 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg dark:hover:border-white/20'
+                    >
+                      <CardContent className='flex h-full flex-col p-4 sm:p-5'>
+                        <div className='mb-3 flex items-start justify-between gap-3 border-b pb-3'>
+                          <div className='min-w-0'>
+                            <h4 className='truncate font-semibold'>
+                              {plan.title || t('Subscription Plans')}
+                            </h4>
+                            {plan.subtitle && (
+                              <p className='text-muted-foreground truncate text-xs'>
+                                {plan.subtitle}
+                              </p>
+                            )}
+                          </div>
+                          <div className='flex shrink-0 items-center gap-2'>
+                            <span className='text-primary text-xl font-bold tabular-nums sm:text-2xl'>
+                              {price}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className='flex-1 space-y-2 py-3'>
+                          {benefits.map((label) => (
+                            <div
+                              key={label}
+                              className='text-muted-foreground flex items-center gap-2 text-xs leading-5'
+                            >
+                              <Check className='text-primary h-3.5 w-3.5 shrink-0' />
+                              <span>{label}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        <Separator className='mb-3' />
+
+                        {reached ? (
+                          <Tooltip>
+                            <TooltipTrigger render={<div />}>
+                              <Button
+                                variant='outline'
+                                className='w-full'
+                                disabled
+                              >
+                                {t('Limit Reached')}
+                              </Button>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              {t('Purchase limit reached')} ({count}/{limit})
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          <Button
+                            variant='outline'
+                            className='w-full'
+                            onClick={() => {
+                              setSelectedPlan(p)
+                              setPurchaseOpen(true)
+                            }}
+                          >
+                            {t('Subscribe Now')}
                           </Button>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          {t('Purchase limit reached')} ({count}/{limit})
-                        </TooltipContent>
-                      </Tooltip>
-                    ) : (
-                      <Button
-                        variant='outline'
-                        className='w-full'
-                        onClick={() => {
-                          setSelectedPlan(p)
-                          setPurchaseOpen(true)
-                        }}
-                      >
-                        {t('Subscribe Now')}
-                      </Button>
-                    )}
-                  </CardContent>
-                </Card>
-              )
-            })}
-          </div>
-        ) : (
-          <p className='text-muted-foreground py-4 text-sm'>
-            {t('No plans available')}
-          </p>
-        )}
+                        )}
+                      </CardContent>
+                    </Card>
+                  )
+                })}
+              </div>
+            ) : (
+              <p className='text-muted-foreground py-4 text-sm'>
+                {t('No plans available')}
+              </p>
+            )}
+          </section>
+        </div>
       </div>
 
       <SubscriptionPurchaseDialog
