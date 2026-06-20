@@ -16,23 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useMemo, useState, useRef } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { VChart } from '@visactor/react-vchart'
 import { PieChart as PieChartIcon } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useThemeRadiusPx } from '@/lib/theme-radius'
-import type { TimeGranularity } from '@/lib/time'
 import { VCHART_OPTION } from '@/lib/vchart'
-import { useThemeCustomization } from '@/context/theme-customization-provider'
 import { useTheme } from '@/context/theme-provider'
-import {
-  DEFAULT_TIME_GRANULARITY,
-  MODEL_ANALYTICS_CHART_OPTIONS,
-} from '@/features/dashboard/constants'
-import { processChartData } from '@/features/dashboard/lib'
+import { MODEL_ANALYTICS_CHART_OPTIONS } from '@/features/dashboard/constants'
 import type {
   ModelAnalyticsChartTab,
-  QuotaDataItem,
+  ProcessedChartData,
 } from '@/features/dashboard/types'
 
 let themeManagerPromise: Promise<
@@ -48,20 +41,15 @@ const CHART_SPEC_KEYS: Record<ModelAnalyticsChartTab, ChartSpecKey> = {
 }
 
 interface ModelChartsProps {
-  data: QuotaDataItem[]
+  chartData: ProcessedChartData
+  dataLength: number
   loading?: boolean
-  timeGranularity?: TimeGranularity
   defaultChartTab?: ModelAnalyticsChartTab
 }
 
 export function ModelCharts(props: ModelChartsProps) {
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
-  const { customization } = useThemeCustomization()
-  const chartRadius = useThemeRadiusPx(
-    '--radius-md',
-    `${customization.preset}:${customization.radius}`
-  )
   const [activeTab, setActiveTab] = useState<ModelAnalyticsChartTab>(
     props.defaultChartTab ?? 'trend'
   )
@@ -69,8 +57,6 @@ export function ModelCharts(props: ModelChartsProps) {
   const themeManagerRef = useRef<
     (typeof import('@visactor/vchart'))['ThemeManager'] | null
   >(null)
-  const timeGranularity = props.timeGranularity ?? DEFAULT_TIME_GRANULARITY
-
   useEffect(() => {
     if (props.defaultChartTab) setActiveTab(props.defaultChartTab)
   }, [props.defaultChartTab])
@@ -94,24 +80,7 @@ export function ModelCharts(props: ModelChartsProps) {
     updateTheme()
   }, [resolvedTheme])
 
-  const chartData = useMemo(
-    () =>
-      processChartData(
-        props.loading ? [] : props.data,
-        timeGranularity,
-        t,
-        customization.preset,
-        chartRadius
-      ),
-    [
-      props.data,
-      props.loading,
-      timeGranularity,
-      t,
-      customization.preset,
-      chartRadius,
-    ]
-  )
+  const chartData = props.chartData
 
   const spec = chartData[CHART_SPEC_KEYS[activeTab]]
   const specType = typeof spec?.type === 'string' ? spec.type : activeTab
@@ -119,9 +88,8 @@ export function ModelCharts(props: ModelChartsProps) {
     activeTab,
     specType,
     props.loading ? 'loading' : 'ready',
-    props.data.length,
+    props.dataLength,
     resolvedTheme,
-    customization.preset,
   ].join('-')
 
   return (

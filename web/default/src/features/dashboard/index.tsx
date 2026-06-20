@@ -21,6 +21,8 @@ import { getRouteApi, useNavigate } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
+import { useThemeRadiusPx } from '@/lib/theme-radius'
+import { useThemeCustomization } from '@/context/theme-customization-provider'
 import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { SectionPageLayout } from '@/components/layout'
 import { FadeIn } from '@/components/page-transition'
@@ -36,6 +38,7 @@ import { DEFAULT_TIME_GRANULARITY } from './constants'
 import {
   buildDefaultDashboardFilters,
   getSavedChartPreferences,
+  processChartData,
   saveChartPreferences,
 } from './lib'
 import {
@@ -67,6 +70,11 @@ export function Dashboard() {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const params = route.useParams()
+  const { customization } = useThemeCustomization()
+  const chartRadius = useThemeRadiusPx(
+    '--radius-md',
+    `${customization.preset}:${customization.radius}`
+  )
   const userRole = useAuthStore((state) => state.auth.user?.role)
   const activeSection = (params.section ??
     DASHBOARD_DEFAULT_SECTION) as DashboardSectionId
@@ -138,6 +146,29 @@ export function Dashboard() {
         />
       </>
     ) : null
+  const modelTimeGranularity =
+    modelFilters.time_granularity || DEFAULT_TIME_GRANULARITY
+  const modelChartData = useMemo(
+    () =>
+      activeSection === 'models'
+        ? processChartData(
+            dataLoading ? [] : modelData,
+            modelTimeGranularity,
+            t,
+            customization.preset,
+            chartRadius
+          )
+        : null,
+    [
+      activeSection,
+      dataLoading,
+      modelData,
+      modelTimeGranularity,
+      t,
+      customization.preset,
+      chartRadius,
+    ]
+  )
 
   return (
     <SectionPageLayout>
@@ -180,28 +211,28 @@ export function Dashboard() {
                   <PerformanceOverview />
                 </FadeIn>
               )}
-              <FadeIn delay={0.1}>
-                <ConsumptionDistributionChart
-                  data={modelData}
-                  loading={dataLoading}
-                  defaultChartType={
-                    chartPreferences.consumptionDistributionChart
-                  }
-                  timeGranularity={
-                    modelFilters.time_granularity || DEFAULT_TIME_GRANULARITY
-                  }
-                />
-              </FadeIn>
-              <FadeIn delay={0.15}>
-                <ModelCharts
-                  data={modelData}
-                  loading={dataLoading}
-                  defaultChartTab={chartPreferences.modelAnalyticsChart}
-                  timeGranularity={
-                    modelFilters.time_granularity || DEFAULT_TIME_GRANULARITY
-                  }
-                />
-              </FadeIn>
+              {modelChartData && (
+                <>
+                  <FadeIn delay={0.1}>
+                    <ConsumptionDistributionChart
+                      chartData={modelChartData}
+                      dataLength={modelData.length}
+                      loading={dataLoading}
+                      defaultChartType={
+                        chartPreferences.consumptionDistributionChart
+                      }
+                    />
+                  </FadeIn>
+                  <FadeIn delay={0.15}>
+                    <ModelCharts
+                      chartData={modelChartData}
+                      dataLength={modelData.length}
+                      loading={dataLoading}
+                      defaultChartTab={chartPreferences.modelAnalyticsChart}
+                    />
+                  </FadeIn>
+                </>
+              )}
             </>
           )}
           {activeSection === 'users' && (

@@ -107,6 +107,19 @@ function UsageLogsContent() {
     activeCategory === 'common' ? SECTION_META.common : SECTION_META.task
   const showTaskSwitcher =
     activeCategory !== 'common' && visibleSections.length > 1
+  const affinityDialogTarget = useMemo(
+    () =>
+      affinityTarget
+        ? {
+            rule_name: affinityTarget.rule_name || '',
+            using_group:
+              affinityTarget.using_group || affinityTarget.selected_group || '',
+            key_hint: affinityTarget.key_hint || '',
+            key_fp: affinityTarget.key_fp || '',
+          }
+        : null,
+    [affinityTarget]
+  )
 
   return (
     <>
@@ -134,29 +147,21 @@ function UsageLogsContent() {
         </SectionPageLayout.Content>
       </SectionPageLayout>
 
-      <UserInfoDialog
-        userId={selectedUserId}
-        open={userInfoDialogOpen}
-        onOpenChange={setUserInfoDialogOpen}
-      />
+      {userInfoDialogOpen && (
+        <UserInfoDialog
+          userId={selectedUserId}
+          open={userInfoDialogOpen}
+          onOpenChange={setUserInfoDialogOpen}
+        />
+      )}
 
-      <CacheStatsDialog
-        open={affinityDialogOpen}
-        onOpenChange={setAffinityDialogOpen}
-        target={
-          affinityTarget
-            ? {
-                rule_name: affinityTarget.rule_name || '',
-                using_group:
-                  affinityTarget.using_group ||
-                  affinityTarget.selected_group ||
-                  '',
-                key_hint: affinityTarget.key_hint || '',
-                key_fp: affinityTarget.key_fp || '',
-              }
-            : null
-        }
-      />
+      {affinityDialogOpen && (
+        <CacheStatsDialog
+          open={affinityDialogOpen}
+          onOpenChange={setAffinityDialogOpen}
+          target={affinityDialogTarget}
+        />
+      )}
     </>
   )
 }

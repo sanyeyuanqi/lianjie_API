@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
@@ -25,10 +26,12 @@ import { useIsAdmin } from '@/hooks/use-admin'
 import { Skeleton } from '@/components/ui/skeleton'
 import { getLogStats, getUserLogStats } from '../api'
 import { DEFAULT_LOG_STATS } from '../constants'
+import { normalizeQuerySnapshot } from '../lib/query-snapshot'
 import { buildApiParams } from '../lib/utils'
 import { useUsageLogsContext } from './usage-logs-provider'
 
 const route = getRouteApi('/_authenticated/usage-logs/$section')
+const USAGE_LOGS_STATS_STALE_TIME = 10_000
 
 function StatBadge(props: {
   label: string
@@ -51,9 +54,13 @@ export function CommonLogsStats() {
   const isAdmin = useIsAdmin()
   const searchParams = route.useSearch()
   const { sensitiveVisible } = useUsageLogsContext()
+  const querySnapshot = useMemo(
+    () => normalizeQuerySnapshot(searchParams),
+    [searchParams]
+  )
 
   const { data: stats, isLoading } = useQuery({
-    queryKey: ['usage-logs-stats', isAdmin, searchParams],
+    queryKey: ['usage-logs-stats', isAdmin, querySnapshot],
     queryFn: async () => {
       const params = buildApiParams({
         page: 1,
@@ -71,6 +78,8 @@ export function CommonLogsStats() {
         ? result.data || DEFAULT_LOG_STATS
         : DEFAULT_LOG_STATS
     },
+    staleTime: USAGE_LOGS_STATS_STALE_TIME,
+    refetchOnWindowFocus: false,
     placeholderData: (previousData) => previousData,
   })
 

@@ -16,23 +16,16 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { VChart } from '@visactor/react-vchart'
 import { AreaChart, BarChart3, WalletCards } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
-import { useThemeRadiusPx } from '@/lib/theme-radius'
-import type { TimeGranularity } from '@/lib/time'
 import { VCHART_OPTION } from '@/lib/vchart'
-import { useThemeCustomization } from '@/context/theme-customization-provider'
 import { useTheme } from '@/context/theme-provider'
-import {
-  CONSUMPTION_DISTRIBUTION_CHART_OPTIONS,
-  DEFAULT_TIME_GRANULARITY,
-} from '@/features/dashboard/constants'
-import { processChartData } from '@/features/dashboard/lib'
+import { CONSUMPTION_DISTRIBUTION_CHART_OPTIONS } from '@/features/dashboard/constants'
 import type {
   ConsumptionDistributionChartType,
-  QuotaDataItem,
+  ProcessedChartData,
 } from '@/features/dashboard/types'
 
 let themeManagerPromise: Promise<
@@ -40,9 +33,9 @@ let themeManagerPromise: Promise<
 > | null = null
 
 interface ConsumptionDistributionChartProps {
-  data: QuotaDataItem[]
+  chartData: ProcessedChartData
+  dataLength: number
   loading?: boolean
-  timeGranularity?: TimeGranularity
   defaultChartType?: ConsumptionDistributionChartType
 }
 
@@ -59,11 +52,6 @@ export function ConsumptionDistributionChart(
 ) {
   const { t } = useTranslation()
   const { resolvedTheme } = useTheme()
-  const { customization } = useThemeCustomization()
-  const chartRadius = useThemeRadiusPx(
-    '--radius-md',
-    `${customization.preset}:${customization.radius}`
-  )
   const [chartType, setChartType] = useState<ConsumptionDistributionChartType>(
     props.defaultChartType ?? 'bar'
   )
@@ -71,8 +59,6 @@ export function ConsumptionDistributionChart(
   const themeManagerRef = useRef<
     (typeof import('@visactor/vchart'))['ThemeManager'] | null
   >(null)
-  const timeGranularity = props.timeGranularity ?? DEFAULT_TIME_GRANULARITY
-
   useEffect(() => {
     if (props.defaultChartType) setChartType(props.defaultChartType)
   }, [props.defaultChartType])
@@ -96,33 +82,15 @@ export function ConsumptionDistributionChart(
     updateTheme()
   }, [resolvedTheme])
 
-  const chartData = useMemo(
-    () =>
-      processChartData(
-        props.loading ? [] : props.data,
-        timeGranularity,
-        t,
-        customization.preset,
-        chartRadius
-      ),
-    [
-      props.data,
-      props.loading,
-      timeGranularity,
-      t,
-      customization.preset,
-      chartRadius,
-    ]
-  )
+  const chartData = props.chartData
   const spec = chartType === 'bar' ? chartData.spec_line : chartData.spec_area
   const specType = typeof spec?.type === 'string' ? spec.type : chartType
   const chartKey = [
     chartType,
     specType,
     props.loading ? 'loading' : 'ready',
-    props.data.length,
+    props.dataLength,
     resolvedTheme,
-    customization.preset,
   ].join('-')
 
   return (

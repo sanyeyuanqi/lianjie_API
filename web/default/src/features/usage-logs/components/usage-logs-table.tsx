@@ -16,6 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { useMemo } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { getRouteApi } from '@tanstack/react-router'
 import { type ColumnDef } from '@tanstack/react-table'
@@ -36,6 +37,7 @@ import {
   LOG_TYPE_ENUM,
 } from '../constants'
 import { useColumnsByCategory } from '../lib/columns'
+import { normalizeQuerySnapshot } from '../lib/query-snapshot'
 import { fetchLogsByCategory } from '../lib/utils'
 import type { LogCategory } from '../types'
 import { CommonLogsFilterBar } from './common-logs-filter-bar'
@@ -48,6 +50,7 @@ const logTypeRowTint: Record<number, string> = {
   [LOG_TYPE_ENUM.ERROR]: 'bg-rose-50/40 dark:bg-rose-950/20',
   [LOG_TYPE_ENUM.REFUND]: 'bg-blue-50/30 dark:bg-blue-950/15',
 }
+const USAGE_LOGS_STALE_TIME = 10_000
 
 function deserializeLogTypeFilter(value: unknown): unknown[] {
   const values = Array.isArray(value) ? value : value ? [value] : []
@@ -71,7 +74,7 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
     onPaginationChange,
     ensurePageInRange,
   } = useTableUrlState({
-    search: route.useSearch(),
+    search: searchParams,
     navigate: route.useNavigate(),
     pagination: { defaultPage: 1, defaultPageSize: isMobile ? 20 : 100 },
     globalFilter: { enabled: false },
@@ -101,6 +104,14 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
         : []),
     ],
   })
+  const querySnapshot = useMemo(
+    () =>
+      normalizeQuerySnapshot({
+        searchParams,
+        columnFilters,
+      }),
+    [searchParams, columnFilters]
+  )
 
   const { data, isLoading, isFetching } = useQuery({
     queryKey: [
@@ -109,9 +120,7 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
       isAdmin,
       pagination.pageIndex + 1,
       pagination.pageSize,
-      columnFilters,
-      searchParams,
-      t,
+      querySnapshot,
     ],
     queryFn: async () => {
       const result = await fetchLogsByCategory({
@@ -130,6 +139,8 @@ export function UsageLogsTable({ logCategory }: UsageLogsTableProps) {
 
       return result.data || DEFAULT_LOGS_DATA
     },
+    staleTime: USAGE_LOGS_STALE_TIME,
+    refetchOnWindowFocus: false,
     placeholderData: (previousData, previousQuery) => {
       if (previousQuery?.queryKey[1] === logCategory) {
         return previousData

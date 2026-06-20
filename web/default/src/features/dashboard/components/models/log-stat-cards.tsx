@@ -16,7 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo } from 'react'
+import { useQuery } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/auth-store'
 import { formatNumber, formatQuota } from '@/lib/format'
 import { computeTimeRange } from '@/lib/time'
@@ -38,77 +39,77 @@ interface LogStatCardsProps {
   onDataUpdate?: (data: QuotaDataItem[], loading: boolean) => void
 }
 
+const MODEL_QUOTA_STALE_TIME = 60_000
+
 export function LogStatCards(props: LogStatCardsProps) {
   const statCardsConfig = useModelStatCardsConfig()
   const user = useAuthStore((state) => state.auth.user)
   const isAdmin = !!(user?.role && user.role >= 10)
-  const [stats, setStats] = useState<{
-    totalQuota: number
-    totalCount: number
-    totalTokens: number
-  } | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-  const [timeRangeMinutes, setTimeRangeMinutes] = useState(0)
 
   const { filters, onDataUpdate } = props
+  const timeRange = useMemo(
+    () =>
+      computeTimeRange(
+        getDefaultDays(filters?.time_granularity),
+        filters?.start_timestamp,
+        filters?.end_timestamp
+      ),
+    [
+      filters?.time_granularity,
+      filters?.start_timestamp,
+      filters?.end_timestamp,
+    ]
+  )
+  const queryParams = useMemo(
+    () => buildQueryParams(timeRange, filters),
+    [timeRange, filters]
+  )
+  const timeRangeMinutes = useMemo(
+    () => (timeRange.end_timestamp - timeRange.start_timestamp) / 60,
+    [timeRange]
+  )
+
+  const quotaQuery = useQuery({
+    queryKey: ['dashboard', 'model-quota', isAdmin, queryParams],
+    queryFn: async () => {
+      const res = await getUserQuotaDates(queryParams, isAdmin)
+      return res?.data || []
+    },
+    staleTime: MODEL_QUOTA_STALE_TIME,
+    refetchOnWindowFocus: false,
+  })
+
+  const data = quotaQuery.data ?? []
+  const stats = useMemo(() => calculateDashboardStats(data), [data])
+  const loading = quotaQuery.isLoading
+  const error = quotaQuery.isError
 
   useEffect(() => {
-    const abortController = new AbortController()
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setLoading(true)
+    onDataUpdate?.(data, quotaQuery.isFetching && data.length === 0)
+  }, [data, quotaQuery.isFetching, onDataUpdate])
 
-    setError(false)
-    onDataUpdate?.([], true)
+  const adaptedStats = useMemo(
+    () => ({
+      rpm: stats?.totalCount ?? 0,
+      quota: stats?.totalQuota ?? 0,
+      tpm: stats?.totalTokens ?? 0,
+    }),
+    [stats]
+  )
 
-    const timeRange = computeTimeRange(
-      getDefaultDays(filters?.time_granularity),
-      filters?.start_timestamp,
-      filters?.end_timestamp
-    )
-    const timeDiff = (timeRange.end_timestamp - timeRange.start_timestamp) / 60
-    setTimeRangeMinutes(timeDiff)
-
-    getUserQuotaDates(buildQueryParams(timeRange, filters), isAdmin)
-      .then((res) => {
-        if (abortController.signal.aborted) return
-        const data = res?.data || []
-        setStats(calculateDashboardStats(data))
-        onDataUpdate?.(data, false)
-      })
-      .catch(() => {
-        if (abortController.signal.aborted) return
-        setStats(null)
-        setError(true)
-        onDataUpdate?.([], false)
-      })
-      .finally(() => {
-        if (!abortController.signal.aborted) {
-          setLoading(false)
-        }
-      })
-
-    return () => {
-      abortController.abort()
-    }
-  }, [filters, isAdmin, onDataUpdate])
-
-  const adaptedStats = {
-    rpm: stats?.totalCount ?? 0,
-    quota: stats?.totalQuota ?? 0,
-    tpm: stats?.totalTokens ?? 0,
-  }
-
-  const items = statCardsConfig.map((config) => ({
-    title: config.title,
-    value:
-      config.key === 'quota'
-        ? formatQuota(config.getValue(adaptedStats, timeRangeMinutes))
-        : formatNumber(config.getValue(adaptedStats, timeRangeMinutes)),
-    desc: config.description,
-    icon: config.icon,
-  }))
+  const items = useMemo(
+    () =>
+      statCardsConfig.map((config) => ({
+        title: config.title,
+        value:
+          config.key === 'quota'
+            ? formatQuota(config.getValue(adaptedStats, timeRangeMinutes))
+            : formatNumber(config.getValue(adaptedStats, timeRangeMinutes)),
+        desc: config.description,
+        icon: config.icon,
+      })),
+    [statCardsConfig, adaptedStats, timeRangeMinutes]
+  )
 
   return (
     <div className='overflow-hidden rounded-lg border'>
