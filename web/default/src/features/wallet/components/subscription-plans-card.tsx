@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useState, useEffect, useMemo, useCallback } from 'react'
-import { Crown, RefreshCw, Sparkles, Check } from 'lucide-react'
+import type { CSSProperties } from 'react'
+import { Crown, RefreshCw, Check } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { formatQuota } from '@/lib/format'
@@ -40,7 +41,6 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import {
-  StatusBadge,
   dotColorMap,
   textColorMap,
 } from '@/components/status-badge'
@@ -95,6 +95,16 @@ export function SubscriptionPlansCard({
   onPurchaseSuccess,
 }: SubscriptionPlansCardProps) {
   const { t } = useTranslation()
+  const [planGridElement, setPlanGridElement] =
+    useState<HTMLDivElement | null>(null)
+  const [planGridColumns, setPlanGridColumns] = useState(1)
+  const planGridClassName = 'grid grid-cols-1 gap-3 2xl:gap-4'
+  const planGridStyle = useMemo<CSSProperties>(
+    () => ({
+      gridTemplateColumns: `repeat(${planGridColumns}, minmax(0, 1fr))`,
+    }),
+    [planGridColumns]
+  )
 
   const [plans, setPlans] = useState<PlanRecord[]>([])
   const [activeSubscriptions, setActiveSubscriptions] = useState<
@@ -206,6 +216,43 @@ export function SubscriptionPlansCard({
     onAvailabilityChange?.(isAvailable)
   }, [isAvailable, onAvailabilityChange])
 
+  useEffect(() => {
+    if (!planGridElement) return
+
+    const calculateColumns = () => {
+      const width = planGridElement.clientWidth
+      if (width <= 0) return
+
+      const rootFontSize =
+        parseFloat(getComputedStyle(document.documentElement).fontSize) || 16
+      const minCardWidth = rootFontSize * 22
+      const maxCardWidth = rootFontSize * 28
+      const gap = rootFontSize * 0.75
+
+      const columnsNeededForMaxWidth = Math.ceil(
+        (width + gap) / (maxCardWidth + gap)
+      )
+      const columnsAllowedByMinWidth = Math.max(
+        1,
+        Math.floor((width + gap) / (minCardWidth + gap))
+      )
+
+      setPlanGridColumns(
+        Math.max(
+          1,
+          Math.min(columnsNeededForMaxWidth, columnsAllowedByMinWidth)
+        )
+      )
+    }
+
+    calculateColumns()
+
+    const observer = new ResizeObserver(calculateColumns)
+    observer.observe(planGridElement)
+
+    return () => observer.disconnect()
+  }, [planGridElement])
+
   if (loading) {
     return (
       <div className='bg-card space-y-4 rounded-2xl border p-4 sm:p-5'>
@@ -216,7 +263,11 @@ export function SubscriptionPlansCard({
             <Skeleton className='h-3 w-48' />
           </div>
         </div>
-        <div className='grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,20rem)] 2xl:grid-cols-[repeat(2,minmax(0,20rem))]'>
+        <div
+          ref={setPlanGridElement}
+          className={planGridClassName}
+          style={planGridStyle}
+        >
           {Array.from({ length: 2 }).map((_, i) => (
             <Skeleton key={i} className='h-72 w-full rounded-xl' />
           ))}
@@ -340,8 +391,12 @@ export function SubscriptionPlansCard({
         </div>
 
         {plans.length > 0 ? (
-          <div className='grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,20rem)] 2xl:grid-cols-[repeat(2,minmax(0,20rem))] 2xl:gap-4'>
-            {plans.map((p, index) => {
+          <div
+            ref={setPlanGridElement}
+            className={planGridClassName}
+            style={planGridStyle}
+          >
+            {plans.map((p) => {
               const plan = p?.plan
               if (!plan) return null
               const totalAmount = Number(plan.total_amount || 0)
@@ -350,7 +405,6 @@ export function SubscriptionPlansCard({
                 ? `${resetQuota.slice(1)}$`
                 : resetQuota
               const price = Number(plan.price_amount || 0).toFixed(2)
-              const isPopular = index === 0 && plans.length > 1
               const limit = Number(plan.max_purchase_per_user || 0)
               const count = planPurchaseCountMap.get(plan.id) || 0
               const reached = limit > 0 && count >= limit
@@ -372,11 +426,7 @@ export function SubscriptionPlansCard({
               return (
                 <Card
                   key={plan.id}
-                  className={cn(
-                    'bg-background/95 gap-0 overflow-hidden rounded-xl border py-0 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg dark:hover:border-white/20',
-                    isPopular &&
-                      'border-primary/70 bg-primary/5 shadow-[0_12px_30px_rgba(15,23,42,0.08)]'
-                  )}
+                  className='bg-background/95 gap-0 overflow-hidden rounded-xl border py-0 shadow-sm transition-[border-color,box-shadow,transform] hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg dark:hover:border-white/20'
                 >
                   <CardContent className='flex h-full flex-col p-4 sm:p-5'>
                     <div className='mb-3 flex items-start justify-between gap-3 border-b pb-3'>
@@ -394,16 +444,6 @@ export function SubscriptionPlansCard({
                         <span className='text-primary text-xl font-bold tabular-nums sm:text-2xl'>
                           {price}
                         </span>
-                        {isPopular && (
-                          <StatusBadge
-                            variant='info'
-                            copyable={false}
-                            className='shrink-0'
-                          >
-                            <Sparkles className='h-3 w-3' />
-                            {t('Recommended')}
-                          </StatusBadge>
-                        )}
                       </div>
                     </div>
 
