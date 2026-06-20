@@ -35,6 +35,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { ImageCaptchaDialog } from '@/components/image-captcha-dialog'
 import { Turnstile } from '@/components/turnstile'
 import { sendPasswordResetEmail } from '@/features/auth/api'
 import {
@@ -42,6 +43,8 @@ import {
   PASSWORD_RESET_COUNTDOWN,
 } from '@/features/auth/constants'
 import { useTurnstile } from '@/features/auth/hooks/use-turnstile'
+import { isImageCaptchaEnabled } from '@/features/auth/lib/status'
+import { useStatus } from '@/hooks/use-status'
 
 export function ForgotPasswordForm({
   className,
@@ -49,6 +52,9 @@ export function ForgotPasswordForm({
 }: React.HTMLAttributes<HTMLFormElement>) {
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
+  const [isImageCaptchaOpen, setIsImageCaptchaOpen] = useState(false)
+  const [pendingEmail, setPendingEmail] = useState('')
+  const { status } = useStatus()
 
   const {
     isTurnstileEnabled,
@@ -68,6 +74,7 @@ export function ForgotPasswordForm({
     defaultValues: { email: '' },
   })
   const turnstileReady = !isTurnstileEnabled || Boolean(turnstileToken)
+  const imageCaptchaEnabled = isImageCaptchaEnabled(status)
   const labelClass =
     'text-[13px] font-medium text-slate-800 dark:text-slate-200'
   const inputClass =
@@ -75,12 +82,14 @@ export function ForgotPasswordForm({
   const primaryButtonClass =
     'mt-2 h-10 w-full justify-center gap-2 rounded-lg bg-slate-950 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 dark:border dark:border-white/15 dark:bg-zinc-900 dark:text-white dark:hover:bg-zinc-800'
 
-  async function onSubmit(data: z.infer<typeof forgotPasswordFormSchema>) {
-    if (!validateTurnstile()) return
-
+  async function sendResetEmail(email: string, captchaToken = '') {
     setIsLoading(true)
     try {
-      const res = await sendPasswordResetEmail(data.email, turnstileToken)
+      const res = await sendPasswordResetEmail(
+        email,
+        turnstileToken,
+        captchaToken
+      )
       if (res?.success) {
         form.reset()
         startCountdown()
@@ -93,6 +102,24 @@ export function ForgotPasswordForm({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  async function onSubmit(data: z.infer<typeof forgotPasswordFormSchema>) {
+    if (!validateTurnstile()) return
+
+    if (imageCaptchaEnabled) {
+      setPendingEmail(data.email)
+      setIsImageCaptchaOpen(true)
+      return
+    }
+
+    await sendResetEmail(data.email)
+  }
+
+  const handleImageCaptchaVerified = (token: string) => {
+    const email = pendingEmail
+    setPendingEmail('')
+    if (email) void sendResetEmail(email, token)
   }
 
   return (
@@ -140,6 +167,15 @@ export function ForgotPasswordForm({
           </div>
         )}
       </form>
+
+      <ImageCaptchaDialog
+        open={isImageCaptchaOpen}
+        onOpenChange={(open) => {
+          setIsImageCaptchaOpen(open)
+          if (!open) setPendingEmail('')
+        }}
+        onVerified={handleImageCaptchaVerified}
+      />
     </Form>
   )
 }

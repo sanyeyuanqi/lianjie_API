@@ -16,7 +16,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
@@ -111,6 +111,15 @@ export function PublicHeader(props: PublicHeaderProps) {
   const isAuthenticated = !!user
   const displaySiteName = customSiteName || systemName
   const links = dynamicLinks.length > 0 ? dynamicLinks : navLinks
+  const navItems = useMemo(
+    () =>
+      links.map((link) => ({
+        ...link,
+        translatedTitle: t(link.title),
+        isActive: isPathActive(pathname, link.href),
+      })),
+    [links, pathname, t]
+  )
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 20)
@@ -261,12 +270,11 @@ export function PublicHeader(props: PublicHeaderProps) {
 
             {/* Desktop nav */}
             <div className='absolute left-1/2 hidden -translate-x-1/2 items-center gap-1 sm:flex'>
-              {links.map((link, i) => {
-                const isActive = isPathActive(pathname, link.href)
+              {navItems.map((link) => {
                 if (link.external) {
                   return (
                     <a
-                      key={i}
+                      key={link.href}
                       href={link.href}
                       target='_blank'
                       rel='noopener noreferrer'
@@ -278,25 +286,25 @@ export function PublicHeader(props: PublicHeaderProps) {
                         link.disabled && 'pointer-events-none opacity-50'
                       )}
                     >
-                      {t(link.title)}
+                      {link.translatedTitle}
                     </a>
                   )
                 }
                 return (
                   <Link
-                    key={i}
+                    key={link.href}
                     to={link.href}
                     disabled={link.disabled}
                     onClick={(event) => handleNavLinkClick(event, link)}
                     className={cn(
                       'rounded-lg px-2.5 py-1 text-[12px] font-medium transition-colors duration-200',
-                      isActive
+                      link.isActive
                         ? 'bg-slate-950 text-white shadow-sm dark:bg-white dark:text-slate-950'
                         : 'text-slate-500 hover:bg-slate-950/[0.04] hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.06] dark:hover:text-slate-100',
                       link.disabled && 'pointer-events-none opacity-50'
                     )}
                   >
-                    {t(link.title)}
+                    {link.translatedTitle}
                   </Link>
                 )
               })}
@@ -400,7 +408,7 @@ export function PublicHeader(props: PublicHeaderProps) {
       {/* Mobile right drawer */}
       <div
         className={cn(
-          'fixed inset-0 z-[60] transition-colors duration-300 sm:pointer-events-none sm:hidden',
+          'fixed inset-0 z-[60] transition-colors duration-150 sm:pointer-events-none sm:hidden',
           mobileOpen
             ? 'pointer-events-auto bg-slate-950/18 backdrop-blur-[1px] dark:bg-black/40'
             : 'pointer-events-none bg-transparent'
@@ -409,7 +417,7 @@ export function PublicHeader(props: PublicHeaderProps) {
       >
         <div
           className={cn(
-            'absolute top-2 right-2 bottom-2 flex w-[min(70vw,18rem)] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/94 shadow-[-18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[-18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]',
+            'absolute top-2 right-2 bottom-2 flex w-[min(70vw,18rem)] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/94 shadow-[-18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl transition-transform duration-200 ease-out dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[-18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]',
             mobileOpen ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
           )}
           onClick={(event) => event.stopPropagation()}
@@ -424,25 +432,21 @@ export function PublicHeader(props: PublicHeaderProps) {
           </div>
 
           <nav className='mx-3 mt-3 flex flex-col gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-1.5 dark:border-white/10 dark:bg-white/[0.04]'>
-            {links.map((link, i) => {
-              const isActive = isPathActive(pathname, link.href)
+            {navItems.map((link) => {
               const linkClassName = cn(
-                'flex h-11 items-center gap-3 rounded-xl px-3.5 text-[15px] font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+                'flex h-11 items-center gap-3 rounded-xl px-3.5 text-[15px] font-medium tracking-tight transition-all duration-150 ease-out',
                 mobileOpen
                   ? 'translate-x-0 opacity-100'
-                  : 'translate-x-4 opacity-0',
-                isActive
+                  : 'translate-x-2 opacity-0',
+                link.isActive
                   ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80 dark:bg-white/10 dark:text-white dark:ring-white/10'
                   : 'text-slate-600 hover:bg-white/80 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-slate-100',
                 link.disabled && 'pointer-events-none opacity-50'
               )
-              const transitionStyle = {
-                transitionDelay: mobileOpen ? `${100 + i * 50}ms` : '0ms',
-              }
               if (link.external) {
                 return (
                   <a
-                    key={i}
+                    key={link.href}
                     href={link.href}
                     target='_blank'
                     rel='noopener noreferrer'
@@ -450,22 +454,20 @@ export function PublicHeader(props: PublicHeaderProps) {
                     tabIndex={link.disabled ? -1 : undefined}
                     onClick={(event) => handleNavLinkClick(event, link, true)}
                     className={linkClassName}
-                    style={transitionStyle}
                   >
-                    {t(link.title)}
+                    {link.translatedTitle}
                   </a>
                 )
               }
               return (
                 <Link
-                  key={i}
+                  key={link.href}
                   to={link.href}
                   disabled={link.disabled}
                   onClick={(event) => handleNavLinkClick(event, link, true)}
                   className={linkClassName}
-                  style={transitionStyle}
                 >
-                  {t(link.title)}
+                  {link.translatedTitle}
                 </Link>
               )
             })}
@@ -473,12 +475,11 @@ export function PublicHeader(props: PublicHeaderProps) {
 
           <div
             className={cn(
-              'mt-auto border-t border-slate-200/70 p-4 transition-all duration-500 dark:border-white/10',
+              'mt-auto border-t border-slate-200/70 p-4 transition-all duration-150 ease-out dark:border-white/10',
               mobileOpen
                 ? 'translate-y-0 opacity-100'
-                : 'translate-y-4 opacity-0'
+                : 'translate-y-2 opacity-0'
             )}
-            style={{ transitionDelay: mobileOpen ? '250ms' : '0ms' }}
           >
             {showAuthButtons && (
               <Link

@@ -146,7 +146,7 @@ export function TopNav({
       ? createPortal(
           <div
             className={cn(
-              'fixed inset-0 z-[70] transition-colors duration-300 lg:hidden',
+              'fixed inset-0 z-[70] transition-colors duration-150 lg:hidden',
               mobileOpen
                 ? 'pointer-events-auto bg-slate-950/18 backdrop-blur-[1px] dark:bg-black/40'
                 : 'pointer-events-none bg-transparent'
@@ -155,7 +155,7 @@ export function TopNav({
           >
             <div
               className={cn(
-                'absolute top-2 right-2 bottom-2 flex w-[min(70vw,18rem)] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/94 shadow-[-18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl transition-transform duration-[420ms] ease-[cubic-bezier(0.22,1,0.36,1)] dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[-18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]',
+                'absolute top-2 right-2 bottom-2 flex w-[min(70vw,18rem)] flex-col overflow-hidden rounded-[1.5rem] border border-slate-200/80 bg-white/94 shadow-[-18px_18px_58px_rgba(15,23,42,0.20),0_1px_0_rgba(255,255,255,0.86)_inset] backdrop-blur-2xl transition-transform duration-200 ease-out dark:border-white/10 dark:bg-zinc-950/94 dark:shadow-[-18px_18px_64px_rgba(0,0,0,0.58),0_1px_0_rgba(255,255,255,0.08)_inset]',
                 mobileOpen ? 'translate-x-0' : 'translate-x-[calc(100%+1rem)]'
               )}
               onClick={(event) => event.stopPropagation()}
@@ -183,25 +183,17 @@ export function TopNav({
 
               <nav className='mx-3 mt-3 flex flex-col gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-1.5 dark:border-white/10 dark:bg-white/[0.04]'>
                 {normalizedLinks.map(
-                  (
-                    { title, href, isActive, disabled, external, requiresAuth },
-                    index
-                  ) => {
+                  ({ title, href, isActive, disabled, external, requiresAuth }) => {
                     const linkClassName = cn(
-                      'flex h-11 items-center rounded-xl px-3.5 text-[15px] font-medium tracking-tight transition-all duration-500 ease-[cubic-bezier(0.16,1,0.3,1)]',
+                      'flex h-11 items-center rounded-xl px-3.5 text-[15px] font-medium tracking-tight transition-all duration-150 ease-out',
                       mobileOpen
                         ? 'translate-x-0 opacity-100'
-                        : 'translate-x-4 opacity-0',
+                        : 'translate-x-2 opacity-0',
                       isActive
                         ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80 dark:bg-white/10 dark:text-white dark:ring-white/10'
                         : 'text-slate-600 hover:bg-white/80 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-slate-100',
                       disabled && 'pointer-events-none opacity-50'
                     )
-                    const transitionStyle = {
-                      transitionDelay: mobileOpen
-                        ? `${100 + index * 50}ms`
-                        : '0ms',
-                    }
 
                     if (external) {
                       return (
@@ -211,7 +203,6 @@ export function TopNav({
                           target='_blank'
                           rel='noopener noreferrer'
                           className={linkClassName}
-                          style={transitionStyle}
                           onClick={(event) => {
                             handleLinkClick(event, {
                               title,
@@ -234,7 +225,6 @@ export function TopNav({
                         to={href}
                         disabled={disabled}
                         className={linkClassName}
-                        style={transitionStyle}
                         onClick={(event) => {
                           handleLinkClick(event, {
                             title,
@@ -255,12 +245,11 @@ export function TopNav({
 
               <div
                 className={cn(
-                  'mt-auto border-t border-slate-200/70 p-4 transition-all duration-500 dark:border-white/10',
+                  'mt-auto border-t border-slate-200/70 p-4 transition-all duration-150 ease-out dark:border-white/10',
                   mobileOpen
                     ? 'translate-y-0 opacity-100'
-                    : 'translate-y-4 opacity-0'
+                    : 'translate-y-2 opacity-0'
                 )}
-                style={{ transitionDelay: mobileOpen ? '250ms' : '0ms' }}
               >
                 <Link
                   to='/dashboard'

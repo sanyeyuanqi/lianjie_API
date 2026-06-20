@@ -43,6 +43,7 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Dialog } from '@/components/dialog'
+import { ImageCaptchaDialog } from '@/components/image-captcha-dialog'
 import { PasswordInput } from '@/components/password-input'
 import { Turnstile } from '@/components/turnstile'
 import { login, wechatLoginByCode } from '@/features/auth/api'
@@ -51,6 +52,7 @@ import { OAuthProviders } from '@/features/auth/components/oauth-providers'
 import { loginFormSchema } from '@/features/auth/constants'
 import { useAuthRedirect } from '@/features/auth/hooks/use-auth-redirect'
 import { useTurnstile } from '@/features/auth/hooks/use-turnstile'
+import { getStatusValue, isImageCaptchaEnabled } from '@/features/auth/lib/status'
 import { beginPasskeyLogin, finishPasskeyLogin } from '@/features/auth/passkey'
 import type { AuthFormProps } from '@/features/auth/types'
 
@@ -66,18 +68,21 @@ export function UserAuthForm({
   const [isPasskeyLoading, setIsPasskeyLoading] = useState(false)
   const [isWeChatDialogOpen, setIsWeChatDialogOpen] = useState(false)
   const [isWeChatSubmitting, setIsWeChatSubmitting] = useState(false)
+  const [isImageCaptchaOpen, setIsImageCaptchaOpen] = useState(false)
+  const [pendingLogin, setPendingLogin] = useState<
+    z.infer<typeof loginFormSchema> | undefined
+  >()
   const [agreedToLegal, setAgreedToLegal] = useState(false)
   const loginFailedMessage = t('Login failed')
   const legalConsentErrorMessage = t('Please agree to the legal terms first')
 
   const { status } = useStatus()
   const passkeyLoginEnabled = Boolean(
-    status?.passkey_login ?? status?.data?.passkey_login
+    getStatusValue(status, 'passkey_login', false)
   )
   const passwordLoginEnabled =
-    (status?.password_login_enabled ??
-      status?.data?.password_login_enabled ??
-      true) !== false
+    getStatusValue<boolean>(status, 'password_login_enabled', true) !== false
+  const imageCaptchaEnabled = isImageCaptchaEnabled(status)
   const {
     isTurnstileEnabled,
     turnstileSiteKey,
@@ -145,20 +150,17 @@ export function UserAuthForm({
     )
   }, [status])
 
-  async function onSubmit(data: z.infer<typeof loginFormSchema>) {
-    if (requiresLegalConsent && !agreedToLegal) {
-      toast.error(legalConsentErrorMessage)
-      return
-    }
-
-    if (!validateTurnstile()) return
-
+  async function performLogin(
+    data: z.infer<typeof loginFormSchema>,
+    captchaToken = ''
+  ) {
     setIsLoading(true)
     try {
       const res = await login({
         username: data.username,
         password: data.password,
         turnstile: turnstileToken,
+        captchaToken,
       })
 
       if (res.success) {
@@ -175,6 +177,29 @@ export function UserAuthForm({
     } finally {
       setIsLoading(false)
     }
+  }
+
+  async function onSubmit(data: z.infer<typeof loginFormSchema>) {
+    if (requiresLegalConsent && !agreedToLegal) {
+      toast.error(legalConsentErrorMessage)
+      return
+    }
+
+    if (!validateTurnstile()) return
+
+    if (imageCaptchaEnabled) {
+      setPendingLogin(data)
+      setIsImageCaptchaOpen(true)
+      return
+    }
+
+    await performLogin(data)
+  }
+
+  const handleImageCaptchaVerified = (token: string) => {
+    const loginData = pendingLogin
+    setPendingLogin(undefined)
+    if (loginData) void performLogin(loginData, token)
   }
 
   function handleSubmitButtonClick(event: MouseEvent<HTMLButtonElement>) {
@@ -440,6 +465,15 @@ export function UserAuthForm({
           </>
         )}
       </form>
+
+      <ImageCaptchaDialog
+        open={isImageCaptchaOpen}
+        onOpenChange={(open) => {
+          setIsImageCaptchaOpen(open)
+          if (!open) setPendingLogin(undefined)
+        }}
+        onVerified={handleImageCaptchaVerified}
+      />
 
       {hasWeChatLogin && (
         <Dialog

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/QuantumNous/new-api/common"
 	"github.com/QuantumNous/new-api/dto"
@@ -18,6 +19,11 @@ import (
 )
 
 const UserNameMaxLength = 20
+
+var (
+	ErrEmailAlreadyTaken = errors.New("邮箱地址已被占用")
+	emailWriteMu         sync.Mutex
+)
 
 // User if you add sensitive fields, don't forget to clean them in setupLogin function.
 // Otherwise, the sensitive information will be saved on local storage in plain text!
@@ -399,7 +405,14 @@ func (user *User) Insert(inviterId int) error {
 		user.SetSetting(defaultSetting)
 	}
 
+	user.Email = NormalizeEmail(user.Email)
+	emailWriteMu.Lock()
+	if err := ensureEmailAvailable(DB, user.Email, 0); err != nil {
+		emailWriteMu.Unlock()
+		return err
+	}
 	result := DB.Create(user)
+	emailWriteMu.Unlock()
 	if result.Error != nil {
 		return result.Error
 	}
@@ -456,7 +469,14 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 		user.SetSetting(defaultSetting)
 	}
 
+	user.Email = NormalizeEmail(user.Email)
+	emailWriteMu.Lock()
+	if err := ensureEmailAvailable(tx, user.Email, 0); err != nil {
+		emailWriteMu.Unlock()
+		return err
+	}
 	result := tx.Create(user)
+	emailWriteMu.Unlock()
 	if result.Error != nil {
 		return result.Error
 	}
@@ -502,6 +522,12 @@ func (user *User) Update(updatePassword bool) error {
 		if err != nil {
 			return err
 		}
+	}
+	user.Email = NormalizeEmail(user.Email)
+	emailWriteMu.Lock()
+	defer emailWriteMu.Unlock()
+	if err := ensureEmailAvailable(DB, user.Email, user.Id); err != nil {
+		return err
 	}
 	newUser := *user
 	DB.First(&user, user.Id)
@@ -685,8 +711,35 @@ func (user *User) FillUserByTelegramId() error {
 	return nil
 }
 
+func NormalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
+func ensureEmailAvailable(db *gorm.DB, email string, excludeUserId int) error {
+	email = NormalizeEmail(email)
+	if email == "" {
+		return nil
+	}
+	query := db.Unscoped().Model(&User{}).Where("LOWER(TRIM(email)) = ?", email)
+	if excludeUserId > 0 {
+		query = query.Where("id <> ?", excludeUserId)
+	}
+	var count int64
+	if err := query.Count(&count).Error; err != nil {
+		return err
+	}
+	if count > 0 {
+		return ErrEmailAlreadyTaken
+	}
+	return nil
+}
+
+func EnsureEmailAvailable(email string, excludeUserId int) error {
+	return ensureEmailAvailable(DB, email, excludeUserId)
+}
+
 func IsEmailAlreadyTaken(email string) bool {
-	return DB.Unscoped().Where("email = ?", email).Find(&User{}).RowsAffected == 1
+	return errors.Is(EnsureEmailAvailable(email, 0), ErrEmailAlreadyTaken)
 }
 
 func IsWeChatIdAlreadyTaken(wechatId string) bool {

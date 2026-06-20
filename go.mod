@@ -60,7 +60,13 @@ require (
 	gorm.io/gorm v1.25.2
 )
 
-require github.com/waffo-com/waffo-pancake-sdk-go v0.3.1
+require (
+	github.com/waffo-com/waffo-pancake-sdk-go v0.3.1
+	github.com/wenlng/go-captcha-assets v1.0.7
+	github.com/wenlng/go-captcha/v2 v2.0.5
+)
+
+require github.com/golang/freetype v0.0.0-20170609003504-e2365dfdc4a0 // indirect
 
 require (
 	github.com/DmitriyVTitov/size v1.5.0 // indirect

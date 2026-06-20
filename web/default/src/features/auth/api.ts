@@ -38,12 +38,43 @@ import type {
 export async function login(payload: LoginPayload) {
   const turnstile = payload.turnstile ?? ''
   const res = await api.post<LoginResponse>(
-    `/api/user/login?turnstile=${turnstile}`,
+    '/api/user/login',
     {
       username: payload.username,
       password: payload.password,
+    },
+    {
+      params: {
+        turnstile,
+        captcha_token: payload.captchaToken ?? '',
+      },
     }
   )
+  return res.data
+}
+
+export interface ImageCaptchaData {
+  key: string
+  master_image: string
+  thumb_image: string
+  image_width: number
+  image_height: number
+  required_clicks: number
+  expires_in: number
+}
+
+export async function getImageCaptcha(): Promise<
+  ApiResponse & { data?: ImageCaptchaData }
+> {
+  const res = await api.get('/api/captcha')
+  return res.data
+}
+
+export async function verifyImageCaptcha(
+  key: string,
+  points: Array<{ x: number; y: number }>
+): Promise<ApiResponse & { data?: { token?: string } }> {
+  const res = await api.post('/api/captcha/verify', { key, points })
   return res.data
 }
 
@@ -66,10 +97,11 @@ export async function logout(): Promise<ApiResponse> {
 // Send password reset email
 export async function sendPasswordResetEmail(
   email: string,
-  turnstile?: string
+  turnstile?: string,
+  captchaToken?: string
 ): Promise<ApiResponse> {
   const res = await api.get('/api/reset_password', {
-    params: { email, turnstile },
+    params: { email, turnstile, captcha_token: captchaToken ?? '' },
   })
   return res.data
 }
@@ -106,7 +138,10 @@ export async function wechatLoginByCode(code: string): Promise<ApiResponse> {
 // User registration
 export async function register(payload: RegisterPayload): Promise<ApiResponse> {
   const res = await api.post(`/api/user/register`, payload, {
-    params: { turnstile: payload.turnstile ?? '' },
+    params: {
+      turnstile: payload.turnstile ?? '',
+      captcha_token: payload.captchaToken ?? '',
+    },
   })
   return res.data
 }

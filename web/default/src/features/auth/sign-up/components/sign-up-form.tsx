@@ -35,6 +35,7 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
+import { ImageCaptchaDialog } from '@/components/image-captcha-dialog'
 import { PasswordInput } from '@/components/password-input'
 import { Turnstile } from '@/components/turnstile'
 import { register } from '@/features/auth/api'
@@ -42,6 +43,7 @@ import { registerFormSchema } from '@/features/auth/constants'
 import { useAuthRedirect } from '@/features/auth/hooks/use-auth-redirect'
 import { useEmailVerification } from '@/features/auth/hooks/use-email-verification'
 import { useTurnstile } from '@/features/auth/hooks/use-turnstile'
+import { getStatusValue, isImageCaptchaEnabled } from '@/features/auth/lib/status'
 import {
   getAffiliateCode,
   saveAffiliateCode,
@@ -54,6 +56,10 @@ export function SignUpForm({
   const { t } = useTranslation()
   const [isLoading, setIsLoading] = useState(false)
   const [verificationCode, setVerificationCode] = useState('')
+  const [isImageCaptchaOpen, setIsImageCaptchaOpen] = useState(false)
+  const [pendingRegistration, setPendingRegistration] = useState<
+    z.infer<typeof registerFormSchema> | undefined
+  >()
 
   const { status } = useStatus()
   const {
@@ -85,7 +91,10 @@ export function SignUpForm({
   })
 
   const emailValue = form.watch('email')
-  const emailVerificationRequired = !!status?.email_verification
+  const emailVerificationRequired = Boolean(
+    getStatusValue(status, 'email_verification', false)
+  )
+  const imageCaptchaEnabled = isImageCaptchaEnabled(status)
   const turnstileReady = !isTurnstileEnabled || Boolean(turnstileToken)
   const labelClass =
     'text-[13px] font-medium text-slate-800 dark:text-slate-200'
@@ -100,6 +109,35 @@ export function SignUpForm({
       saveAffiliateCode(aff)
     }
   }, [])
+
+  async function performRegistration(
+    data: z.infer<typeof registerFormSchema>,
+    captchaToken = ''
+  ) {
+    setIsLoading(true)
+    try {
+      const res = await register({
+        username: data.username,
+        password: data.password,
+        email: data.email || undefined,
+        verification_code: verificationCode || undefined,
+        aff_code: getAffiliateCode(),
+        turnstile: turnstileToken,
+        captchaToken,
+      })
+
+      if (res?.success) {
+        toast.success(t('Account created! Please sign in'))
+        redirectToLogin()
+      } else {
+        toast.error(res?.message || t('Failed to create account'))
+      }
+    } catch (_error) {
+      // Errors are handled by global interceptor
+    } finally {
+      setIsLoading(false)
+    }
+  }
 
   async function onSubmit(data: z.infer<typeof registerFormSchema>) {
     // Validate email verification if required
@@ -116,28 +154,19 @@ export function SignUpForm({
 
     if (!validateTurnstile()) return
 
-    setIsLoading(true)
-    try {
-      const res = await register({
-        username: data.username,
-        password: data.password,
-        email: data.email || undefined,
-        verification_code: verificationCode || undefined,
-        aff_code: getAffiliateCode(),
-        turnstile: turnstileToken,
-      })
-
-      if (res?.success) {
-        toast.success(t('Account created! Please sign in'))
-        redirectToLogin()
-      } else {
-        toast.error(res?.message || t('Failed to create account'))
-      }
-    } catch (_error) {
-      // Errors are handled by global interceptor
-    } finally {
-      setIsLoading(false)
+    if (imageCaptchaEnabled) {
+      setPendingRegistration(data)
+      setIsImageCaptchaOpen(true)
+      return
     }
+
+    await performRegistration(data)
+  }
+
+  const handleImageCaptchaVerified = (token: string) => {
+    const registration = pendingRegistration
+    setPendingRegistration(undefined)
+    if (registration) void performRegistration(registration, token)
   }
 
   async function handleSendVerificationCode() {
@@ -290,6 +319,15 @@ export function SignUpForm({
           {t('Create account')}
         </Button>
       </form>
+
+      <ImageCaptchaDialog
+        open={isImageCaptchaOpen}
+        onOpenChange={(open) => {
+          setIsImageCaptchaOpen(open)
+          if (!open) setPendingRegistration(undefined)
+        }}
+        onVerified={handleImageCaptchaVerified}
+      />
     </Form>
   )
 }

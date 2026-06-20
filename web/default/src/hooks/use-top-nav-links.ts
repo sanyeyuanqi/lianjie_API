@@ -60,62 +60,68 @@ export function useTopNavLinks(): TopNavLink[] {
 
   const isAuthed = !!auth?.user
 
-  const links: TopNavLink[] = []
+  return useMemo(() => {
+    const links: TopNavLink[] = []
 
-  // Home
-  if (modules?.home !== false) {
-    links.push({ title: t('Home'), href: '/' })
-  }
-
-  // Console -> /dashboard (new console path)
-  if (modules?.console !== false) {
-    links.push({ title: t('Console'), href: '/dashboard' })
-  }
-
-  // Pricing
-  const pricing = modules?.pricing
-  if (pricing && typeof pricing === 'object' && pricing.enabled) {
-    const requiresAuth = pricing.requireAuth && !isAuthed
-    links.push({ title: t('Model Square'), href: '/pricing', requiresAuth })
-  }
-
-  // Creation Center
-  const playground = modules?.playground
-  if (playground && typeof playground === 'object' && playground.enabled) {
-    const statusRecord = status as Record<string, unknown> | null
-    const canUsePlayground = statusRecord
-      ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'playground')
-      : isSidebarModuleEnabled('chat', 'playground')
-    const canUseChat = statusRecord
-      ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'chat')
-      : isSidebarModuleEnabled('chat', 'chat')
-    const href = canUsePlayground ? '/playground' : canUseChat ? '/chat' : null
-    const requiresAuth = playground.requireAuth && !isAuthed
-    if (href) {
-      links.push({
-        title: t('Creation Center'),
-        href,
-        requiresAuth,
-      })
+    // Home
+    if (modules?.home !== false) {
+      links.push({ title: t('Home'), href: '/' })
     }
-  }
 
-  // Rankings
-  const rankings = modules?.rankings
-  if (rankings && typeof rankings === 'object' && rankings.enabled) {
-    const requiresAuth = rankings.requireAuth && !isAuthed
-    links.push({ title: t('Rankings'), href: '/rankings', requiresAuth })
-  }
+    // Console -> /dashboard (new console path)
+    if (modules?.console !== false) {
+      links.push({ title: t('Console'), href: '/dashboard' })
+    }
 
-  // Docs
-  if (modules?.docs !== false) {
-    links.push({ title: t('Docs'), href: '/docs' })
-  }
+    // Pricing
+    const pricing = modules?.pricing
+    if (pricing && typeof pricing === 'object' && pricing.enabled) {
+      const requiresAuth = pricing.requireAuth && !isAuthed
+      links.push({ title: t('Model Square'), href: '/pricing', requiresAuth })
+    }
 
-  // About
-  if (modules?.about !== false) {
-    links.push({ title: t('About'), href: '/about' })
-  }
+    // Creation Center
+    const playground = modules?.playground
+    if (playground && typeof playground === 'object' && playground.enabled) {
+      const statusRecord = status as Record<string, unknown> | null
+      const canUsePlayground = statusRecord
+        ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'playground')
+        : isSidebarModuleEnabled('chat', 'playground')
+      const canUseChat = statusRecord
+        ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'chat')
+        : isSidebarModuleEnabled('chat', 'chat')
+      const href = canUsePlayground
+        ? '/playground'
+        : canUseChat
+          ? '/chat'
+          : null
+      const requiresAuth = playground.requireAuth && !isAuthed
+      if (href) {
+        links.push({
+          title: t('Creation Center'),
+          href,
+          requiresAuth,
+        })
+      }
+    }
 
-  return links
+    // Rankings
+    const rankings = modules?.rankings
+    if (rankings && typeof rankings === 'object' && rankings.enabled) {
+      const requiresAuth = rankings.requireAuth && !isAuthed
+      links.push({ title: t('Rankings'), href: '/rankings', requiresAuth })
+    }
+
+    // Docs
+    if (modules?.docs !== false) {
+      links.push({ title: t('Docs'), href: '/docs' })
+    }
+
+    // About
+    if (modules?.about !== false) {
+      links.push({ title: t('About'), href: '/about' })
+    }
+
+    return links
+  }, [isAuthed, modules, status, t])
 }

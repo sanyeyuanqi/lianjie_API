@@ -45,6 +45,7 @@ const botProtectionSchema = z.object({
   TurnstileCheckEnabled: z.boolean(),
   TurnstileSiteKey: z.string().optional(),
   TurnstileSecretKey: z.string().optional(),
+  ImageCaptchaEnabled: z.boolean(),
 })
 
 type BotProtectionFormValues = z.infer<typeof botProtectionSchema>
@@ -87,6 +88,29 @@ export function BotProtectionSection({
             onSave={form.handleSubmit(onSubmit)}
             isSaving={updateOption.isPending}
           />
+          <FormField
+            control={form.control}
+            name='ImageCaptchaEnabled'
+            render={({ field }) => (
+              <SettingsSwitchItem>
+                <SettingsSwitchContent>
+                  <FormLabel>{t('Enable image CAPTCHA')}</FormLabel>
+                  <FormDescription>
+                    {t(
+                      'Require a self-hosted click CAPTCHA before password sign-in or registration'
+                    )}
+                  </FormDescription>
+                </SettingsSwitchContent>
+                <FormControl>
+                  <SettingsEnableDisableButton
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+              </SettingsSwitchItem>
+            )}
+          />
+
           <FormField
             control={form.control}
             name='TurnstileCheckEnabled'
