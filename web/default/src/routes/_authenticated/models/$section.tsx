@@ -16,28 +16,34 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import z from 'zod'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
-import { Models } from '@/features/models'
 import {
-  MODELS_SECTION_IDS,
-  MODELS_DEFAULT_SECTION,
-} from '@/features/models/section-registry'
+  asNumber,
+  asString,
+  asStringArray,
+  compactSearch,
+} from '@/lib/route-search'
 
-const modelsSearchSchema = z.object({
-  page: z.number().optional().catch(1),
-  pageSize: z.number().optional().catch(10),
-  filter: z.string().optional().catch(''),
-  vendor: z.array(z.string()).optional().catch([]),
-  status: z.array(z.string()).optional().catch([]),
-  sync: z.array(z.string()).optional().catch([]),
-  dPage: z.number().optional().catch(1),
-  dPageSize: z.number().optional().catch(10),
-  dFilter: z.string().optional().catch(''),
-  dStatus: z.array(z.string()).optional().catch([]),
-})
+const MODELS_SECTION_IDS = ['metadata', 'deployments'] as const
+const MODELS_DEFAULT_SECTION = MODELS_SECTION_IDS[0]
+type ModelsSearch = {
+  page?: number
+  pageSize?: number
+  filter?: string
+  vendor?: string[]
+  status?: string[]
+  sync?: string[]
+  dPage?: number
+  dPageSize?: number
+  dFilter?: string
+  dStatus?: string[]
+}
 
 export const Route = createFileRoute('/_authenticated/models/$section')({
   beforeLoad: ({ params }) => {
@@ -57,6 +63,18 @@ export const Route = createFileRoute('/_authenticated/models/$section')({
       })
     }
   },
-  validateSearch: modelsSearchSchema,
-  component: Models,
+  validateSearch: (search): ModelsSearch =>
+    compactSearch({
+      page: asNumber(search.page, 1),
+      pageSize: asNumber(search.pageSize, 10),
+      filter: asString(search.filter),
+      vendor: asStringArray(search.vendor),
+      status: asStringArray(search.status),
+      sync: asStringArray(search.sync),
+      dPage: asNumber(search.dPage, 1),
+      dPageSize: asNumber(search.dPageSize, 10),
+      dFilter: asString(search.dFilter),
+      dStatus: asStringArray(search.dStatus),
+    }),
+  component: lazyRouteComponent(() => import('@/features/models'), 'Models'),
 })

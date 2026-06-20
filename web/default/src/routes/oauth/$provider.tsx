@@ -25,9 +25,9 @@ import {
   useSearch,
 } from '@tanstack/react-router'
 import i18next from 'i18next'
-import { toast } from 'sonner'
 import { useAuthStore, type AuthUser } from '@/stores/auth-store'
 import { api, getSelf } from '@/lib/api'
+import { showErrorToast, showSuccessToast } from '@/lib/toast'
 import { OAuthCallbackScreen } from '@/features/auth/components/oauth-callback-screen'
 import { OAUTH_BIND_STORAGE_KEY } from '@/features/auth/constants'
 
@@ -52,7 +52,6 @@ function OAuthCallback() {
 
   useEffect(() => {
     if (typeof window === 'undefined') return
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setMode(window.opener ? 'bind' : 'login')
   }, [])
 
@@ -78,7 +77,7 @@ function OAuthCallback() {
       }
 
       if (!search?.code) {
-        toast.error(i18next.t('Missing code'))
+        showErrorToast(i18next.t('Missing code'))
         safeNavigate('/sign-in')
         return
       }
@@ -143,14 +142,14 @@ function OAuthCallback() {
       }
 
       const redirectAfterLogin = (target?: string) => {
-        const to = target || search?.redirect || '/dashboard'
+        const to = target || search?.redirect || '/'
         safeNavigate(to)
-        toast.success(i18next.t('Signed in successfully!'))
+        showSuccessToast(i18next.t('Signed in successfully!'))
       }
 
       const handleBindingFailure = (message: string) => {
         notifyBindingResult('error')
-        toast.error(message)
+        showErrorToast(message)
       }
 
       const handleLoginFailure = async (message: string) => {
@@ -158,7 +157,7 @@ function OAuthCallback() {
           redirectAfterLogin()
           return
         }
-        toast.error(message)
+        showErrorToast(message)
         safeNavigate('/sign-in')
       }
 
@@ -173,7 +172,7 @@ function OAuthCallback() {
           const loginUser = (res.data?.data ?? null) as AuthUser | null
           // Check if this is a bind operation
           if (message === 'bind') {
-            toast.success(i18next.t('Binding successful!'))
+            showSuccessToast(i18next.t('Binding successful!'))
             notifyBindingResult('success')
             if (isBindingFlow) {
               // Close the callback window if we opened a new tab for binding
@@ -200,7 +199,7 @@ function OAuthCallback() {
             redirectAfterLogin()
             return
           }
-          toast.error(res?.data?.message || i18next.t('OAuth failed'))
+          showErrorToast(res?.data?.message || i18next.t('OAuth failed'))
           safeNavigate('/sign-in')
           return
         }

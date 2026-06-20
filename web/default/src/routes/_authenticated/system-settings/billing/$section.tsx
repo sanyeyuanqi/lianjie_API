@@ -16,12 +16,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { BillingSettings } from '@/features/system-settings/billing'
 import {
-  BILLING_DEFAULT_SECTION,
-  BILLING_SECTION_IDS,
-} from '@/features/system-settings/billing/section-registry.tsx'
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
+
+const BILLING_SECTION_IDS = [
+  'quota',
+  'currency',
+  'model-pricing',
+  'group-pricing',
+  'payment',
+  'checkin',
+] as const
+const BILLING_DEFAULT_SECTION = BILLING_SECTION_IDS[0]
 
 export const Route = createFileRoute(
   '/_authenticated/system-settings/billing/$section'
@@ -35,5 +44,8 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: BillingSettings,
+  component: lazyRouteComponent(
+    () => import('@/features/system-settings/billing'),
+    'BillingSettings'
+  ),
 })

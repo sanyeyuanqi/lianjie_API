@@ -16,21 +16,25 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import z from 'zod'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { getFreshModuleAccess } from '@/lib/nav-modules'
-import { Rankings } from '@/features/rankings'
+import { asEnum, compactSearch } from '@/lib/route-search'
 
-const rankingsSearchSchema = z.object({
-  period: z
-    .enum(['today', 'week', 'month', 'year', 'all'])
-    .optional()
-    .catch(undefined),
-})
+const RANKING_PERIODS = ['today', 'week', 'month', 'year', 'all'] as const
+type RankingsSearch = {
+  period?: (typeof RANKING_PERIODS)[number]
+}
 
 export const Route = createFileRoute('/rankings/')({
-  validateSearch: rankingsSearchSchema,
+  validateSearch: (search): RankingsSearch =>
+    compactSearch({
+      period: asEnum(search.period, RANKING_PERIODS),
+    }),
   beforeLoad: async ({ location }) => {
     const access = await getFreshModuleAccess('rankings')
     if (!access.enabled) {
@@ -46,5 +50,8 @@ export const Route = createFileRoute('/rankings/')({
       }
     }
   },
-  component: Rankings,
+  component: lazyRouteComponent(
+    () => import('@/features/rankings'),
+    'Rankings'
+  ),
 })

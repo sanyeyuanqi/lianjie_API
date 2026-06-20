@@ -36,6 +36,12 @@ const route = getRouteApi('/_authenticated/usage-logs/$section')
 
 type TaskLikeLogCategory = Extract<LogCategory, 'drawing' | 'task'>
 type TaskLogsFilters = DrawingLogFilters | TaskLogFilters
+type UsageLogsSearchParams = {
+  startTime?: number
+  endTime?: number
+  channel?: string
+  filter?: string
+}
 
 interface TaskLogsFilterBarProps<TData> {
   table: Table<TData>
@@ -67,7 +73,7 @@ export function TaskLogsFilterBar<TData>(props: TaskLogsFilterBarProps<TData>) {
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const searchParams = route.useSearch()
+  const searchParams = route.useSearch() as UsageLogsSearchParams
   const isAdmin = useIsAdmin()
   const fetchingLogs = useIsFetching({ queryKey: ['logs'] })
 

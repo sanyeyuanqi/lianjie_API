@@ -16,12 +16,19 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { SiteSettings } from '@/features/system-settings/site'
 import {
-  SITE_DEFAULT_SECTION,
-  SITE_SECTION_IDS,
-} from '@/features/system-settings/site/section-registry.tsx'
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
+
+const SITE_SECTION_IDS = [
+  'system-info',
+  'notice',
+  'header-navigation',
+  'sidebar-modules',
+] as const
+const SITE_DEFAULT_SECTION = SITE_SECTION_IDS[0]
 
 export const Route = createFileRoute(
   '/_authenticated/system-settings/site/$section'
@@ -35,5 +42,8 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: SiteSettings,
+  component: lazyRouteComponent(
+    () => import('@/features/system-settings/site'),
+    'SiteSettings'
+  ),
 })

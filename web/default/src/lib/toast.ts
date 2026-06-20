@@ -16,27 +16,18 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { lazy, Suspense } from 'react'
-import { createFileRoute, useSearch } from '@tanstack/react-router'
-import type { ResetPasswordSearchParams } from '@/features/auth/reset-password-confirm'
 
-const ResetPasswordConfirm = lazy(() =>
-  import('@/features/auth/reset-password-confirm').then((module) => ({
-    default: module.ResetPasswordConfirm,
-  }))
-)
+type ToastLevel = 'error' | 'success' | 'info' | 'warning'
 
-export const Route = createFileRoute('/(auth)/reset')({
-  component: ResetPassword,
-})
+async function showToast(level: ToastLevel, message: string) {
+  const { toast } = await import('sonner')
+  toast[level](message)
+}
 
-function ResetPassword() {
-  const search = useSearch({
-    from: '/(auth)/reset',
-  }) as ResetPasswordSearchParams
-  return (
-    <Suspense fallback={null}>
-      <ResetPasswordConfirm email={search?.email} token={search?.token} />
-    </Suspense>
-  )
+export function showErrorToast(message: string) {
+  void showToast('error', message)
+}
+
+export function showSuccessToast(message: string) {
+  void showToast('success', message)
 }

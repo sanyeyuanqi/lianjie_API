@@ -16,8 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import { lazy, Suspense } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Profile } from '@/features/profile'
+
+const Profile = lazy(() =>
+  import('@/features/profile').then((module) => ({
+    default: module.Profile,
+  }))
+)
 
 export const Route = createFileRoute('/_authenticated/profile/')({
   component: RouteComponent,
@@ -25,8 +31,13 @@ export const Route = createFileRoute('/_authenticated/profile/')({
 
 function RouteComponent() {
   return (
-    <div data-profile-fullscreen className='flex min-h-0 flex-1 flex-col overflow-hidden'>
-      <Profile />
+    <div
+      data-profile-fullscreen
+      className='flex min-h-0 flex-1 flex-col overflow-hidden'
+    >
+      <Suspense fallback={null}>
+        <Profile />
+      </Suspense>
     </div>
   )
 }

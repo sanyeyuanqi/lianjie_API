@@ -16,27 +16,49 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import z from 'zod'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { getFreshModuleAccess } from '@/lib/nav-modules'
-import { Pricing } from '@/features/pricing'
+import {
+  asBoolean,
+  asEnum,
+  asOptionalString,
+  compactSearch,
+} from '@/lib/route-search'
 
-const pricingSearchSchema = z.object({
-  search: z.string().optional(),
-  sort: z.string().optional(),
-  vendor: z.string().optional(),
-  group: z.string().optional(),
-  quotaType: z.string().optional(),
-  endpointType: z.string().optional(),
-  tag: z.string().optional(),
-  tokenUnit: z.enum(['M', 'K']).optional(),
-  view: z.enum(['card', 'table']).optional().catch(undefined),
-  rechargePrice: z.boolean().optional(),
-})
+const TOKEN_UNITS = ['M', 'K'] as const
+const PRICING_VIEWS = ['card', 'table'] as const
+type PricingSearch = {
+  search?: string
+  sort?: string
+  vendor?: string
+  group?: string
+  quotaType?: string
+  endpointType?: string
+  tag?: string
+  tokenUnit?: (typeof TOKEN_UNITS)[number]
+  view?: (typeof PRICING_VIEWS)[number]
+  rechargePrice?: boolean
+}
 
 export const Route = createFileRoute('/pricing/')({
-  validateSearch: pricingSearchSchema,
+  validateSearch: (search): PricingSearch =>
+    compactSearch({
+      search: asOptionalString(search.search),
+      sort: asOptionalString(search.sort),
+      vendor: asOptionalString(search.vendor),
+      group: asOptionalString(search.group),
+      quotaType: asOptionalString(search.quotaType),
+      endpointType: asOptionalString(search.endpointType),
+      tag: asOptionalString(search.tag),
+      tokenUnit: asEnum(search.tokenUnit, TOKEN_UNITS),
+      view: asEnum(search.view, PRICING_VIEWS),
+      rechargePrice: asBoolean(search.rechargePrice),
+    }),
   beforeLoad: async ({ location }) => {
     const access = await getFreshModuleAccess('pricing')
     if (!access.enabled) {
@@ -52,5 +74,5 @@ export const Route = createFileRoute('/pricing/')({
       }
     }
   },
-  component: Pricing,
+  component: lazyRouteComponent(() => import('@/features/pricing'), 'Pricing'),
 })

@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@/components/ui/button'
+import { ErrorActionButton } from './error-action'
 
 export function ForbiddenError() {
   const { t } = useTranslation()
@@ -34,12 +34,12 @@ export function ForbiddenError() {
           {t('to view this resource.')}
         </p>
         <div className='mt-6 flex gap-4'>
-          <Button variant='outline' onClick={() => history.go(-1)}>
+          <ErrorActionButton variant='outline' onClick={() => history.go(-1)}>
             {t('Go Back')}
-          </Button>
-          <Button onClick={() => navigate({ to: '/' })}>
+          </ErrorActionButton>
+          <ErrorActionButton onClick={() => navigate({ to: '/' })}>
             {t('Back to Home')}
-          </Button>
+          </ErrorActionButton>
         </div>
       </div>
     </div>

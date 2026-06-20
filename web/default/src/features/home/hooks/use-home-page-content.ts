@@ -22,24 +22,29 @@ import type { HomePageContentResult } from '../types'
 
 const STORAGE_KEY = 'home_page_content'
 
+function getCachedHomePageContent() {
+  try {
+    if (typeof window === 'undefined') return ''
+    return window.localStorage.getItem(STORAGE_KEY) || ''
+  } catch {
+    return ''
+  }
+}
+
 /**
  * Hook to load and manage custom home page content
  * Supports both Markdown/HTML content and iframe URLs
  */
 export function useHomePageContent(): HomePageContentResult {
-  const [content, setContent] = useState<string>('')
-  const [isLoaded, setIsLoaded] = useState(false)
+  const [content, setContent] = useState<string>(() =>
+    getCachedHomePageContent()
+  )
+  const [isLoaded] = useState(true)
 
   useEffect(() => {
     let mounted = true
 
     const loadContent = async () => {
-      // Load from localStorage first for immediate display
-      const cached = localStorage.getItem(STORAGE_KEY)
-      if (cached && mounted) {
-        setContent(cached)
-      }
-
       try {
         const response = await getHomePageContent()
         const { success, data } = response
@@ -59,10 +64,6 @@ export function useHomePageContent(): HomePageContentResult {
         if (import.meta.env.DEV) {
           // eslint-disable-next-line no-console
           console.warn('Failed to load home page content:', error)
-        }
-      } finally {
-        if (mounted) {
-          setIsLoaded(true)
         }
       }
     }

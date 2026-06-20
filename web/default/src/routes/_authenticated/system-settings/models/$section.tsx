@@ -16,12 +16,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { ModelSettings } from '@/features/system-settings/models'
 import {
-  MODELS_DEFAULT_SECTION,
-  MODELS_SECTION_IDS,
-} from '@/features/system-settings/models/section-registry.tsx'
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
+
+const MODELS_SECTION_IDS = [
+  'global',
+  'gemini',
+  'claude',
+  'grok',
+  'channel-affinity',
+  'model-deployment',
+] as const
+const MODELS_DEFAULT_SECTION = MODELS_SECTION_IDS[0]
 
 export const Route = createFileRoute(
   '/_authenticated/system-settings/models/$section'
@@ -35,5 +44,8 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: ModelSettings,
+  component: lazyRouteComponent(
+    () => import('@/features/system-settings/models'),
+    'ModelSettings'
+  ),
 })

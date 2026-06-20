@@ -37,7 +37,7 @@ export default defineConfig(({ envMode }) => {
         'vendor-ui-primitives': {
           test: /node_modules[\\/](@base-ui|@radix-ui)[\\/]/,
           name: 'vendor-ui-primitives',
-          chunks: 'all',
+          chunks: 'async',
           priority: 0,
           enforce: true,
         },
@@ -95,9 +95,8 @@ export default defineConfig(({ envMode }) => {
         plugins: [
           tanstackRouter({
             target: 'react',
-            // Dev: avoid per-route async chunks (reduces white flash on navigation + faster HMR feedback).
-            // Prod: keep route-based code splitting.
-            autoCodeSplitting: isProd,
+            // Split every route into its own async chunk in all environments.
+            autoCodeSplitting: true,
           }),
         ],
       },

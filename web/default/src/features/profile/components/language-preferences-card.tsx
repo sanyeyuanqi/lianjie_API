@@ -17,6 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { useEffect, useMemo, useState } from 'react'
+import { changeLanguage } from '@/i18n/config'
 import {
   INTERFACE_LANGUAGE_OPTIONS,
   normalizeInterfaceLanguage,
@@ -25,6 +26,7 @@ import { Loader2 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Select,
   SelectContent,
@@ -33,7 +35,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Card, CardContent } from '@/components/ui/card'
 import { updateUserLanguage } from '../api'
 import { parseUserSettings } from '../lib'
 import type { UserProfile } from '../types'
@@ -67,7 +68,7 @@ export function LanguagePreferencesCard(props: LanguagePreferencesCardProps) {
     const previousLanguage = currentLanguage
     setCurrentLanguage(nextLanguage)
     setSaving(true)
-    await i18n.changeLanguage(nextLanguage)
+    await changeLanguage(nextLanguage)
 
     try {
       const response = await updateUserLanguage(nextLanguage)
@@ -93,7 +94,7 @@ export function LanguagePreferencesCard(props: LanguagePreferencesCardProps) {
       toast.success(t('Language preference saved'))
     } catch (_error) {
       setCurrentLanguage(previousLanguage)
-      await i18n.changeLanguage(previousLanguage)
+      await changeLanguage(previousLanguage)
       toast.error(t('Failed to update settings'))
     } finally {
       setSaving(false)
@@ -105,9 +106,7 @@ export function LanguagePreferencesCard(props: LanguagePreferencesCardProps) {
       <CardContent className='p-3 sm:p-5'>
         <div className='flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4'>
           <div className='space-y-1'>
-            <div className='text-sm font-medium'>
-              {t('Interface Language')}
-            </div>
+            <div className='text-sm font-medium'>{t('Interface Language')}</div>
             <p className='text-muted-foreground line-clamp-2 text-xs sm:text-sm'>
               {t(
                 'Language preferences sync across your signed-in devices and affect API error messages.'

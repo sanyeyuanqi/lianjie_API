@@ -16,12 +16,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { OperationsSettings } from '@/features/system-settings/operations'
 import {
-  OPERATIONS_DEFAULT_SECTION,
-  OPERATIONS_SECTION_IDS,
-} from '@/features/system-settings/operations/section-registry.tsx'
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
+
+const OPERATIONS_SECTION_IDS = [
+  'behavior',
+  'monitoring',
+  'email',
+  'worker',
+  'logs',
+  'performance',
+  'update-checker',
+] as const
+const OPERATIONS_DEFAULT_SECTION = OPERATIONS_SECTION_IDS[0]
 
 export const Route = createFileRoute(
   '/_authenticated/system-settings/operations/$section'
@@ -35,5 +45,8 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: OperationsSettings,
+  component: lazyRouteComponent(
+    () => import('@/features/system-settings/operations'),
+    'OperationsSettings'
+  ),
 })

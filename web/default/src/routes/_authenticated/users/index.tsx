@@ -16,26 +16,30 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import z from 'zod'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
-import { Users } from '@/features/users'
+import {
+  asEnumArray,
+  asNumber,
+  asString,
+  compactSearch,
+} from '@/lib/route-search'
 
-const usersSearchSchema = z.object({
-  page: z.number().optional().catch(1),
-  pageSize: z.number().optional().catch(undefined),
-  filter: z.string().optional().catch(''),
-  status: z
-    .array(z.enum(['-1', '1', '2']))
-    .optional()
-    .catch([]),
-  role: z
-    .array(z.enum(['1', '10', '100']))
-    .optional()
-    .catch([]),
-  group: z.string().optional().catch(''),
-})
+const USER_STATUSES = ['-1', '1', '2'] as const
+const USER_ROLES = ['1', '10', '100'] as const
+type UsersSearch = {
+  page?: number
+  pageSize?: number
+  filter?: string
+  status?: (typeof USER_STATUSES)[number][]
+  role?: (typeof USER_ROLES)[number][]
+  group?: string
+}
 
 export const Route = createFileRoute('/_authenticated/users/')({
   beforeLoad: () => {
@@ -47,6 +51,14 @@ export const Route = createFileRoute('/_authenticated/users/')({
       })
     }
   },
-  validateSearch: usersSearchSchema,
-  component: Users,
+  validateSearch: (search): UsersSearch =>
+    compactSearch({
+      page: asNumber(search.page, 1),
+      pageSize: asNumber(search.pageSize),
+      filter: asString(search.filter),
+      status: asEnumArray(search.status, USER_STATUSES),
+      role: asEnumArray(search.role, USER_ROLES),
+      group: asString(search.group),
+    }),
+  component: lazyRouteComponent(() => import('@/features/users'), 'Users'),
 })

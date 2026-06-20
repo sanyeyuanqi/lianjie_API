@@ -16,12 +16,20 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { AuthSettings } from '@/features/system-settings/auth'
 import {
-  AUTH_DEFAULT_SECTION,
-  AUTH_SECTION_IDS,
-} from '@/features/system-settings/auth/section-registry.tsx'
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
+
+const AUTH_SECTION_IDS = [
+  'basic-auth',
+  'oauth',
+  'passkey',
+  'bot-protection',
+  'custom-oauth',
+] as const
+const AUTH_DEFAULT_SECTION = AUTH_SECTION_IDS[0]
 
 export const Route = createFileRoute(
   '/_authenticated/system-settings/auth/$section'
@@ -35,5 +43,8 @@ export const Route = createFileRoute(
       })
     }
   },
-  component: AuthSettings,
+  component: lazyRouteComponent(
+    () => import('@/features/system-settings/auth'),
+    'AuthSettings'
+  ),
 })

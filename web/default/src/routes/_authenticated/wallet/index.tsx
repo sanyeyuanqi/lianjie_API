@@ -16,17 +16,22 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { z } from 'zod'
+import { lazy, Suspense } from 'react'
 import { createFileRoute } from '@tanstack/react-router'
-import { Wallet } from '@/features/wallet'
+import { asBoolean, compactSearch } from '@/lib/route-search'
 
-const walletSearchSchema = z.object({
-  show_history: z.boolean().optional(),
-})
+const Wallet = lazy(() =>
+  import('@/features/wallet').then((module) => ({
+    default: module.Wallet,
+  }))
+)
 
 export const Route = createFileRoute('/_authenticated/wallet/')({
   component: RouteComponent,
-  validateSearch: walletSearchSchema,
+  validateSearch: (search): { show_history?: boolean } =>
+    compactSearch({
+      show_history: asBoolean(search.show_history),
+    }),
 })
 
 function RouteComponent() {
@@ -36,7 +41,9 @@ function RouteComponent() {
       data-wallet-fullscreen
       className='flex min-h-0 flex-1 flex-col overflow-hidden'
     >
-      <Wallet initialShowHistory={show_history} />
+      <Suspense fallback={null}>
+        <Wallet initialShowHistory={show_history} />
+      </Suspense>
     </div>
   )
 }

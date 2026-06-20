@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useNavigate, useRouter } from '@tanstack/react-router'
 import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
+import { ErrorActionButton, ErrorActionLink } from './error-action'
 
 const FEEDBACK_URL = 'https://github.com/QuantumNous/new-api/issues'
 
@@ -72,24 +72,20 @@ export function GeneralError({
         )}
         {!minimal && (
           <div className='mt-6 flex flex-wrap justify-center gap-4'>
-            <Button variant='outline' onClick={() => history.go(-1)}>
+            <ErrorActionButton variant='outline' onClick={() => history.go(-1)}>
               {t('Go Back')}
-            </Button>
-            <Button
+            </ErrorActionButton>
+            <ErrorActionLink
               variant='outline'
-              render={
-                <a
-                  href={FEEDBACK_URL}
-                  target='_blank'
-                  rel='noopener noreferrer'
-                />
-              }
+              href={FEEDBACK_URL}
+              target='_blank'
+              rel='noopener noreferrer'
             >
               {t('Report an issue')}
-            </Button>
-            <Button onClick={() => navigate({ to: '/' })}>
+            </ErrorActionLink>
+            <ErrorActionButton onClick={() => navigate({ to: '/' })}>
               {t('Back to Home')}
-            </Button>
+            </ErrorActionButton>
           </div>
         )}
       </div>

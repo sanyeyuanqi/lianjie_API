@@ -16,12 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
-import { Dashboard } from '@/features/dashboard'
 import {
-  DASHBOARD_SECTION_IDS,
-  DASHBOARD_DEFAULT_SECTION,
-} from '@/features/dashboard/section-registry'
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
+
+const DASHBOARD_SECTION_IDS = ['overview', 'models', 'users'] as const
+const DASHBOARD_DEFAULT_SECTION = DASHBOARD_SECTION_IDS[0]
 
 export const Route = createFileRoute('/_authenticated/dashboard/$section')({
   beforeLoad: ({ params }) => {
@@ -33,5 +35,8 @@ export const Route = createFileRoute('/_authenticated/dashboard/$section')({
       })
     }
   },
-  component: Dashboard,
+  component: lazyRouteComponent(
+    () => import('@/features/dashboard'),
+    'Dashboard'
+  ),
 })

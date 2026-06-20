@@ -16,21 +16,29 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import z from 'zod'
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { ROLE } from '@/lib/roles'
-import { Channels } from '@/features/channels'
+import {
+  asNumber,
+  asString,
+  asStringArray,
+  compactSearch,
+} from '@/lib/route-search'
 
-const channelsSearchSchema = z.object({
-  page: z.number().optional().catch(1),
-  pageSize: z.number().optional().catch(undefined),
-  filter: z.string().optional().catch(''),
-  status: z.array(z.string()).optional().catch([]),
-  type: z.array(z.string()).optional().catch([]),
-  group: z.array(z.string()).optional().catch([]),
-  model: z.string().optional().catch(''),
-})
+type ChannelsSearch = {
+  page?: number
+  pageSize?: number
+  filter?: string
+  status?: string[]
+  type?: string[]
+  group?: string[]
+  model?: string
+}
 
 export const Route = createFileRoute('/_authenticated/channels/')({
   beforeLoad: () => {
@@ -42,6 +50,18 @@ export const Route = createFileRoute('/_authenticated/channels/')({
       })
     }
   },
-  validateSearch: channelsSearchSchema,
-  component: Channels,
+  validateSearch: (search): ChannelsSearch =>
+    compactSearch({
+      page: asNumber(search.page, 1),
+      pageSize: asNumber(search.pageSize),
+      filter: asString(search.filter),
+      status: asStringArray(search.status),
+      type: asStringArray(search.type),
+      group: asStringArray(search.group),
+      model: asString(search.model),
+    }),
+  component: lazyRouteComponent(
+    () => import('@/features/channels'),
+    'Channels'
+  ),
 })

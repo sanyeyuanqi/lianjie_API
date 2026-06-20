@@ -18,7 +18,7 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { AxiosError } from 'axios'
 import i18next from 'i18next'
-import { toast } from 'sonner'
+import { showErrorToast } from '@/lib/toast'
 
 export function handleServerError(error: unknown) {
   let errMsg = i18next.t('Something went wrong!')
@@ -36,5 +36,5 @@ export function handleServerError(error: unknown) {
     errMsg = error.response?.data.title
   }
 
-  toast.error(errMsg)
+  showErrorToast(errMsg)
 }

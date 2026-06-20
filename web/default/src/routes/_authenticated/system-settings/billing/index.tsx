@@ -17,7 +17,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { createFileRoute, redirect } from '@tanstack/react-router'
-import { BILLING_DEFAULT_SECTION } from '@/features/system-settings/billing/section-registry.tsx'
+
+const BILLING_DEFAULT_SECTION = 'quota'
 
 export const Route = createFileRoute(
   '/_authenticated/system-settings/billing/'

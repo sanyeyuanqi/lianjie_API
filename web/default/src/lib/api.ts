@@ -18,8 +18,8 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import axios, { type AxiosRequestConfig } from 'axios'
 import { t } from 'i18next'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { showErrorToast } from '@/lib/toast'
 
 declare module 'axios' {
   export interface AxiosRequestConfig {
@@ -91,7 +91,7 @@ api.interceptors.response.use(
       if (!response.data.success) {
         // Show error toast for business failures
         const msg = response.data.message || t('Request failed')
-        toast.error(msg)
+        showErrorToast(msg)
       }
     }
     return response
@@ -108,11 +108,11 @@ api.interceptors.response.use(
       }
 
       if (!skip) {
-        toast.error(t('Session expired!'))
+        showErrorToast(t('Session expired!'))
       }
     } else if (status === 429) {
       if (!skip) {
-        toast.error(
+        showErrorToast(
           error?.response?.data?.message ||
             t('Too many requests. Please try again later.')
         )
@@ -121,7 +121,7 @@ api.interceptors.response.use(
       // Other errors: show error message from response or default
       const msg =
         error?.response?.data?.message || error?.message || t('Request failed')
-      toast.error(msg)
+      showErrorToast(msg)
     }
     return Promise.reject(error)
   }

@@ -35,7 +35,9 @@ function getInitialStatus(): SystemStatus | undefined {
   return undefined
 }
 
-export function useStatus() {
+export function useStatus(options: { enabled?: boolean } = {}) {
+  const enabled = options.enabled ?? true
+
   const { data, isLoading, error } = useQuery({
     queryKey: ['status'],
     queryFn: async () => {
@@ -70,11 +72,12 @@ export function useStatus() {
     staleTime: 5 * 60 * 1000,
     // Cache expires after 30 minutes
     gcTime: 30 * 60 * 1000,
+    enabled,
   })
 
   return {
     status: data ?? null,
-    loading: isLoading,
+    loading: enabled ? isLoading : false,
     error,
   }
 }

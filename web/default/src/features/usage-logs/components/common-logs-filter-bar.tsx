@@ -54,6 +54,18 @@ const route = getRouteApi('/_authenticated/usage-logs/$section')
 const logTypeValues = ['0', '1', '2', '3', '4', '5', '6'] as const
 
 type LogTypeValue = (typeof logTypeValues)[number]
+type UsageLogsSearchParams = {
+  startTime?: number
+  endTime?: number
+  channel?: string
+  model?: string
+  token?: string
+  group?: string
+  username?: string
+  requestId?: string
+  upstreamRequestId?: string
+  type?: LogTypeValue[]
+}
 
 function isLogTypeValue(value: string): value is LogTypeValue {
   return (logTypeValues as readonly string[]).includes(value)
@@ -69,7 +81,7 @@ export function CommonLogsFilterBar<TData>(
   const { t } = useTranslation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
-  const searchParams = route.useSearch()
+  const searchParams = route.useSearch() as UsageLogsSearchParams
   const isAdmin = useIsAdmin()
   const { sensitiveVisible, setSensitiveVisible } = useUsageLogsContext()
   const fetchingLogs = useIsFetching({ queryKey: ['logs'] })

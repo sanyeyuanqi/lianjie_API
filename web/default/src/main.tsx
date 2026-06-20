@@ -26,19 +26,19 @@ import {
 } from '@tanstack/react-query'
 import { RouterProvider, createRouter } from '@tanstack/react-router'
 import i18next from 'i18next'
-import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { getStatus } from '@/lib/api'
 import { installBuildMetadata } from '@/lib/build-metadata'
+import { DEFAULT_SYSTEM_NAME } from '@/lib/constants'
 import '@/lib/dayjs'
 import { applyFaviconToDom } from '@/lib/dom-utils'
-import { DEFAULT_SYSTEM_NAME } from '@/lib/constants'
 import { initializeFrontendCache } from '@/lib/frontend-cache'
 import { handleServerError } from '@/lib/handle-server-error'
+import { showErrorToast } from '@/lib/toast'
 import { DirectionProvider } from './context/direction-provider'
 import { FontProvider } from './context/font-provider'
 import { ThemeProvider } from './context/theme-provider'
-import './i18n/config'
+import { i18nReady } from './i18n/config'
 // Generated Routes
 import { routeTree } from './routeTree.gen'
 // Styles
@@ -70,7 +70,7 @@ const queryClient = new QueryClient({
 
         if (error instanceof AxiosError) {
           if (error.response?.status === 304) {
-            toast.error(i18next.t('Content not modified!'))
+            showErrorToast(i18next.t('Content not modified!'))
           }
         }
       },
@@ -80,13 +80,13 @@ const queryClient = new QueryClient({
     onError: (error) => {
       if (error instanceof AxiosError) {
         if (error.response?.status === 401) {
-          toast.error(i18next.t('Session expired!'))
+          showErrorToast(i18next.t('Session expired!'))
           useAuthStore.getState().auth.reset()
           const redirect = `${router.history.location.href}`
           router.navigate({ to: '/sign-in', search: { redirect } })
         }
         if (error.response?.status === 500) {
-          toast.error(i18next.t('Internal Server Error!'))
+          showErrorToast(i18next.t('Internal Server Error!'))
           router.navigate({ to: '/500' })
         }
       }
@@ -98,7 +98,8 @@ const queryClient = new QueryClient({
 const router = createRouter({
   routeTree,
   context: { queryClient },
-  defaultPreload: 'intent',
+  // Fetch route chunks only when the user actually navigates to a page.
+  defaultPreload: false,
   defaultPreloadStaleTime: 0,
 })
 
@@ -158,17 +159,19 @@ const rootElement = document.getElementById('root')!
 })()
 if (!rootElement.innerHTML) {
   const root = ReactDOM.createRoot(rootElement)
-  root.render(
-    <StrictMode>
-      <QueryClientProvider client={queryClient}>
-        <ThemeProvider>
-          <FontProvider>
-            <DirectionProvider>
-              <RouterProvider router={router} />
-            </DirectionProvider>
-          </FontProvider>
-        </ThemeProvider>
-      </QueryClientProvider>
-    </StrictMode>
-  )
+  void i18nReady.finally(() => {
+    root.render(
+      <StrictMode>
+        <QueryClientProvider client={queryClient}>
+          <ThemeProvider>
+            <FontProvider>
+              <DirectionProvider>
+                <RouterProvider router={router} />
+              </DirectionProvider>
+            </FontProvider>
+          </ThemeProvider>
+        </QueryClientProvider>
+      </StrictMode>
+    )
+  })
 }

@@ -16,29 +16,114 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Link, useNavigate, useRouterState } from '@tanstack/react-router'
+import { Bell } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
 import { useNotifications } from '@/hooks/use-notifications'
 import { useSystemConfig } from '@/hooks/use-system-config'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
-import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
-import { Dialog } from '@/components/dialog'
-import { LanguageSwitcher } from '@/components/language-switcher'
-import { NotificationPopover } from '@/components/notification-popover'
-import { ProfileDropdown } from '@/components/profile-dropdown'
-import { ThemeSwitch } from '@/components/theme-switch'
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import type { TopNavLink } from '../types'
 
 const AUTH_PROMPT_SECONDS = 5
 
+const NotificationPopover = lazy(() =>
+  import('@/components/notification-popover').then((module) => ({
+    default: module.NotificationPopover,
+  }))
+)
+
+const ProfileDropdown = lazy(() =>
+  import('@/components/profile-dropdown').then((module) => ({
+    default: module.ProfileDropdown,
+  }))
+)
+
+const Dialog = lazy(() =>
+  import('@/components/dialog').then((module) => ({
+    default: module.Dialog,
+  }))
+)
+
+const LanguageSwitcher = lazy(() =>
+  import('@/components/language-switcher').then((module) => ({
+    default: module.LanguageSwitcher,
+  }))
+)
+
+const ThemeSwitch = lazy(() =>
+  import('@/components/theme-switch').then((module) => ({
+    default: module.ThemeSwitch,
+  }))
+)
+
 type AuthPromptTarget = {
   title: string
   href: string
+}
+
+function NotificationPopoverFallback() {
+  return (
+    <button
+      type='button'
+      className='inline-flex size-8 items-center justify-center rounded-lg text-slate-700 opacity-60 dark:text-slate-300'
+      disabled
+      aria-label='Notifications'
+    >
+      <Bell className='size-4' />
+    </button>
+  )
+}
+
+function UtilityButtonFallback(props: {
+  label: string
+  children: React.ReactNode
+}) {
+  return (
+    <button
+      type='button'
+      className='inline-flex size-8 items-center justify-center rounded-lg text-slate-700 opacity-70 dark:text-slate-300'
+      disabled
+      aria-label={props.label}
+    >
+      {props.children}
+    </button>
+  )
+}
+
+function ProfileDropdownFallback(props: {
+  showName?: boolean
+  name?: string
+  className?: string
+}) {
+  if (!props.showName) {
+    return <Skeleton className='size-6 rounded-full' />
+  }
+
+  return (
+    <button
+      type='button'
+      className={cn(
+        'inline-flex h-8 max-w-[180px] items-center justify-center rounded-lg px-2 text-slate-700 opacity-70 dark:text-slate-300',
+        props.className
+      )}
+      disabled
+    >
+      <span className='truncate text-sm font-medium'>{props.name}</span>
+    </button>
+  )
 }
 
 function normalizePath(path: string) {
@@ -99,10 +184,14 @@ export function PublicHeader(props: PublicHeaderProps) {
     useState<AuthPromptTarget | null>(null)
   const [authPromptSecondsLeft, setAuthPromptSecondsLeft] =
     useState(AUTH_PROMPT_SECONDS)
+  const [utilityControlsReady, setUtilityControlsReady] = useState(false)
+  const [notificationsReady, setNotificationsReady] = useState(false)
   const { auth } = useAuthStore()
   const { systemName, logo: systemLogo, loading } = useSystemConfig()
   const dynamicLinks = useTopNavLinks()
-  const notifications = useNotifications()
+  const notifications = useNotifications({
+    enabled: showNotifications && notificationsReady,
+  })
   const setNotificationPopoverOpenRef = useRef(notifications.setPopoverOpen)
   const routerState = useRouterState()
   const pathname = normalizePath(routerState.location.pathname)
@@ -127,6 +216,18 @@ export function PublicHeader(props: PublicHeaderProps) {
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    if (!showNotifications) return
+    const timer = window.setTimeout(() => setNotificationsReady(true), 800)
+    return () => window.clearTimeout(timer)
+  }, [showNotifications])
+
+  useEffect(() => {
+    if (!showLanguageSwitcher && !showThemeSwitch) return
+    const timer = window.setTimeout(() => setUtilityControlsReady(true), 800)
+    return () => window.clearTimeout(timer)
+  }, [showLanguageSwitcher, showThemeSwitch])
 
   useEffect(() => {
     setNotificationPopoverOpenRef.current = notifications.setPopoverOpen
@@ -311,20 +412,52 @@ export function PublicHeader(props: PublicHeaderProps) {
             </div>
 
             <div className='ml-auto hidden items-center gap-1 sm:flex'>
-              {showLanguageSwitcher && <LanguageSwitcher />}
-              {showThemeSwitch && <ThemeSwitch />}
+              {showLanguageSwitcher &&
+                (utilityControlsReady ? (
+                  <Suspense
+                    fallback={
+                      <UtilityButtonFallback label={t('Change language')}>
+                        <span className='text-xs font-semibold'>A文</span>
+                      </UtilityButtonFallback>
+                    }
+                  >
+                    <LanguageSwitcher />
+                  </Suspense>
+                ) : (
+                  <UtilityButtonFallback label={t('Change language')}>
+                    <span className='text-xs font-semibold'>A文</span>
+                  </UtilityButtonFallback>
+                ))}
+              {showThemeSwitch &&
+                (utilityControlsReady ? (
+                  <Suspense
+                    fallback={
+                      <UtilityButtonFallback label={t('Toggle theme')}>
+                        <span className='text-base leading-none'>☼</span>
+                      </UtilityButtonFallback>
+                    }
+                  >
+                    <ThemeSwitch />
+                  </Suspense>
+                ) : (
+                  <UtilityButtonFallback label={t('Toggle theme')}>
+                    <span className='text-base leading-none'>☼</span>
+                  </UtilityButtonFallback>
+                ))}
               {showNotifications && isDesktop && (
-                <NotificationPopover
-                  open={notifications.popoverOpen}
-                  onOpenChange={notifications.setPopoverOpen}
-                  unreadCount={notifications.unreadCount}
-                  activeTab={notifications.activeTab}
-                  onTabChange={notifications.setActiveTab}
-                  notice={notifications.notice}
-                  announcements={notifications.announcements}
-                  loading={notifications.loading}
-                  onCloseToday={notifications.closeToday}
-                />
+                <Suspense fallback={<NotificationPopoverFallback />}>
+                  <NotificationPopover
+                    open={notifications.popoverOpen}
+                    onOpenChange={notifications.setPopoverOpen}
+                    unreadCount={notifications.unreadCount}
+                    activeTab={notifications.activeTab}
+                    onTabChange={notifications.setActiveTab}
+                    notice={notifications.notice}
+                    announcements={notifications.announcements}
+                    loading={notifications.loading}
+                    onCloseToday={notifications.closeToday}
+                  />
+                </Suspense>
               )}
 
               {showAuthButtons && (
@@ -333,49 +466,97 @@ export function PublicHeader(props: PublicHeaderProps) {
                   {loading ? (
                     <Skeleton className='h-8 w-20 rounded-lg' />
                   ) : isAuthenticated ? (
-                    <ProfileDropdown showName nameMode='username' />
+                    <Suspense
+                      fallback={
+                        <ProfileDropdownFallback
+                          showName
+                          name={user?.username}
+                        />
+                      }
+                    >
+                      <ProfileDropdown showName nameMode='username' />
+                    </Suspense>
                   ) : (
-                    <Button
-                      size='sm'
+                    <Link
+                      to='/sign-in'
                       className='h-8 rounded-lg bg-slate-950 px-3.5 text-xs font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-white dark:text-slate-950 dark:hover:bg-slate-200'
-                      render={<Link to='/sign-in' />}
                     >
                       {t('Sign in')}
-                    </Button>
+                    </Link>
                   )}
                 </>
               )}
             </div>
 
             {/* Mobile: keep the utility actions visible beside the menu. */}
-            <div className='ml-auto flex min-w-0 items-center gap-1 sm:hidden [&_[data-slot=button]]:size-8'>
-              {showLanguageSwitcher && <LanguageSwitcher />}
-              {showThemeSwitch && <ThemeSwitch />}
+            <div className='ml-auto flex min-w-0 items-center gap-1 sm:hidden'>
+              {showLanguageSwitcher &&
+                (utilityControlsReady ? (
+                  <Suspense
+                    fallback={
+                      <UtilityButtonFallback label={t('Change language')}>
+                        <span className='text-xs font-semibold'>A文</span>
+                      </UtilityButtonFallback>
+                    }
+                  >
+                    <LanguageSwitcher />
+                  </Suspense>
+                ) : (
+                  <UtilityButtonFallback label={t('Change language')}>
+                    <span className='text-xs font-semibold'>A文</span>
+                  </UtilityButtonFallback>
+                ))}
+              {showThemeSwitch &&
+                (utilityControlsReady ? (
+                  <Suspense
+                    fallback={
+                      <UtilityButtonFallback label={t('Toggle theme')}>
+                        <span className='text-base leading-none'>☼</span>
+                      </UtilityButtonFallback>
+                    }
+                  >
+                    <ThemeSwitch />
+                  </Suspense>
+                ) : (
+                  <UtilityButtonFallback label={t('Toggle theme')}>
+                    <span className='text-base leading-none'>☼</span>
+                  </UtilityButtonFallback>
+                ))}
               {showNotifications && !isDesktop && (
-                <NotificationPopover
-                  open={notifications.popoverOpen}
-                  onOpenChange={notifications.setPopoverOpen}
-                  unreadCount={notifications.unreadCount}
-                  activeTab={notifications.activeTab}
-                  onTabChange={notifications.setActiveTab}
-                  notice={notifications.notice}
-                  announcements={notifications.announcements}
-                  loading={notifications.loading}
-                  onCloseToday={notifications.closeToday}
-                />
+                <Suspense fallback={<NotificationPopoverFallback />}>
+                  <NotificationPopover
+                    open={notifications.popoverOpen}
+                    onOpenChange={notifications.setPopoverOpen}
+                    unreadCount={notifications.unreadCount}
+                    activeTab={notifications.activeTab}
+                    onTabChange={notifications.setActiveTab}
+                    notice={notifications.notice}
+                    announcements={notifications.announcements}
+                    loading={notifications.loading}
+                    onCloseToday={notifications.closeToday}
+                  />
+                </Suspense>
               )}
               {showAuthButtons && !loading && isAuthenticated && (
-                <ProfileDropdown
-                  showName
-                  nameMode='username'
-                  className='max-w-[92px]'
-                />
+                <Suspense
+                  fallback={
+                    <ProfileDropdownFallback
+                      showName
+                      name={user?.username}
+                      className='max-w-[92px]'
+                    />
+                  }
+                >
+                  <ProfileDropdown
+                    showName
+                    nameMode='username'
+                    className='max-w-[92px]'
+                  />
+                </Suspense>
               )}
-              <Button
+              <button
                 type='button'
-                variant='ghost'
-                size='icon'
-                className='size-9 rounded-xl text-slate-700 hover:bg-slate-950/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.06]'
+                className='inline-flex size-9 items-center justify-center rounded-xl text-slate-700 hover:bg-slate-950/[0.05] dark:text-slate-300 dark:hover:bg-white/[0.06]'
                 onClick={() => setMobileOpen((v) => !v)}
                 aria-label={t('Toggle navigation menu')}
               >
@@ -399,7 +580,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                     )}
                   />
                 </div>
-              </Button>
+              </button>
             </div>
           </nav>
         </div>
@@ -494,34 +675,48 @@ export function PublicHeader(props: PublicHeaderProps) {
         </div>
       </div>
 
-      <Dialog
-        open={!!authPromptTarget}
-        onOpenChange={(open) => {
-          if (!open) {
-            closeAuthPrompt()
-          }
-        }}
-        title={t('Sign in required')}
-        description={t('Please sign in to view {{module}}.', {
-          module: authPromptTarget?.title || '',
-        })}
-        contentClassName='sm:max-w-md'
-        contentHeight='auto'
-        footer={
-          <>
-            <Button variant='outline' onClick={closeAuthPrompt}>
-              {t('Cancel')}
-            </Button>
-            <Button onClick={navigateToSignIn}>{t('Sign in now')}</Button>
-          </>
-        }
-      >
-        <div className='bg-muted/40 text-muted-foreground rounded-lg px-3 py-2 text-sm'>
-          {t('Redirecting to sign in in {{seconds}} seconds.', {
-            seconds: authPromptSecondsLeft,
-          })}
-        </div>
-      </Dialog>
+      {authPromptTarget ? (
+        <Suspense fallback={null}>
+          <Dialog
+            open={!!authPromptTarget}
+            onOpenChange={(open) => {
+              if (!open) {
+                closeAuthPrompt()
+              }
+            }}
+            title={t('Sign in required')}
+            description={t('Please sign in to view {{module}}.', {
+              module: authPromptTarget?.title || '',
+            })}
+            contentClassName='sm:max-w-md'
+            contentHeight='auto'
+            footer={
+              <>
+                <button
+                  type='button'
+                  className='border-border bg-background hover:bg-muted hover:text-foreground inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-2.5 text-sm font-medium whitespace-nowrap transition-all'
+                  onClick={closeAuthPrompt}
+                >
+                  {t('Cancel')}
+                </button>
+                <button
+                  type='button'
+                  className='bg-primary text-primary-foreground hover:bg-primary/90 inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-lg px-2.5 text-sm font-medium whitespace-nowrap transition-all'
+                  onClick={navigateToSignIn}
+                >
+                  {t('Sign in now')}
+                </button>
+              </>
+            }
+          >
+            <div className='bg-muted/40 text-muted-foreground rounded-lg px-3 py-2 text-sm'>
+              {t('Redirecting to sign in in {{seconds}} seconds.', {
+                seconds: authPromptSecondsLeft,
+              })}
+            </div>
+          </Dialog>
+        </Suspense>
+      ) : null}
     </>
   )
 }

@@ -16,9 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute } from '@tanstack/react-router'
-import { Otp } from '@/features/auth/otp'
+import { createFileRoute, lazyRouteComponent } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/(auth)/otp')({
-  component: Otp,
+  component: lazyRouteComponent(() => import('@/features/auth/otp'), 'Otp'),
 })

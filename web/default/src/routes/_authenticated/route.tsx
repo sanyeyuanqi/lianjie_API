@@ -16,13 +16,72 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import { lazy, Suspense, useEffect } from 'react'
+import { createFileRoute, redirect, useNavigate } from '@tanstack/react-router'
 import { useAuthStore } from '@/stores/auth-store'
 import { getSelf } from '@/lib/api'
-import { AuthenticatedLayout } from '@/components/layout'
+
+const AuthenticatedLayout = lazy(() =>
+  import('@/components/layout/components/authenticated-layout').then(
+    (module) => ({
+      default: module.AuthenticatedLayout,
+    })
+  )
+)
 
 // 内存中的验证标记，避免同一会话中重复验证
 let sessionVerified = false
+let sessionVerificationPromise: Promise<boolean> | null = null
+
+function verifySessionInBackground() {
+  if (sessionVerified) return Promise.resolve(true)
+  if (sessionVerificationPromise) return sessionVerificationPromise
+
+  sessionVerificationPromise = getSelf()
+    .then((res) => {
+      const { auth } = useAuthStore.getState()
+
+      if (res?.success && res.data) {
+        auth.setUser(res.data)
+        sessionVerified = true
+        return true
+      }
+
+      auth.reset()
+      return false
+    })
+    .catch(() => {
+      useAuthStore.getState().auth.reset()
+      return false
+    })
+    .finally(() => {
+      sessionVerificationPromise = null
+    })
+
+  return sessionVerificationPromise
+}
+
+function AuthenticatedRouteComponent() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    void verifySessionInBackground().then((valid) => {
+      if (!valid) {
+        navigate({
+          to: '/sign-in',
+          search: { redirect: window.location.href },
+          replace: true,
+        })
+      }
+    })
+  }, [navigate])
+
+  return (
+    <Suspense fallback={null}>
+      <AuthenticatedLayout />
+    </Suspense>
+  )
+}
 
 export const Route = createFileRoute('/_authenticated')({
   beforeLoad: async ({ location }) => {
@@ -36,22 +95,8 @@ export const Route = createFileRoute('/_authenticated')({
       })
     }
 
-    // 本地有用户信息，但需要验证 session 是否有效（每个会话只验证一次）
-    if (!sessionVerified) {
-      const res = await getSelf().catch(() => null)
-      if (res?.success && res.data) {
-        // 验证成功，更新用户信息（可能有变化）
-        auth.setUser(res.data)
-        sessionVerified = true
-      } else {
-        // 验证失败或 API 调用失败，清除本地缓存并跳转登录页
-        auth.reset()
-        throw redirect({
-          to: '/sign-in',
-          search: { redirect: location.href },
-        })
-      }
-    }
+    // 本地有用户信息时先渲染页面，再在组件内后台校验 session。
+    // 这样部署环境网络较慢时，登录后不会被 getSelf() 阻塞首屏。
   },
-  component: AuthenticatedLayout,
+  component: AuthenticatedRouteComponent,
 })

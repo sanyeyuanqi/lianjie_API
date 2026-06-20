@@ -16,9 +16,12 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { createFileRoute, redirect } from '@tanstack/react-router'
+import {
+  createFileRoute,
+  lazyRouteComponent,
+  redirect,
+} from '@tanstack/react-router'
 import { getFreshSidebarModuleEnabled } from '@/lib/nav-modules'
-import { ChatWorkspace } from '@/features/chat/components/chat-workspace'
 
 export const Route = createFileRoute('/_authenticated/chat/')({
   beforeLoad: async () => {
@@ -32,9 +35,8 @@ export const Route = createFileRoute('/_authenticated/chat/')({
 
     throw redirect({ to: '/dashboard' })
   },
-  component: ChatIndexPage,
+  component: lazyRouteComponent(
+    () => import('@/features/chat/components/chat-workspace'),
+    'ChatWorkspace'
+  ),
 })
-
-function ChatIndexPage() {
-  return <ChatWorkspace />
-}
