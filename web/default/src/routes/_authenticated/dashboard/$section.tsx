@@ -16,11 +16,8 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import {
-  createFileRoute,
-  lazyRouteComponent,
-  redirect,
-} from '@tanstack/react-router'
+import { createFileRoute, redirect } from '@tanstack/react-router'
+import { Dashboard } from '@/features/dashboard'
 
 const DASHBOARD_SECTION_IDS = ['overview', 'models', 'users'] as const
 const DASHBOARD_DEFAULT_SECTION = DASHBOARD_SECTION_IDS[0]
@@ -35,8 +32,5 @@ export const Route = createFileRoute('/_authenticated/dashboard/$section')({
       })
     }
   },
-  component: lazyRouteComponent(
-    () => import('@/features/dashboard'),
-    'Dashboard'
-  ),
+  component: Dashboard,
 })
