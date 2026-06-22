@@ -44,8 +44,9 @@ function getChatNavGroups(t: TFunction): NavGroup[] {
       title: t('Features'),
       items: [
         {
-          title: t('New chat'),
-          type: 'playground-sessions',
+          title: t('Conversation'),
+          url: '/chat',
+          icon: MessageSquare,
         },
         {
           title: t('Chat'),

@@ -140,6 +140,33 @@ export function TopNav({
       })),
     [links, currentPath]
   )
+  const creationCenterTitle = t('Creation Center')
+  const creationCenterLink = normalizedLinks.find(
+    (link) => link.title === creationCenterTitle
+  )
+  const mobilePrimaryLinks = normalizedLinks.filter(
+    (link) => link.title !== creationCenterTitle
+  )
+  const mobileCreationLinks = creationCenterLink
+    ? [
+        {
+          title: t('Playground'),
+          href: '/playground',
+          disabled: creationCenterLink.disabled,
+          external: false,
+          requiresAuth: creationCenterLink.requiresAuth,
+          isActive: isPathActive(currentPath, '/playground'),
+        },
+        {
+          title: t('Conversation'),
+          href: '/chat',
+          disabled: creationCenterLink.disabled,
+          external: false,
+          requiresAuth: creationCenterLink.requiresAuth,
+          isActive: isPathActive(currentPath, '/chat'),
+        },
+      ]
+    : []
 
   const mobileDrawer =
     showMobileMenu && typeof document !== 'undefined'
@@ -182,7 +209,7 @@ export function TopNav({
               </div>
 
               <nav className='mx-3 mt-3 flex flex-col gap-1 rounded-2xl border border-slate-200/70 bg-slate-50/70 p-1.5 dark:border-white/10 dark:bg-white/[0.04]'>
-                {normalizedLinks.map(
+                {mobilePrimaryLinks.map(
                   ({ title, href, isActive, disabled, external, requiresAuth }) => {
                     const linkClassName = cn(
                       'flex h-11 items-center rounded-xl px-3.5 text-[15px] font-medium tracking-tight transition-all duration-150 ease-out',
@@ -242,6 +269,59 @@ export function TopNav({
                   }
                 )}
               </nav>
+
+              {mobileCreationLinks.length > 0 && (
+                <section
+                  className={cn(
+                    'mx-4 mt-4 transition-all duration-150 ease-out',
+                    mobileOpen
+                      ? 'translate-x-0 opacity-100'
+                      : 'translate-x-2 opacity-0'
+                  )}
+                >
+                  <div className='rounded-2xl border border-slate-200/70 bg-slate-50/70 p-3 dark:border-white/10 dark:bg-white/[0.04]'>
+                    <div className='flex flex-col gap-2'>
+                      {mobileCreationLinks.map(
+                        ({
+                          title,
+                          href,
+                          isActive,
+                          disabled,
+                          external,
+                          requiresAuth,
+                        }) => (
+                          <Link
+                            key={`${title}-${href}`}
+                            to={href}
+                            disabled={disabled}
+                            className={cn(
+                              'flex h-11 items-center rounded-xl px-3.5 text-[15px] font-semibold tracking-tight transition-all duration-150 ease-out',
+                              isActive
+                                ? 'bg-white text-slate-950 shadow-sm ring-1 ring-slate-200/80 dark:bg-white/10 dark:text-white dark:ring-white/10'
+                                : 'text-slate-600 hover:bg-white/80 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-white/[0.08] dark:hover:text-slate-100',
+                              disabled && 'pointer-events-none opacity-50'
+                            )}
+                            onClick={(event) => {
+                              handleLinkClick(event, {
+                                title,
+                                href,
+                                disabled,
+                                external,
+                                requiresAuth,
+                              })
+                              if (!disabled && !requiresAuth) {
+                                setMobileOpen(false)
+                              }
+                            }}
+                          >
+                            {title}
+                          </Link>
+                        )
+                      )}
+                    </div>
+                  </div>
+                </section>
+              )}
 
               <div
                 className={cn(

@@ -16,19 +16,14 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
-import { CheckCircle, Clock, Code, Copy, Eye, Send, Zap } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import { CheckCircle, Clock, Code, Copy, Eye, Send, Zap } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import {
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
-} from '@/components/ui/tabs'
-import { cn } from '@/lib/utils'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import type { DebugData } from '../types'
 
 interface DebugPanelProps {
@@ -80,18 +75,18 @@ function CodeBlock({
   }
 
   return (
-    <div className='bg-muted/35 text-foreground dark:bg-zinc-900/80 dark:text-zinc-100 relative h-full min-h-0 overflow-hidden rounded-lg border border-border/80 shadow-inner'>
+    <div className='bg-muted/35 text-foreground border-border/80 relative h-full min-h-0 overflow-hidden rounded-lg border shadow-inner dark:bg-zinc-900/80 dark:text-zinc-100'>
       <Button
         type='button'
         variant='ghost'
         size='icon-sm'
-        className='bg-background/85 text-muted-foreground hover:bg-background hover:text-foreground dark:bg-zinc-800/85 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white absolute top-2 right-2 z-10 border shadow-sm'
+        className='bg-background/85 text-muted-foreground hover:bg-background hover:text-foreground absolute top-2 right-2 z-10 border shadow-sm dark:bg-zinc-800/85 dark:text-zinc-300 dark:hover:bg-zinc-700 dark:hover:text-white'
         onClick={handleCopy}
         aria-label={t('Copy')}
       >
         <Copy className='size-3.5' />
       </Button>
-      <pre className='selection:bg-primary/15 h-full overflow-auto p-3 pr-12 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-800 dark:text-zinc-100 [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2'>
+      <pre className='selection:bg-primary/15 [&::-webkit-scrollbar-thumb]:bg-border h-full overflow-auto p-3 pr-12 font-mono text-xs leading-relaxed whitespace-pre-wrap text-slate-800 dark:text-zinc-100 [&::-webkit-scrollbar]:h-2 [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-thumb]:rounded-full'>
         {formatted}
       </pre>
     </div>
@@ -134,7 +129,7 @@ function SseViewer({ messages }: { messages: string[] }) {
           return (
             <details
               key={`${index}-${message.slice(0, 12)}`}
-              className='group rounded-md border bg-background'
+              className='group bg-background rounded-md border'
               open={index === messages.length - 1 || isDone}
             >
               <summary className='flex cursor-pointer items-center gap-2 px-3 py-2 text-xs'>
@@ -179,71 +174,85 @@ export function DebugPanel({ data }: DebugPanelProps) {
       : ''
 
   return (
-    <aside className='bg-background hidden h-full w-[360px] shrink-0 border-l xl:flex xl:flex-col'>
-      <div className='flex h-14 shrink-0 items-center gap-2 border-b px-4'>
-        <Code className='text-muted-foreground size-4' />
-        <h2 className='text-sm font-semibold'>{t('调试信息')}</h2>
-      </div>
-
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className='flex min-h-0 flex-1 flex-col gap-0'
-      >
-        <div className='border-b px-3 py-2'>
-          <TabsList className='grid w-full grid-cols-3'>
-            <TabsTrigger value='preview' className='gap-1'>
-              <Eye className='size-3.5' />
-              {t('预览')}
-            </TabsTrigger>
-            <TabsTrigger value='request' className='gap-1'>
-              <Send className='size-3.5' />
-              {t('请求')}
-            </TabsTrigger>
-            <TabsTrigger value='response' className='gap-1'>
-              <Zap className='size-3.5' />
-              {t('响应')}
-              {data.sseMessages.length > 0 && (
-                <Badge className='h-4 px-1 text-[10px]'>
-                  {data.sseMessages.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+    <aside className='hidden h-full w-[360px] shrink-0 bg-transparent p-2 pr-2 xl:flex'>
+      <div className='border-sidebar-border bg-background flex h-full w-full flex-col overflow-hidden rounded-lg border shadow-sm'>
+        <div className='flex h-14 shrink-0 items-center gap-2 border-b px-4'>
+          <Code className='text-muted-foreground size-4' />
+          <h2 className='text-sm font-semibold'>{t('调试信息')}</h2>
         </div>
 
-        <TabsContent
-          value='preview'
-          className={cn('min-h-0 flex-1 p-3', activeTab !== 'preview' && 'hidden')}
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className='flex min-h-0 flex-1 flex-col gap-0'
         >
-          <CodeBlock
-            content={data.previewRequest}
-            emptyText={t('正在构造请求体预览...')}
-          />
-        </TabsContent>
-        <TabsContent
-          value='request'
-          className={cn('min-h-0 flex-1 p-3', activeTab !== 'request' && 'hidden')}
-        >
-          <CodeBlock content={data.request} emptyText={t('暂无请求数据')} />
-        </TabsContent>
-        <TabsContent
-          value='response'
-          className={cn('min-h-0 flex-1 p-3', activeTab !== 'response' && 'hidden')}
-        >
-          {data.sseMessages.length > 0 ? (
-            <SseViewer messages={data.sseMessages} />
-          ) : (
-            <CodeBlock content={data.response} emptyText={t('暂无响应数据')} />
-          )}
-        </TabsContent>
-      </Tabs>
+          <div className='border-b px-3 py-2'>
+            <TabsList className='grid w-full grid-cols-3'>
+              <TabsTrigger value='preview' className='gap-1'>
+                <Eye className='size-3.5' />
+                {t('预览')}
+              </TabsTrigger>
+              <TabsTrigger value='request' className='gap-1'>
+                <Send className='size-3.5' />
+                {t('请求')}
+              </TabsTrigger>
+              <TabsTrigger value='response' className='gap-1'>
+                <Zap className='size-3.5' />
+                {t('响应')}
+                {data.sseMessages.length > 0 && (
+                  <Badge className='h-4 px-1 text-[10px]'>
+                    {data.sseMessages.length}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
-      <div className='text-muted-foreground flex h-10 shrink-0 items-center gap-2 border-t px-4 text-xs'>
-        <Clock className='size-3.5' />
-        <span>
-          {lastTime ? `${t('最后请求')}: ${lastTime}` : t('暂无请求数据')}
-        </span>
+          <TabsContent
+            value='preview'
+            className={cn(
+              'min-h-0 flex-1 p-3',
+              activeTab !== 'preview' && 'hidden'
+            )}
+          >
+            <CodeBlock
+              content={data.previewRequest}
+              emptyText={t('正在构造请求体预览...')}
+            />
+          </TabsContent>
+          <TabsContent
+            value='request'
+            className={cn(
+              'min-h-0 flex-1 p-3',
+              activeTab !== 'request' && 'hidden'
+            )}
+          >
+            <CodeBlock content={data.request} emptyText={t('暂无请求数据')} />
+          </TabsContent>
+          <TabsContent
+            value='response'
+            className={cn(
+              'min-h-0 flex-1 p-3',
+              activeTab !== 'response' && 'hidden'
+            )}
+          >
+            {data.sseMessages.length > 0 ? (
+              <SseViewer messages={data.sseMessages} />
+            ) : (
+              <CodeBlock
+                content={data.response}
+                emptyText={t('暂无响应数据')}
+              />
+            )}
+          </TabsContent>
+        </Tabs>
+
+        <div className='text-muted-foreground flex h-10 shrink-0 items-center gap-2 border-t px-4 text-xs'>
+          <Clock className='size-3.5' />
+          <span>
+            {lastTime ? `${t('最后请求')}: ${lastTime}` : t('暂无请求数据')}
+          </span>
+        </div>
       </div>
     </aside>
   )

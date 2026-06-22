@@ -26,11 +26,11 @@ import {
   Thermometer,
 } from 'lucide-react'
 import { useTranslation } from 'react-i18next'
+import { cn } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 import { Input } from '@/components/ui/input'
 import { Slider } from '@/components/ui/slider'
 import { Switch } from '@/components/ui/switch'
-import { cn } from '@/lib/utils'
 import type { ParameterEnabled, PlaygroundConfig } from '../types'
 
 type NumericConfigKey =
@@ -77,7 +77,9 @@ function ParameterControl({
   value,
 }: ParameterControlProps) {
   return (
-    <div className={cn('space-y-2 transition-opacity', !enabled && 'opacity-50')}>
+    <div
+      className={cn('space-y-2 transition-opacity', !enabled && 'opacity-50')}
+    >
       <div className='flex items-center justify-between gap-3'>
         <div className='flex min-w-0 items-center gap-2'>
           <span className='text-muted-foreground'>{icon}</span>
@@ -166,104 +168,108 @@ export function ModelConfigPanel({
   ]
 
   return (
-    <aside className='bg-background hidden h-full w-[280px] shrink-0 border-r xl:flex xl:flex-col'>
-      <div className='flex h-14 shrink-0 items-center gap-2 border-b px-4'>
-        <Settings className='text-muted-foreground size-4' />
-        <h2 className='text-sm font-semibold'>{t('模型配置')}</h2>
-      </div>
+    <aside className='hidden h-full w-[280px] shrink-0 bg-transparent p-2 pl-0 xl:flex'>
+      <div className='border-sidebar-border bg-background flex h-full w-full flex-col overflow-hidden rounded-lg border shadow-sm'>
+        <div className='flex h-14 shrink-0 items-center gap-2 border-b px-4'>
+          <Settings className='text-muted-foreground size-4' />
+          <h2 className='text-sm font-semibold'>{t('模型配置')}</h2>
+        </div>
 
-      <div className='flex-1 space-y-5 overflow-y-auto px-4 py-4'>
-        {controls.map((control) => (
-          <ParameterControl
-            key={control.key}
-            description={control.description}
-            enabled={parameterEnabled[control.key]}
-            icon={control.icon}
-            label={control.label}
-            max={control.max}
-            min={control.min}
-            step={control.step}
-            value={config[control.key]}
-            onEnabledChange={() => onParameterToggle(control.key)}
-            onValueChange={(value) => onConfigChange(control.key, value)}
-          />
-        ))}
+        <div className='flex-1 space-y-5 overflow-y-auto px-4 py-4'>
+          {controls.map((control) => (
+            <ParameterControl
+              key={control.key}
+              description={control.description}
+              enabled={parameterEnabled[control.key]}
+              icon={control.icon}
+              label={control.label}
+              max={control.max}
+              min={control.min}
+              step={control.step}
+              value={config[control.key]}
+              onEnabledChange={() => onParameterToggle(control.key)}
+              onValueChange={(value) => onConfigChange(control.key, value)}
+            />
+          ))}
 
-        <div
-          className={cn(
-            'space-y-2 transition-opacity',
-            !parameterEnabled.max_tokens && 'opacity-50'
-          )}
-        >
-          <div className='flex items-center justify-between gap-3'>
-            <div className='flex min-w-0 items-center gap-2'>
-              <Hash className='text-muted-foreground size-4' />
-              <span className='truncate text-sm font-medium'>Max Tokens</span>
+          <div
+            className={cn(
+              'space-y-2 transition-opacity',
+              !parameterEnabled.max_tokens && 'opacity-50'
+            )}
+          >
+            <div className='flex items-center justify-between gap-3'>
+              <div className='flex min-w-0 items-center gap-2'>
+                <Hash className='text-muted-foreground size-4' />
+                <span className='truncate text-sm font-medium'>Max Tokens</span>
+              </div>
+              <Switch
+                checked={parameterEnabled.max_tokens}
+                size='sm'
+                onCheckedChange={() => onParameterToggle('max_tokens')}
+                aria-label={
+                  parameterEnabled.max_tokens
+                    ? 'Disable Max Tokens'
+                    : 'Enable Max Tokens'
+                }
+              />
             </div>
-            <Switch
-              checked={parameterEnabled.max_tokens}
-              size='sm'
-              onCheckedChange={() => onParameterToggle('max_tokens')}
-              aria-label={
-                parameterEnabled.max_tokens
-                  ? 'Disable Max Tokens'
-                  : 'Enable Max Tokens'
+            <Input
+              type='number'
+              min={0}
+              step={1}
+              value={config.max_tokens}
+              disabled={!parameterEnabled.max_tokens}
+              onChange={(event) =>
+                onConfigChange('max_tokens', Number(event.target.value || 0))
               }
             />
           </div>
-          <Input
-            type='number'
-            min={0}
-            step={1}
-            value={config.max_tokens}
-            disabled={!parameterEnabled.max_tokens}
-            onChange={(event) =>
-              onConfigChange('max_tokens', Number(event.target.value || 0))
-            }
-          />
-        </div>
 
-        <div
-          className={cn(
-            'space-y-2 transition-opacity',
-            !parameterEnabled.seed && 'opacity-50'
-          )}
-        >
-          <div className='flex items-center justify-between gap-3'>
-            <div className='flex min-w-0 items-center gap-2'>
-              <Shuffle className='text-muted-foreground size-4' />
-              <span className='truncate text-sm font-medium'>Seed</span>
+          <div
+            className={cn(
+              'space-y-2 transition-opacity',
+              !parameterEnabled.seed && 'opacity-50'
+            )}
+          >
+            <div className='flex items-center justify-between gap-3'>
+              <div className='flex min-w-0 items-center gap-2'>
+                <Shuffle className='text-muted-foreground size-4' />
+                <span className='truncate text-sm font-medium'>Seed</span>
+              </div>
+              <Switch
+                checked={parameterEnabled.seed}
+                size='sm'
+                onCheckedChange={() => onParameterToggle('seed')}
+                aria-label={
+                  parameterEnabled.seed ? 'Disable Seed' : 'Enable Seed'
+                }
+              />
             </div>
-            <Switch
-              checked={parameterEnabled.seed}
-              size='sm'
-              onCheckedChange={() => onParameterToggle('seed')}
-              aria-label={parameterEnabled.seed ? 'Disable Seed' : 'Enable Seed'}
+            <p className='text-muted-foreground text-xs'>
+              {t('可选，用于复现结果')}
+            </p>
+            <Input
+              placeholder={t('随机种子 (留空为随机)')}
+              value={config.seed ?? ''}
+              disabled={!parameterEnabled.seed}
+              onChange={(event) => {
+                const value = event.target.value.trim()
+                onConfigChange('seed', value === '' ? null : Number(value))
+              }}
             />
           </div>
-          <p className='text-muted-foreground text-xs'>
-            {t('可选，用于复现结果')}
-          </p>
-          <Input
-            placeholder={t('随机种子 (留空为随机)')}
-            value={config.seed ?? ''}
-            disabled={!parameterEnabled.seed}
-            onChange={(event) => {
-              const value = event.target.value.trim()
-              onConfigChange('seed', value === '' ? null : Number(value))
-            }}
-          />
-        </div>
 
-        <div className='flex items-center justify-between gap-3 border-t pt-4'>
-          <div>
-            <div className='text-sm font-medium'>{t('流式输出')}</div>
-            <p className='text-muted-foreground text-xs'>SSE</p>
+          <div className='flex items-center justify-between gap-3 border-t pt-4'>
+            <div>
+              <div className='text-sm font-medium'>{t('流式输出')}</div>
+              <p className='text-muted-foreground text-xs'>SSE</p>
+            </div>
+            <Switch
+              checked={config.stream}
+              onCheckedChange={(checked) => onConfigChange('stream', checked)}
+            />
           </div>
-          <Switch
-            checked={config.stream}
-            onCheckedChange={(checked) => onConfigChange('stream', checked)}
-          />
         </div>
       </div>
     </aside>

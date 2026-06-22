@@ -16,11 +16,21 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 
 For commercial licensing, please contact support@quantumnous.com
 */
+import type { CSSProperties } from 'react'
+import { Link, useLocation } from '@tanstack/react-router'
 import { AnimatePresence, motion, useReducedMotion } from 'motion/react'
 import { MOTION_TRANSITION, MOTION_VARIANTS } from '@/lib/motion'
 import { useLayout } from '@/context/layout-provider'
 import { useSidebarView } from '@/hooks/use-sidebar-view'
-import { Sidebar, SidebarContent } from '@/components/ui/sidebar'
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from '@/components/ui/sidebar'
+import { checkIsActive } from '../lib/url-utils'
+import type { NavLink } from '../types'
 import { NavGroup } from './nav-group'
 import { SidebarViewHeader } from './sidebar-view-header'
 
@@ -46,6 +56,32 @@ export function AppSidebar() {
   const { key, view, navGroups } = useSidebarView()
   const shouldReduce = useReducedMotion()
 
+  if (view?.id === 'chat') {
+    return (
+      <Sidebar
+        collapsible='none'
+        variant='sidebar'
+        className='hidden h-[calc(100svh-var(--app-header-height,0px))] bg-transparent p-2 pr-2 md:flex'
+        style={{ '--sidebar-width': '5rem' } as CSSProperties}
+      >
+        <SidebarContent className='border-sidebar-border bg-background rounded-lg border px-1.5 py-3 shadow-sm'>
+          <AnimatePresence mode='wait' initial={false}>
+            <motion.div
+              key={key}
+              initial={shouldReduce ? false : MOTION_VARIANTS.fadeIn.initial}
+              animate={MOTION_VARIANTS.fadeIn.animate}
+              exit={shouldReduce ? undefined : MOTION_VARIANTS.fadeIn.exit}
+              transition={MOTION_TRANSITION.fast}
+              className='flex flex-col'
+            >
+              <ChatPrimaryNav groups={navGroups} />
+            </motion.div>
+          </AnimatePresence>
+        </SidebarContent>
+      </Sidebar>
+    )
+  }
+
   return (
     <Sidebar collapsible={collapsible} variant={variant}>
       {view && view.id !== 'chat' && <SidebarViewHeader view={view} />}
@@ -67,5 +103,52 @@ export function AppSidebar() {
         </AnimatePresence>
       </SidebarContent>
     </Sidebar>
+  )
+}
+
+function ChatPrimaryNav({
+  groups,
+}: {
+  groups: ReturnType<typeof useSidebarView>['navGroups']
+}) {
+  const href = useLocation({ select: (location) => location.href })
+  const links = groups.flatMap((group) =>
+    group.items.filter(
+      (item): item is NavLink => 'url' in item && Boolean(item.url)
+    )
+  )
+
+  return (
+    <SidebarMenu className='items-stretch gap-1'>
+      {links.map((item) => (
+        <SidebarMenuItem key={`${item.title}-${item.url}`}>
+          <SidebarMenuButton
+            isActive={checkIsActive(href, item)}
+            tooltip={item.title}
+            render={<Link to={item.url} />}
+            className='h-14 flex-col justify-center gap-1 rounded-lg px-1 py-1.5 text-center font-sans text-[12px] leading-none tracking-normal'
+          >
+            {item.icon && <item.icon className='size-4 shrink-0' />}
+            <ChatPrimaryNavLabel title={item.title} />
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      ))}
+    </SidebarMenu>
+  )
+}
+
+function ChatPrimaryNavLabel({ title }: { title: string }) {
+  const chars = Array.from(title)
+  const lines =
+    chars.length === 4 ? [chars.slice(0, 2).join(''), chars.slice(2).join('')] : [title]
+
+  return (
+    <div className='flex w-full flex-col items-center justify-center gap-0.5 overflow-visible text-center leading-tight whitespace-normal'>
+      {lines.map((line) => (
+        <span key={line} className='block max-w-full truncate'>
+          {line}
+        </span>
+      ))}
+    </div>
   )
 }

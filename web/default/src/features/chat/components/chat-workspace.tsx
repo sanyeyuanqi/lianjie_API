@@ -20,6 +20,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 import { getUserGroups, getUserModels } from '@/features/playground/api'
 import { PlaygroundChat } from '@/features/playground/components/playground-chat'
 import { PlaygroundInput } from '@/features/playground/components/playground-input'
@@ -29,7 +30,6 @@ import {
   createUserMessage,
 } from '@/features/playground/lib'
 import type { Message as MessageType } from '@/features/playground/types'
-import { cn } from '@/lib/utils'
 import { useChatState } from '../hooks/use-chat-state'
 
 export function ChatWorkspace() {
@@ -198,7 +198,7 @@ export function ChatWorkspace() {
       <div className='flex flex-1 flex-col overflow-hidden'>
         <PlaygroundChat
           assistantName={assistantName}
-          contentClassName='pb-80'
+          contentClassName='pb-80 xl:-translate-x-10'
           messages={messages}
           onRegenerateMessage={handleRegenerateMessage}
           onEditMessage={handleEditMessage}
@@ -213,7 +213,7 @@ export function ChatWorkspace() {
 
       <h1
         className={cn(
-          'pointer-events-none absolute left-1/2 top-[calc(46%-5rem-150px)] z-10 -translate-x-1/2 text-center text-3xl font-semibold tracking-normal text-foreground transition-opacity duration-200 md:text-4xl xl:left-[calc(50%-40px)]',
+          'text-foreground pointer-events-none absolute top-[calc(46%-5rem-150px)] left-1/2 z-10 -translate-x-1/2 text-center text-3xl font-semibold tracking-normal transition-opacity duration-200 md:text-4xl xl:left-[calc(50%-40px)]',
           messages.length === 0 ? 'opacity-100' : 'opacity-0'
         )}
       >
@@ -223,9 +223,7 @@ export function ChatWorkspace() {
       <div
         className={cn(
           'absolute left-1/2 z-10 mx-auto w-full max-w-4xl -translate-x-1/2 px-3 pb-3 transition-[top,bottom] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:px-0 md:pb-0 xl:left-[calc(50%-40px)]',
-          messages.length === 0
-            ? 'top-[calc(46%-150px)]'
-            : 'bottom-0'
+          messages.length === 0 ? 'top-[calc(46%-150px)]' : 'bottom-0'
         )}
       >
         <PlaygroundInput

@@ -18,14 +18,20 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useEffect, useState } from 'react'
 import { useLocation } from '@tanstack/react-router'
+import { PanelLeft } from 'lucide-react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { useChatSessionsSidebar } from '@/context/chat-sessions-sidebar-provider'
 import { useNotifications } from '@/hooks/use-notifications'
+import { useIsMobile } from '@/hooks/use-mobile'
 import { useTopNavLinks } from '@/hooks/use-top-nav-links'
 import { ConfigDrawer } from '@/components/config-drawer'
 import { LanguageSwitcher } from '@/components/language-switcher'
 import { NotificationPopover } from '@/components/notification-popover'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 import { ThemeSwitch } from '@/components/theme-switch'
+import { Button } from '@/components/ui/button'
+import { useSidebar } from '@/components/ui/sidebar'
 import { defaultTopNavLinks } from '../config/top-nav.config'
 import { type TopNavLink } from '../types'
 import { Header } from './header'
@@ -109,7 +115,11 @@ export function AppHeader({
   showConfigDrawer = true,
   showProfileDropdown = true,
 }: AppHeaderProps) {
+  const { t } = useTranslation()
   const location = useLocation()
+  const isMobile = useIsMobile()
+  const { toggleSidebar } = useSidebar()
+  const { toggleDesktopOpen, toggleMobileOpen } = useChatSessionsSidebar()
   const [scrolled, setScrolled] = useState(false)
   // Prioritize dynamically generated links from backend
   const dynamicLinks = useTopNavLinks()
@@ -117,6 +127,8 @@ export function AppHeader({
   const expandTopNav =
     location.pathname.startsWith('/dashboard') ||
     location.pathname.startsWith('/console')
+  const isChatPage =
+    location.pathname === '/chat' || location.pathname.startsWith('/chat/')
   // Notifications hook
   const notifications = useNotifications()
 
@@ -171,6 +183,36 @@ export function AppHeader({
     <>
       <Header
         className='bg-transparent'
+        sidebarTrigger={
+          <Button
+            type='button'
+            variant='ghost'
+            className={cn(
+              'h-9 w-auto shrink-0 gap-1.5 rounded-lg bg-transparent px-2 text-sm font-semibold text-slate-700 hover:bg-slate-950/[0.05] md:size-8 md:px-0 dark:bg-transparent dark:text-slate-300 dark:hover:bg-white/[0.06]',
+              !isChatPage && 'md:hidden'
+            )}
+            onClick={() => {
+              if (isChatPage) {
+                if (isMobile) {
+                  toggleMobileOpen()
+                } else {
+                  toggleDesktopOpen()
+                }
+                return
+              }
+
+              toggleSidebar()
+            }}
+            aria-label={
+              isChatPage ? t('Toggle chat sessions') : t('Toggle Sidebar')
+            }
+          >
+            <PanelLeft className='size-4' />
+            <span className='md:sr-only'>
+              {isChatPage ? t('Sessions') : t('Directory')}
+            </span>
+          </Button>
+        }
         contentClassName={cn(
           'relative rounded-xl border backdrop-blur-2xl transition-all duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]',
           'md:[&_[data-sidebar=trigger]]:size-8 [&_[data-slot=button]]:rounded-lg [&_[data-slot=button]]:text-slate-700 [&_[data-slot=button]]:hover:bg-slate-950/[0.055] dark:[&_[data-slot=button]]:text-slate-300 dark:[&_[data-slot=button]]:hover:bg-white/[0.075]',

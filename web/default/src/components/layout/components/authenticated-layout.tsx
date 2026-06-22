@@ -20,11 +20,13 @@ import { getCookie } from '@/lib/cookies'
 import { cn } from '@/lib/utils'
 import { LayoutProvider } from '@/context/layout-provider'
 import { SearchProvider } from '@/context/search-provider'
+import { ChatSessionsSidebarProvider } from '@/context/chat-sessions-sidebar-provider'
 import { SidebarInset, SidebarProvider } from '@/components/ui/sidebar'
 import { AnimatedOutlet } from '@/components/page-transition'
 import { SkipToMain } from '@/components/skip-to-main'
 import { AppHeader } from './app-header'
 import { AppSidebar } from './app-sidebar'
+import { ChatSessionsSidebar } from './chat-sessions-sidebar'
 
 type AuthenticatedLayoutProps = {
   children?: React.ReactNode
@@ -40,21 +42,24 @@ export function AuthenticatedLayout(props: AuthenticatedLayoutProps) {
           defaultOpen={defaultOpen}
           className='flex-col [--app-header-height:4rem]'
         >
-          <SkipToMain />
-          <AppHeader />
-          <div className='flex min-h-0 w-full flex-1'>
-            <AppSidebar />
-            <SidebarInset
-              className={cn(
-                '@container/content',
-                'h-[calc(100svh-var(--app-header-height,0px))]',
-                'min-h-0 overflow-hidden',
-                'peer-data-[variant=inset]:h-[calc(100svh-var(--app-header-height,0px)-(var(--spacing)*4))]'
-              )}
-            >
-              {props.children ?? <AnimatedOutlet />}
-            </SidebarInset>
-          </div>
+          <ChatSessionsSidebarProvider>
+            <SkipToMain />
+            <AppHeader />
+            <div className='flex min-h-0 w-full flex-1'>
+              <AppSidebar />
+              <ChatSessionsSidebar />
+              <SidebarInset
+                className={cn(
+                  '@container/content',
+                  'h-[calc(100svh-var(--app-header-height,0px))]',
+                  'min-h-0 overflow-hidden',
+                  'peer-data-[variant=inset]:h-[calc(100svh-var(--app-header-height,0px)-(var(--spacing)*4))]'
+                )}
+              >
+                {props.children ?? <AnimatedOutlet />}
+              </SidebarInset>
+            </div>
+          </ChatSessionsSidebarProvider>
         </SidebarProvider>
       </SearchProvider>
     </LayoutProvider>

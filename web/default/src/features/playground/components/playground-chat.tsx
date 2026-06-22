@@ -129,7 +129,10 @@ export function PlaygroundChat({
       {/* Remove outer padding; apply padding to inner centered container to align with input */}
       <ConversationContent className='p-0'>
         <div
-          className={cn('mx-auto w-full max-w-5xl px-4 py-4', contentClassName)}
+          className={cn(
+            'mx-auto w-full max-w-4xl px-3 py-4 md:px-0',
+            contentClassName
+          )}
         >
           {messages.map((message, messageIndex) => {
             const { versions = [] } = message
