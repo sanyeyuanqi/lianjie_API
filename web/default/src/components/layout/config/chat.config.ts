@@ -17,7 +17,7 @@ along with this program. If not, see <https://www.gnu.org/licenses/>.
 For commercial licensing, please contact support@quantumnous.com
 */
 import { type TFunction } from 'i18next'
-import { FlaskConical, MessageSquare } from 'lucide-react'
+import { FlaskConical, Image, MessageSquare } from 'lucide-react'
 import { isSidebarModuleEnabled } from '@/lib/nav-modules'
 import type { NavGroup, SidebarView } from '../types'
 
@@ -33,6 +33,11 @@ function getChatNavGroups(t: TFunction): NavGroup[] {
           title: t('Playground'),
           url: '/playground',
           icon: FlaskConical,
+        },
+        {
+          title: '图像',
+          url: '/playground/image',
+          icon: Image,
         },
       ],
     })

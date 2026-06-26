@@ -23,6 +23,7 @@ import (
 	"github.com/QuantumNous/new-api/service"
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/QuantumNous/new-api/setting/operation_setting"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/QuantumNous/new-api/types"
 
 	"github.com/bytedance/gopkg/util/gopool"
@@ -185,9 +186,13 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 		Retry:      common.GetPointer(0),
 	}
 	relayInfo.RetryIndex = 0
+	maxRetryTimes := common.RetryTimes
+	if candidates := imageModelCandidatesFromContext(c); len(candidates) > maxRetryTimes+1 {
+		maxRetryTimes = len(candidates) - 1
+	}
 	relayInfo.LastError = nil
 
-	for ; retryParam.GetRetry() <= common.RetryTimes; retryParam.IncreaseRetry() {
+	for ; retryParam.GetRetry() <= maxRetryTimes; retryParam.IncreaseRetry() {
 		relayInfo.RetryIndex = retryParam.GetRetry()
 		channel, channelErr := getChannel(c, relayInfo, retryParam)
 		if channelErr != nil {
@@ -230,7 +235,7 @@ func Relay(c *gin.Context, relayFormat types.RelayFormat) {
 
 		processChannelError(c, *types.NewChannelError(channel.Id, channel.Type, channel.Name, channel.ChannelInfo.IsMultiKey, common.GetContextKeyString(c, constant.ContextKeyChannelKey), channel.GetAutoBan()), newAPIError)
 
-		if !shouldRetry(c, newAPIError, common.RetryTimes-retryParam.GetRetry()) {
+		if !shouldRetry(c, newAPIError, maxRetryTimes-retryParam.GetRetry()) {
 			break
 		}
 	}
@@ -282,11 +287,25 @@ func fastTokenCountMetaForPricing(request dto.Request) *types.TokenCountMeta {
 		meta.MaxTokens = int(lo.FromPtr(r.MaxTokens))
 	case *dto.ImageRequest:
 		// Pricing for image requests depends on ImagePriceRatio; safe to compute even when CountToken is disabled.
-		return r.GetTokenCountMeta()
+		meta := r.GetTokenCountMeta()
+		ratio_setting.ApplyImageModelPricingMeta(r.Model, r.Size, meta)
+		return meta
 	default:
 		// Best-effort: leave CombineText empty to avoid large allocations.
 	}
 	return meta
+}
+
+func imageModelCandidatesFromContext(c *gin.Context) []ratio_setting.ImageModelCandidate {
+	value, exists := c.Get("image_model_candidates")
+	if !exists {
+		return nil
+	}
+	candidates, ok := value.([]ratio_setting.ImageModelCandidate)
+	if !ok {
+		return nil
+	}
+	return candidates
 }
 
 func getChannel(c *gin.Context, info *relaycommon.RelayInfo, retryParam *service.RetryParam) (*model.Channel, *types.NewAPIError) {
@@ -302,6 +321,19 @@ func getChannel(c *gin.Context, info *relaycommon.RelayInfo, retryParam *service
 			Name:    c.GetString("channel_name"),
 			AutoBan: &autoBanInt,
 		}, nil
+	}
+	if candidates := imageModelCandidatesFromContext(c); len(candidates) > 0 && retryParam.GetRetry() < len(candidates) {
+		candidate := candidates[retryParam.GetRetry()]
+		if candidate.Model != "" {
+			info.OriginModelName = candidate.Model
+			retryParam.ModelName = candidate.Model
+			if info.Request != nil {
+				info.Request.SetModelName(candidate.Model)
+			}
+		}
+		if candidate.Group != "" {
+			retryParam.TokenGroup = candidate.Group
+		}
 	}
 	channel, selectGroup, err := service.CacheGetRandomSatisfiedChannel(retryParam)
 

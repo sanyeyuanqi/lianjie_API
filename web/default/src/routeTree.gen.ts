@@ -49,6 +49,8 @@ import { Route as AuthenticatedDashboardIndexRouteImport } from './routes/_authe
 import { Route as AuthenticatedChatIndexRouteImport } from './routes/_authenticated/chat/index'
 import { Route as AuthenticatedChannelsIndexRouteImport } from './routes/_authenticated/channels/index'
 import { Route as AuthenticatedUsageLogsSectionRouteImport } from './routes/_authenticated/usage-logs/$section'
+import { Route as AuthenticatedSubscriptionsImageModelsRouteImport } from './routes/_authenticated/subscriptions/image-models'
+import { Route as AuthenticatedPlaygroundImageRouteImport } from './routes/_authenticated/playground/image'
 import { Route as AuthenticatedModelsSectionRouteImport } from './routes/_authenticated/models/$section'
 import { Route as AuthenticatedErrorsErrorRouteImport } from './routes/_authenticated/errors/$error'
 import { Route as AuthenticatedDashboardSectionRouteImport } from './routes/_authenticated/dashboard/$section'
@@ -279,6 +281,18 @@ const AuthenticatedUsageLogsSectionRoute =
     path: '/usage-logs/$section',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedSubscriptionsImageModelsRoute =
+  AuthenticatedSubscriptionsImageModelsRouteImport.update({
+    id: '/subscriptions/image-models',
+    path: '/subscriptions/image-models',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedPlaygroundImageRoute =
+  AuthenticatedPlaygroundImageRouteImport.update({
+    id: '/playground/image',
+    path: '/playground/image',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedModelsSectionRoute =
   AuthenticatedModelsSectionRouteImport.update({
     id: '/models/$section',
@@ -421,6 +435,8 @@ export interface FileRoutesByFullPath {
   '/dashboard/$section': typeof AuthenticatedDashboardSectionRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/models/$section': typeof AuthenticatedModelsSectionRoute
+  '/playground/image': typeof AuthenticatedPlaygroundImageRoute
+  '/subscriptions/image-models': typeof AuthenticatedSubscriptionsImageModelsRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/channels/': typeof AuthenticatedChannelsIndexRoute
   '/chat/': typeof AuthenticatedChatIndexRoute
@@ -479,6 +495,8 @@ export interface FileRoutesByTo {
   '/dashboard/$section': typeof AuthenticatedDashboardSectionRoute
   '/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/models/$section': typeof AuthenticatedModelsSectionRoute
+  '/playground/image': typeof AuthenticatedPlaygroundImageRoute
+  '/subscriptions/image-models': typeof AuthenticatedSubscriptionsImageModelsRoute
   '/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/channels': typeof AuthenticatedChannelsIndexRoute
   '/chat': typeof AuthenticatedChatIndexRoute
@@ -541,6 +559,8 @@ export interface FileRoutesById {
   '/_authenticated/dashboard/$section': typeof AuthenticatedDashboardSectionRoute
   '/_authenticated/errors/$error': typeof AuthenticatedErrorsErrorRoute
   '/_authenticated/models/$section': typeof AuthenticatedModelsSectionRoute
+  '/_authenticated/playground/image': typeof AuthenticatedPlaygroundImageRoute
+  '/_authenticated/subscriptions/image-models': typeof AuthenticatedSubscriptionsImageModelsRoute
   '/_authenticated/usage-logs/$section': typeof AuthenticatedUsageLogsSectionRoute
   '/_authenticated/channels/': typeof AuthenticatedChannelsIndexRoute
   '/_authenticated/chat/': typeof AuthenticatedChatIndexRoute
@@ -602,6 +622,8 @@ export interface FileRouteTypes {
     | '/dashboard/$section'
     | '/errors/$error'
     | '/models/$section'
+    | '/playground/image'
+    | '/subscriptions/image-models'
     | '/usage-logs/$section'
     | '/channels/'
     | '/chat/'
@@ -660,6 +682,8 @@ export interface FileRouteTypes {
     | '/dashboard/$section'
     | '/errors/$error'
     | '/models/$section'
+    | '/playground/image'
+    | '/subscriptions/image-models'
     | '/usage-logs/$section'
     | '/channels'
     | '/chat'
@@ -721,6 +745,8 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard/$section'
     | '/_authenticated/errors/$error'
     | '/_authenticated/models/$section'
+    | '/_authenticated/playground/image'
+    | '/_authenticated/subscriptions/image-models'
     | '/_authenticated/usage-logs/$section'
     | '/_authenticated/channels/'
     | '/_authenticated/chat/'
@@ -1054,6 +1080,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedUsageLogsSectionRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/subscriptions/image-models': {
+      id: '/_authenticated/subscriptions/image-models'
+      path: '/subscriptions/image-models'
+      fullPath: '/subscriptions/image-models'
+      preLoaderRoute: typeof AuthenticatedSubscriptionsImageModelsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/playground/image': {
+      id: '/_authenticated/playground/image'
+      path: '/playground/image'
+      fullPath: '/playground/image'
+      preLoaderRoute: typeof AuthenticatedPlaygroundImageRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/models/$section': {
       id: '/_authenticated/models/$section'
       path: '/models/$section'
@@ -1280,6 +1320,8 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardSectionRoute: typeof AuthenticatedDashboardSectionRoute
   AuthenticatedErrorsErrorRoute: typeof AuthenticatedErrorsErrorRoute
   AuthenticatedModelsSectionRoute: typeof AuthenticatedModelsSectionRoute
+  AuthenticatedPlaygroundImageRoute: typeof AuthenticatedPlaygroundImageRoute
+  AuthenticatedSubscriptionsImageModelsRoute: typeof AuthenticatedSubscriptionsImageModelsRoute
   AuthenticatedUsageLogsSectionRoute: typeof AuthenticatedUsageLogsSectionRoute
   AuthenticatedChannelsIndexRoute: typeof AuthenticatedChannelsIndexRoute
   AuthenticatedChatIndexRoute: typeof AuthenticatedChatIndexRoute
@@ -1303,6 +1345,9 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardSectionRoute: AuthenticatedDashboardSectionRoute,
   AuthenticatedErrorsErrorRoute: AuthenticatedErrorsErrorRoute,
   AuthenticatedModelsSectionRoute: AuthenticatedModelsSectionRoute,
+  AuthenticatedPlaygroundImageRoute: AuthenticatedPlaygroundImageRoute,
+  AuthenticatedSubscriptionsImageModelsRoute:
+    AuthenticatedSubscriptionsImageModelsRoute,
   AuthenticatedUsageLogsSectionRoute: AuthenticatedUsageLogsSectionRoute,
   AuthenticatedChannelsIndexRoute: AuthenticatedChannelsIndexRoute,
   AuthenticatedChatIndexRoute: AuthenticatedChatIndexRoute,

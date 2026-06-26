@@ -21,6 +21,7 @@ import {
   Box,
   CreditCard,
   FileText,
+  Image,
   Key,
   LayoutDashboard,
   ListTodo,
@@ -112,6 +113,11 @@ export function useSidebarData(): SidebarData {
             title: t('Subscription Management'),
             url: '/subscriptions',
             icon: CreditCard,
+          },
+          {
+            title: t('Image Models'),
+            url: '/subscriptions/image-models',
+            icon: Image,
           },
           {
             title: t('System Settings'),

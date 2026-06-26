@@ -7,6 +7,7 @@ import (
 	"github.com/QuantumNous/new-api/constant"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
+	"github.com/QuantumNous/new-api/setting/ratio_setting"
 	"github.com/QuantumNous/new-api/setting"
 	"github.com/gin-gonic/gin"
 )
@@ -153,10 +154,61 @@ func CacheGetRandomSatisfiedChannel(param *RetryParam) (*model.Channel, string, 
 			break
 		}
 	} else {
+		// For image generation with group_models, try each (group, model) pair in order on first attempt
+		if param.GetRetry() == 0 {
+			if candidates := imageModelCandidatesFromContext(param.Ctx); len(candidates) > 0 {
+				logger.LogDebug(param.Ctx, "[ImageModelCandidate] Found %d candidates for model %s", len(candidates), param.ModelName)
+				for i, candidate := range candidates {
+					group := candidate.Group
+					modelName := candidate.Model
+					if group == "" || modelName == "" {
+						logger.LogDebug(param.Ctx, "[ImageModelCandidate] Skipping candidate %d: empty group or model (group=%s, model=%s)", i, group, modelName)
+						continue
+					}
+					logger.LogDebug(param.Ctx, "[ImageModelCandidate] Trying candidate %d: group=%s, model=%s", i, group, modelName)
+					channel, err = model.GetRandomSatisfiedChannel(group, modelName, 0)
+					if channel != nil {
+						logger.LogDebug(param.Ctx, "[ImageModelCandidate] Found channel %d for group=%s, model=%s", channel.Id, group, modelName)
+						selectGroup = group
+						return channel, selectGroup, nil
+					}
+					if err != nil {
+						logger.LogDebug(param.Ctx, "[ImageModelCandidate] Error for group=%s, model=%s: %v", group, modelName, err)
+						continue
+					}
+					logger.LogDebug(param.Ctx, "[ImageModelCandidate] No channel found for group=%s, model=%s", group, modelName)
+				}
+				// Fallback to token group if all candidates failed
+				if param.TokenGroup != "" && param.TokenGroup != "auto" {
+					channel, err = model.GetRandomSatisfiedChannel(param.TokenGroup, param.ModelName, 0)
+					if channel != nil {
+						selectGroup = param.TokenGroup
+						return channel, selectGroup, nil
+					}
+				}
+				if err != nil {
+					return nil, selectGroup, err
+				}
+				return channel, selectGroup, nil
+			}
+		}
+		// Default path: use TokenGroup and ModelName directly (for non-image or retry > 0)
 		channel, err = model.GetRandomSatisfiedChannel(param.TokenGroup, param.ModelName, param.GetRetry())
 		if err != nil {
 			return nil, param.TokenGroup, err
 		}
 	}
 	return channel, selectGroup, nil
+}
+
+func imageModelCandidatesFromContext(c *gin.Context) []ratio_setting.ImageModelCandidate {
+	value, exists := c.Get("image_model_candidates")
+	if !exists {
+		return nil
+	}
+	candidates, ok := value.([]ratio_setting.ImageModelCandidate)
+	if !ok || len(candidates) == 0 {
+		return nil
+	}
+	return candidates
 }

@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/QuantumNous/new-api/common"
+	"github.com/QuantumNous/new-api/dto"
 	"github.com/QuantumNous/new-api/logger"
 	"github.com/QuantumNous/new-api/model"
 	"github.com/QuantumNous/new-api/pkg/billingexpr"
@@ -30,6 +31,23 @@ func modelPriceNotConfiguredError(modelName string, userId int) error {
 			"Model %s has not been priced by the administrator yet. Please contact the site administrator to enable this model.",
 		modelName, modelName,
 	)
+}
+
+func imageModelActualPrice(c *gin.Context, info *relaycommon.RelayInfo) (float64, bool) {
+	if c == nil || !c.GetBool("playground_image_actual_price") {
+		return 0, false
+	}
+	if info == nil {
+		return 0, false
+	}
+	imageReq, ok := info.Request.(*dto.ImageRequest)
+	if !ok {
+		return 0, false
+	}
+	if price, ok := ratio_setting.GetImageModelActualPrice(info.OriginModelName, imageReq.Size); ok {
+		return price, true
+	}
+	return ratio_setting.GetImageModelActualPrice(imageReq.Model, imageReq.Size)
 }
 
 // https://docs.claude.com/en/docs/build-with-claude/prompt-caching#1-hour-cache-duration
@@ -65,12 +83,15 @@ func HandleGroupRatio(ctx *gin.Context, relayInfo *relaycommon.RelayInfo) types.
 }
 
 func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens int, meta *types.TokenCountMeta) (types.PriceData, error) {
-	modelPrice, usePrice := ratio_setting.GetModelPrice(info.OriginModelName, false)
-
 	groupRatioInfo := HandleGroupRatio(c, info)
+	modelPrice, usePrice := imageModelActualPrice(c, info)
+	useImageModelPrice := usePrice
+	if !usePrice {
+		modelPrice, usePrice = ratio_setting.GetModelPrice(info.OriginModelName, false)
+	}
 
 	// Check if this model uses tiered_expr billing
-	if billing_setting.GetBillingMode(info.OriginModelName) == billing_setting.BillingModeTieredExpr {
+	if !useImageModelPrice && billing_setting.GetBillingMode(info.OriginModelName) == billing_setting.BillingModeTieredExpr {
 		return modelPriceHelperTiered(c, info, promptTokens, meta, groupRatioInfo)
 	}
 
@@ -114,7 +135,7 @@ func ModelPriceHelper(c *gin.Context, info *relaycommon.RelayInfo, promptTokens 
 		ratio := modelRatio * groupRatioInfo.GroupRatio
 		preConsumedQuota = int(float64(preConsumedTokens) * ratio)
 	} else {
-		if meta.ImagePriceRatio != 0 {
+		if !useImageModelPrice && meta.ImagePriceRatio != 0 {
 			modelPrice = modelPrice * meta.ImagePriceRatio
 		}
 		preConsumedQuota = int(modelPrice * common.QuotaPerUnit * groupRatioInfo.GroupRatio)

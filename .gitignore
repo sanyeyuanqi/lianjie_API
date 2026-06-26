@@ -35,3 +35,11 @@ data/
 token_estimator_test.go
 skills-lock.json
 .playwright-mcp
+
+# 临时文件和缓存
+.codex/
+cmd_query/
+backend.log
+backend-dev.log
+frontend-dev.log
+cookies.txt

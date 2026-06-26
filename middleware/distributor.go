@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -77,12 +78,31 @@ func Distribute() func(c *gin.Context) {
 			}
 
 			if shouldSelectChannel {
-				if modelRequest.Model == "" {
+				// 图像编辑请求的模型在 multipart form 中，会在后续的 GetAndValidOpenAIImageRequest 中提取
+				// 所以这里不检查模型是否为空
+				isImageEdit := strings.HasPrefix(c.Request.URL.Path, "/pg/images/edits") ||
+					strings.HasPrefix(c.Request.URL.Path, "/v1/images/edits")
+
+				if modelRequest.Model == "" && !isImageEdit {
 					abortWithOpenAiMessage(c, http.StatusBadRequest, i18n.T(c, i18n.MsgDistributorModelNameRequired))
 					return
 				}
 				var selectGroup string
 				usingGroup := common.GetContextKeyString(c, constant.ContextKeyUsingGroup)
+				if strings.HasPrefix(c.Request.URL.Path, "/pg/images/generations") ||
+					strings.HasPrefix(c.Request.URL.Path, "/v1/images/generations") ||
+					isImageEdit {
+					if candidates := ratio_setting.GetImageModelCandidates(modelRequest.Model); len(candidates) > 0 {
+						c.Set("image_model_candidates", candidates)
+						// Debug log
+						tokenGroup := common.GetContextKeyString(c, constant.ContextKeyTokenGroup)
+						fmt.Printf("[Distributor] Set image_model_candidates for model=%s, count=%d, tokenGroup=%s, usingGroup=%s\n",
+							modelRequest.Model, len(candidates), tokenGroup, usingGroup)
+					} else {
+						fmt.Printf("[Distributor] No candidates found for model=%s\n", modelRequest.Model)
+					}
+					// Don't modify modelRequest.Model here - let channel_select traverse candidates
+				}
 				// check path is /pg/chat/completions
 				if strings.HasPrefix(c.Request.URL.Path, "/pg/chat/completions") {
 					playgroundRequest := &dto.PlayGroundRequest{}
@@ -327,6 +347,15 @@ func getModelRequest(c *gin.Context) (*ModelRequest, bool, error) {
 			modelRequest.Model = modelName
 		}
 		c.Set("relay_mode", relayMode)
+	} else if strings.HasPrefix(c.Request.URL.Path, "/v1/images/edits") || strings.HasPrefix(c.Request.URL.Path, "/pg/images/edits") {
+		// 图像编辑请求使用 multipart/form-data，需要提前读取模型字段
+		// 使用 ParseMultipartFormReusable 避免消耗请求体
+		if form, err := common.ParseMultipartFormReusable(c); err == nil {
+			formData := url.Values(form.Value)
+			if model := formData.Get("model"); model != "" {
+				modelRequest.Model = model
+			}
+		}
 	} else if !strings.HasPrefix(c.Request.URL.Path, "/v1/audio/transcriptions") && !strings.Contains(c.Request.Header.Get("Content-Type"), "multipart/form-data") {
 		req, err := getModelFromRequest(c)
 		if err != nil {
@@ -422,6 +451,47 @@ func getTaskOriginModelName(c *gin.Context) string {
 		return task.Properties.OriginModelName
 	}
 	return ""
+}
+
+func firstImageModelCandidate(modelName string) (ratio_setting.ImageModelCandidate, bool) {
+	item, ok := ratio_setting.GetImageModelPricingItem(modelName)
+	if !ok {
+		return ratio_setting.ImageModelCandidate{}, false
+	}
+	candidates := ratio_setting.GetImageModelCandidates(modelName)
+	if len(candidates) == 0 {
+		return ratio_setting.ImageModelCandidate{}, false
+	}
+	matchedModelName := ratio_setting.FormatMatchingModelName(modelName)
+	matchedItemName := ratio_setting.FormatMatchingModelName(item.Name)
+	matchedItemModel := ratio_setting.FormatMatchingModelName(item.Model)
+	if matchedItemName != matchedModelName &&
+		matchedItemModel != matchedModelName {
+		matched := false
+		for _, model := range item.Models {
+			if ratio_setting.FormatMatchingModelName(model) == matchedModelName {
+				matched = true
+				break
+			}
+		}
+		if !matched {
+			for _, group := range item.GroupModels {
+				for _, model := range group.Models {
+					if ratio_setting.FormatMatchingModelName(model) == matchedModelName {
+						matched = true
+						break
+					}
+				}
+				if matched {
+					break
+				}
+			}
+		}
+		if !matched {
+			return ratio_setting.ImageModelCandidate{}, false
+		}
+	}
+	return candidates[0], true
 }
 
 func SetupContextForSelectedChannel(c *gin.Context, channel *model.Channel, modelName string) *types.NewAPIError {

@@ -33,6 +33,53 @@ func checkRedirect(req *http.Request, via []*http.Request) error {
 	return nil
 }
 
+func dialWithFallback(ctx context.Context, network, addr string) (net.Conn, error) {
+	dialer := &net.Dialer{Timeout: 30 * time.Second}
+	host, port, err := net.SplitHostPort(addr)
+	if err != nil {
+		return dialer.DialContext(ctx, network, addr)
+	}
+
+	if ip := net.ParseIP(host); ip != nil {
+		if ip.To4() != nil {
+			return dialer.DialContext(ctx, "tcp4", addr)
+		}
+		return dialer.DialContext(ctx, "tcp6", addr)
+	}
+
+	ipv4s, err := net.DefaultResolver.LookupIP(ctx, "ip4", host)
+	if err == nil && len(ipv4s) > 0 {
+		for _, ip := range ipv4s {
+			target := net.JoinHostPort(ip.String(), port)
+			if conn, dialErr := dialer.DialContext(ctx, "tcp4", target); dialErr == nil {
+				return conn, nil
+			}
+		}
+	}
+
+	ips, err := net.DefaultResolver.LookupIPAddr(ctx, host)
+	if err != nil || len(ips) == 0 {
+		return dialer.DialContext(ctx, network, addr)
+	}
+
+	for _, family := range []string{"tcp4", "tcp6"} {
+		for _, ip := range ips {
+			if family == "tcp4" && ip.IP.To4() == nil {
+				continue
+			}
+			if family == "tcp6" && ip.IP.To4() != nil {
+				continue
+			}
+			target := net.JoinHostPort(ip.IP.String(), port)
+			if conn, dialErr := dialer.DialContext(ctx, family, target); dialErr == nil {
+				return conn, nil
+			}
+		}
+	}
+
+	return dialer.DialContext(ctx, network, addr)
+}
+
 func InitHttpClient() {
 	transport := &http.Transport{
 		MaxIdleConns:        common.RelayMaxIdleConns,
@@ -40,6 +87,7 @@ func InitHttpClient() {
 		IdleConnTimeout:     time.Duration(common.RelayIdleConnTimeout) * time.Second,
 		ForceAttemptHTTP2:   true,
 		Proxy:               http.ProxyFromEnvironment, // Support HTTP_PROXY, HTTPS_PROXY, NO_PROXY env vars
+		DialContext:        dialWithFallback,
 	}
 	if common.TLSInsecureSkipVerify {
 		transport.TLSClientConfig = common.InsecureTLSConfig
@@ -112,6 +160,7 @@ func NewProxyHttpClient(proxyURL string) (*http.Client, error) {
 			IdleConnTimeout:     time.Duration(common.RelayIdleConnTimeout) * time.Second,
 			ForceAttemptHTTP2:   true,
 			Proxy:               http.ProxyURL(parsedURL),
+			DialContext:         dialWithFallback,
 		}
 		if common.TLSInsecureSkipVerify {
 			transport.TLSClientConfig = common.InsecureTLSConfig

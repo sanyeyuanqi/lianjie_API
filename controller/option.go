@@ -25,6 +25,7 @@ var completionRatioMetaOptionKeys = []string{
 	"CacheRatio",
 	"CreateCacheRatio",
 	"ImageRatio",
+	"ImageModelPricing",
 	"AudioRatio",
 	"AudioCompletionRatio",
 }
@@ -235,6 +236,15 @@ func UpdateOption(c *gin.Context) {
 			c.JSON(http.StatusOK, gin.H{
 				"success": false,
 				"message": "图片倍率设置失败: " + err.Error(),
+			})
+			return
+		}
+	case "ImageModelPricing":
+		err = ratio_setting.UpdateImageModelPricingByJSONString(option.Value.(string))
+		if err != nil {
+			c.JSON(http.StatusOK, gin.H{
+				"success": false,
+				"message": "图像模型价格设置失败: " + err.Error(),
 			})
 			return
 		}

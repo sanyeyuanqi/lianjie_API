@@ -569,7 +569,7 @@ export function ChannelTestDialog({
                 <SelectTrigger id='endpoint-type'>
                   <SelectValue placeholder={t('Auto detect (default)')} />
                 </SelectTrigger>
-                <SelectContent alignItemWithTrigger={false}>
+                <SelectContent>
                   <SelectGroup>
                     {endpointSelectItems.map((option) => (
                       <SelectItem key={option.value} value={option.value}>

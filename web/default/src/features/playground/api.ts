@@ -21,6 +21,8 @@ import { API_ENDPOINTS } from './constants'
 import type {
   ChatCompletionRequest,
   ChatCompletionResponse,
+  ImageGenerationRequest,
+  ImageGenerationResponse,
   ModelOption,
   GroupOption,
 } from './types'
@@ -33,6 +35,54 @@ export async function sendChatCompletion(
 ): Promise<ChatCompletionResponse> {
   const res = await api.post(API_ENDPOINTS.CHAT_COMPLETIONS, payload, {
     skipErrorHandler: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Send image generation request.
+ */
+export async function sendImageGeneration(
+  payload: ImageGenerationRequest
+): Promise<ImageGenerationResponse> {
+  const res = await api.post('/pg/images/generations', payload, {
+    skipErrorHandler: true,
+  } as Record<string, unknown>)
+  return res.data
+}
+
+/**
+ * Send image edit request (with reference image).
+ */
+export async function sendImageEdit(
+  payload: {
+    image: Blob
+    prompt: string
+    model: string
+    n?: number
+    size?: string
+    quality?: string
+  }
+): Promise<ImageGenerationResponse> {
+  const formData = new FormData()
+  formData.append('image', payload.image, 'reference.png')
+  formData.append('prompt', payload.prompt)
+  formData.append('model', payload.model)
+  if (payload.n) formData.append('n', payload.n.toString())
+  if (payload.size) formData.append('size', payload.size)
+  if (payload.quality) formData.append('quality', payload.quality)
+  formData.append('response_format', 'url')
+
+  console.log('[API] Sending image edit request:', {
+    imageSize: payload.image.size,
+    imageType: payload.image.type,
+    prompt: payload.prompt,
+    model: payload.model,
+  })
+
+  const res = await api.post('/pg/images/edits', formData, {
+    skipErrorHandler: true,
+    // 不要手动设置 Content-Type，让浏览器自动设置（包含 boundary）
   } as Record<string, unknown>)
   return res.data
 }

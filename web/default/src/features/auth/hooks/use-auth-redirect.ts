@@ -19,7 +19,7 @@ For commercial licensing, please contact support@quantumnous.com
 import { useNavigate } from '@tanstack/react-router'
 import { changeLanguage } from '@/i18n/config'
 import i18n from 'i18next'
-import { useAuthStore } from '@/stores/auth-store'
+import { useAuthStore, type AuthUser } from '@/stores/auth-store'
 import { getSelf } from '@/lib/api'
 import type { User } from '@/features/users/types'
 import { saveUserId } from '../lib/storage'
@@ -61,34 +61,38 @@ export function useAuthRedirect() {
     // Save user ID if available
     if (userData?.id) {
       saveUserId(userData.id)
+      // Prime local auth state immediately so route guards can proceed
+      // without waiting for the follow-up profile fetch.
+      auth.setUser({ id: userData.id } as AuthUser)
     }
 
-    // Fetch and set user data
-    try {
-      const self = await getSelf()
-      if (self?.success && self.data) {
-        const user = self.data as User
-        auth.setUser(user)
-
-        // Update user ID if not already set
-        if (user.id) {
-          saveUserId(user.id)
-        }
-
-        // Restore saved language preference
-        const savedLang = getSavedLanguage(user)
-        if (savedLang && savedLang !== i18n.language) {
-          void changeLanguage(savedLang)
-        }
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to fetch user data:', error)
-    }
-
-    // Navigate to target page
+    // Navigate right away; the background session refresh will reconcile state.
     const targetPath = redirectTo || '/'
     navigate({ to: targetPath, replace: true })
+
+    void (async () => {
+      try {
+        const self = await getSelf()
+        if (self?.success && self.data) {
+          const user = self.data as User
+          auth.setUser(user)
+
+          // Update user ID if not already set
+          if (user.id) {
+            saveUserId(user.id)
+          }
+
+          // Restore saved language preference
+          const savedLang = getSavedLanguage(user)
+          if (savedLang && savedLang !== i18n.language) {
+            void changeLanguage(savedLang)
+          }
+        }
+      } catch (error) {
+        // eslint-disable-next-line no-console
+        console.error('Failed to fetch user data:', error)
+      }
+    })()
   }
 
   /**
