@@ -30,6 +30,10 @@ export const Route = createFileRoute('/_authenticated/chat/')({
       throw redirect({ to: '/playground' })
     }
 
+    if (await getFreshSidebarModuleEnabled('chat', 'image')) {
+      throw redirect({ to: '/playground/image' })
+    }
+
     throw redirect({ to: '/dashboard' })
   },
   component: ChatWorkspace,

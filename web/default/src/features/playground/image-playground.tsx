@@ -402,7 +402,7 @@ export function ImagePlayground() {
         }
       }
       toast.error('剪贴板中没有图片')
-    } catch (error) {
+    } catch {
       toast.error('读取剪贴板失败')
     }
   }
@@ -460,19 +460,8 @@ export function ImagePlayground() {
     try {
       // 加载所有历史记录
       const recordsRaw = window.localStorage.getItem(imageRecordsStorageKey)
-      console.log(
-        '[ImagePlayground] 加载记录:',
-        recordsRaw ? `找到 ${recordsRaw.length} 字节数据` : '无数据'
-      )
       if (recordsRaw) {
         const savedRecords = JSON.parse(recordsRaw) as GenerationRecord[]
-        console.log('[ImagePlayground] 解析记录:', {
-          记录数: savedRecords.length,
-          记录列表: savedRecords.map((r) => ({
-            id: r.id,
-            prompt: r.prompt.slice(0, 30),
-          })),
-        })
         if (Array.isArray(savedRecords) && savedRecords.length > 0) {
           setRecords(savedRecords)
           // 显示最新的一条记录
@@ -488,7 +477,6 @@ export function ImagePlayground() {
       // 兼容旧的 sessionStorage 数据
       const raw = window.sessionStorage.getItem(lastImageResultStorageKey)
       if (!raw) return
-      console.log('[ImagePlayground] 迁移旧数据')
       const saved = JSON.parse(raw) as GenerationRecord
       if (saved?.images?.length) {
         setImages(saved.images)
@@ -501,8 +489,7 @@ export function ImagePlayground() {
         )
         window.sessionStorage.removeItem(lastImageResultStorageKey)
       }
-    } catch (error) {
-      console.error('[ImagePlayground] 加载记录失败:', error)
+    } catch {
       window.sessionStorage.removeItem(lastImageResultStorageKey)
       window.localStorage.removeItem(imageRecordsStorageKey)
     }
@@ -537,11 +524,6 @@ export function ImagePlayground() {
         const imageBlob = new Blob([byteArray], { type: 'image/jpeg' })
 
         const modelName = selectedImageModel.model || selectedImageModel.name
-        console.log('[ImagePlayground] Sending image edit:', {
-          model: modelName,
-          selectedImageModel,
-          blobSize: imageBlob.size,
-        })
 
         response = await sendImageEdit({
           image: imageBlob,
@@ -566,10 +548,6 @@ export function ImagePlayground() {
       if (response.error?.message) {
         throw new Error(response.error.message)
       }
-
-      // 调试：查看响应数据结构
-      console.log('[ImagePlayground] API Response:', response)
-      console.log('[ImagePlayground] Response data:', response.data)
 
       const nextImages = extractImageData(response)
         .slice(0, requestedCount)
@@ -606,12 +584,6 @@ export function ImagePlayground() {
           imageRecordsStorageKey,
           JSON.stringify(toSave)
         )
-        console.log('[ImagePlayground] 保存记录:', {
-          新记录ID: record.id,
-          当前记录数: current.length,
-          更新后记录数: updated.length,
-          保存记录数: toSave.length,
-        })
         return updated
       })
       // 兼容旧逻辑，保留 sessionStorage

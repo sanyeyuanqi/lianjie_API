@@ -73,13 +73,6 @@ export async function sendImageEdit(
   if (payload.quality) formData.append('quality', payload.quality)
   formData.append('response_format', 'url')
 
-  console.log('[API] Sending image edit request:', {
-    imageSize: payload.image.size,
-    imageType: payload.image.type,
-    prompt: payload.prompt,
-    model: payload.model,
-  })
-
   const res = await api.post('/pg/images/edits', formData, {
     skipErrorHandler: true,
     // 不要手动设置 Content-Type，让浏览器自动设置（包含 boundary）

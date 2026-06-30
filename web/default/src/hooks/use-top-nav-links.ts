@@ -87,14 +87,19 @@ export function useTopNavLinks(): TopNavLink[] {
       const canUsePlayground = statusRecord
         ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'playground')
         : isSidebarModuleEnabled('chat', 'playground')
+      const canUseImage = statusRecord
+        ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'image')
+        : isSidebarModuleEnabled('chat', 'image')
       const canUseChat = statusRecord
         ? isSidebarModuleEnabledFromStatus(statusRecord, 'chat', 'chat')
         : isSidebarModuleEnabled('chat', 'chat')
       const href = canUsePlayground
         ? '/playground'
-        : canUseChat
-          ? '/chat'
-          : null
+        : canUseImage
+          ? '/playground/image'
+          : canUseChat
+            ? '/chat'
+            : null
       const requiresAuth = playground.requireAuth && !isAuthed
       if (href) {
         links.push({

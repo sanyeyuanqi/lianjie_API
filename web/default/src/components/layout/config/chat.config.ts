@@ -23,23 +23,29 @@ import type { NavGroup, SidebarView } from '../types'
 
 function getChatNavGroups(t: TFunction): NavGroup[] {
   const navGroups: NavGroup[] = []
+  const items: NavGroup['items'] = []
 
   if (isSidebarModuleEnabled('chat', 'playground')) {
+    items.push({
+      title: t('Playground'),
+      url: '/playground',
+      icon: FlaskConical,
+    })
+  }
+
+  if (isSidebarModuleEnabled('chat', 'image')) {
+    items.push({
+      title: t('Image'),
+      url: '/playground/image',
+      icon: Image,
+    })
+  }
+
+  if (items.length > 0) {
     navGroups.push({
       id: 'playground',
       title: '',
-      items: [
-        {
-          title: t('Playground'),
-          url: '/playground',
-          icon: FlaskConical,
-        },
-        {
-          title: '图像',
-          url: '/playground/image',
-          icon: Image,
-        },
-      ],
+      items,
     })
   }
 

@@ -5,8 +5,12 @@ import { ImagePlayground } from '@/features/playground/image-playground'
 
 export const Route = createFileRoute('/_authenticated/playground/image')({
   beforeLoad: async () => {
-    if (await getFreshSidebarModuleEnabled('chat', 'playground')) {
+    if (await getFreshSidebarModuleEnabled('chat', 'image')) {
       return
+    }
+
+    if (await getFreshSidebarModuleEnabled('chat', 'playground')) {
+      throw redirect({ to: '/playground' })
     }
 
     if (await getFreshSidebarModuleEnabled('chat', 'chat')) {

@@ -27,6 +27,10 @@ export const Route = createFileRoute('/_authenticated/playground/')({
       return
     }
 
+    if (await getFreshSidebarModuleEnabled('chat', 'image')) {
+      throw redirect({ to: '/playground/image' })
+    }
+
     if (await getFreshSidebarModuleEnabled('chat', 'chat')) {
       throw redirect({ to: '/chat' })
     }
