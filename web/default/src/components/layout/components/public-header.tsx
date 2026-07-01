@@ -337,6 +337,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                       announcements={notifications.announcements}
                       loading={notifications.loading}
                       onCloseToday={notifications.closeToday}
+                      singleTabMode={notifications.isAutoPrompt}
                       className={publicHeaderToolButtonClass}
                     />
                   )}
@@ -381,6 +382,7 @@ export function PublicHeader(props: PublicHeaderProps) {
                   announcements={notifications.announcements}
                   loading={notifications.loading}
                   onCloseToday={notifications.closeToday}
+                  singleTabMode={notifications.isAutoPrompt}
                 />
               )}
               {showAuthButtons && !loading && isAuthenticated && (

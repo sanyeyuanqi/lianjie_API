@@ -249,6 +249,7 @@ export function AppHeader({
                     announcements={notifications.announcements}
                     loading={notifications.loading}
                     onCloseToday={notifications.closeToday}
+                    singleTabMode={notifications.isAutoPrompt}
                     className={appHeaderToolButtonClass}
                   />
                 )}

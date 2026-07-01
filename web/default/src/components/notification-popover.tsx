@@ -22,6 +22,7 @@ import { useTranslation } from 'react-i18next'
 import { getAnnouncementColorClass } from '@/lib/colors'
 import { formatDateTimeObject } from '@/lib/time'
 import { cn } from '@/lib/utils'
+import type { NotificationTab } from '@/stores/notification-store'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import {
@@ -54,12 +55,13 @@ interface NotificationPopoverProps {
   open: boolean
   onOpenChange: (open: boolean) => void
   unreadCount: number
-  activeTab: 'notice' | 'announcements'
-  onTabChange: (tab: 'notice' | 'announcements') => void
+  activeTab: NotificationTab
+  onTabChange: (tab: NotificationTab) => void
   notice: string
   announcements: AnnouncementItem[]
   loading: boolean
-  onCloseToday?: () => void
+  onCloseToday?: (tab: NotificationTab) => void
+  singleTabMode?: boolean
   className?: string
 }
 
@@ -279,9 +281,13 @@ export function NotificationPopover({
   announcements,
   loading,
   onCloseToday,
+  singleTabMode = false,
   className,
 }: NotificationPopoverProps) {
   const { t } = useTranslation()
+  const activeTitle =
+    activeTab === 'announcements' ? t('System Announcements') : t('Notice')
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger
@@ -316,25 +322,27 @@ export function NotificationPopover({
         >
           <DialogHeader className='flex-row items-start justify-between gap-4 space-y-0'>
             <DialogTitle className='pt-1 text-lg font-semibold'>
-              {t('System Announcements')}
+              {activeTitle}
             </DialogTitle>
             <div className='flex shrink-0 items-center gap-2'>
-              <TabsList className='bg-transparent p-0 group-data-horizontal/tabs:h-9'>
-                <TabsTrigger
-                  value='notice'
-                  className='data-active:bg-primary/10 data-active:text-primary h-9 gap-1.5 rounded-lg px-3 text-xs data-active:shadow-none'
-                >
-                  <Bell className='size-3.5' />
-                  {t('Notice')}
-                </TabsTrigger>
-                <TabsTrigger
-                  value='announcements'
-                  className='data-active:bg-primary/10 data-active:text-primary h-9 gap-1.5 rounded-lg px-3 text-xs data-active:shadow-none'
-                >
-                  <Megaphone className='size-3.5' />
-                  {t('System Announcements')}
-                </TabsTrigger>
-              </TabsList>
+              {!singleTabMode ? (
+                <TabsList className='bg-transparent p-0 group-data-horizontal/tabs:h-9'>
+                  <TabsTrigger
+                    value='notice'
+                    className='data-active:bg-primary/10 data-active:text-primary h-9 gap-1.5 rounded-lg px-3 text-xs data-active:shadow-none'
+                  >
+                    <Bell className='size-3.5' />
+                    {t('Notice')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value='announcements'
+                    className='data-active:bg-primary/10 data-active:text-primary h-9 gap-1.5 rounded-lg px-3 text-xs data-active:shadow-none'
+                  >
+                    <Megaphone className='size-3.5' />
+                    {t('System Announcements')}
+                  </TabsTrigger>
+                </TabsList>
+              ) : null}
               <Button
                 variant='ghost'
                 size='icon-sm'
@@ -365,7 +373,7 @@ export function NotificationPopover({
             variant='ghost'
             size='sm'
             className='h-8 min-w-[4.75rem] rounded-[8px] bg-zinc-100 px-3 text-zinc-600 hover:bg-zinc-200 hover:text-zinc-900 dark:bg-white/10 dark:text-zinc-300 dark:hover:bg-white/15 dark:hover:text-white'
-            onClick={onCloseToday}
+            onClick={() => onCloseToday?.(activeTab)}
           >
             {t('Close Today')}
           </Button>

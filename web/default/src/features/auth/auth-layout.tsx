@@ -110,9 +110,19 @@ function AuthDetailPanels({ isDark }: { isDark: boolean }) {
   const mutedTextClass = isDark ? 'text-zinc-500' : 'text-slate-500'
 
   const metrics = [
-    { label: '模型接入', value: '100+', tone: 'from-cyan-300/60' },
-    { label: '统一格式', value: 'OpenAI', tone: 'from-violet-300/55' },
-    { label: '按量计费', value: '实时', tone: 'from-amber-200/60' },
+    { label: '模型接入', value: '100+', tone: 'from-cyan-300/60', delay: '0s' },
+    {
+      label: '统一格式',
+      value: 'OpenAI',
+      tone: 'from-violet-300/55',
+      delay: '0.65s',
+    },
+    {
+      label: '按量计费',
+      value: '实时',
+      tone: 'from-amber-200/60',
+      delay: '1.3s',
+    },
   ]
   return (
     <>
@@ -129,18 +139,34 @@ function AuthDetailPanels({ isDark }: { isDark: boolean }) {
         }}
       />
 
-      <div className='pointer-events-none absolute bottom-[clamp(2.5rem,9vh,6rem)] left-[clamp(2rem,6vw,5rem)] z-0 hidden w-[min(36vw,560px)] select-none lg:block'>
-        <div className='grid grid-cols-3 gap-3'>
+      <div className='pointer-events-none absolute bottom-[clamp(2.5rem,8vh,5.25rem)] left-[clamp(2rem,5vw,4.25rem)] z-0 hidden w-[min(34vw,520px)] select-none lg:block'>
+        <div className='grid grid-cols-3 gap-2.5'>
           {metrics.map((item) => (
             <div
               key={item.label}
-              className={`relative overflow-hidden rounded-2xl border px-4 py-3 backdrop-blur-xl ${panelClass}`}
+              className={`relative min-h-16 overflow-hidden rounded-[1.15rem] border px-4 py-3 backdrop-blur-xl ${panelClass}`}
             >
+              <div
+                aria-hidden
+                className='absolute inset-0 opacity-70'
+                style={{
+                  background: isDark
+                    ? 'radial-gradient(circle at 18% 18%,rgba(103,232,249,0.16),transparent 34%),linear-gradient(135deg,rgba(255,255,255,0.055),rgba(255,255,255,0.018))'
+                    : 'radial-gradient(circle at 18% 18%,rgba(99,102,241,0.12),transparent 34%),linear-gradient(135deg,rgba(255,255,255,0.62),rgba(255,255,255,0.22))',
+                }}
+              />
               <div
                 className={`absolute inset-x-0 top-0 h-px bg-gradient-to-r ${item.tone} via-white/20 to-transparent`}
               />
-              <div className={`text-[11px] ${mutedTextClass}`}>{item.label}</div>
-              <div className={`mt-1 text-lg font-bold ${accentClass}`}>
+              <span
+                aria-hidden
+                className='auth-metric-shine absolute inset-y-[-35%] -left-1/2 w-10 rotate-12 bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.42),transparent)] blur-sm'
+                style={{ animationDelay: item.delay }}
+              />
+              <div className={`relative text-[11px] ${mutedTextClass}`}>
+                {item.label}
+              </div>
+              <div className={`relative mt-1 text-lg font-bold ${accentClass}`}>
                 {item.value}
               </div>
             </div>
@@ -348,7 +374,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
         background: 'rgba(99,102,241,0.06)',
       }
   const authFormSurfaceClass = isDark
-    ? 'border-white/[0.13] bg-[#111216]/78 text-slate-50 shadow-[0_30px_90px_rgba(0,0,0,0.54),0_0_0_1px_rgba(255,255,255,0.025),0_0_70px_rgba(34,211,238,0.055),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl transition-[border-color,background-color,box-shadow] duration-700 ease-out hover:border-white/20 hover:bg-[#14161b]/82 hover:shadow-[0_36px_110px_rgba(0,0,0,0.58),0_0_82px_rgba(34,211,238,0.075),inset_0_1px_0_rgba(255,255,255,0.12)] [&_input]:border-white/14 [&_input]:bg-black/20 [&_input]:text-slate-100 [&_input]:placeholder:text-slate-500 [&_label]:text-slate-300 [&_[data-slot=checkbox]]:border-white/18 [&_[data-slot=checkbox]]:bg-white/6'
+    ? 'border-white/[0.14] bg-[#111216]/78 text-slate-50 shadow-[0_30px_90px_rgba(0,0,0,0.54),0_0_0_1px_rgba(255,255,255,0.03),0_0_72px_rgba(34,211,238,0.065),inset_0_1px_0_rgba(255,255,255,0.08)] backdrop-blur-2xl transition-[border-color,box-shadow] duration-500 ease-out hover:border-cyan-200/42 hover:shadow-[0_42px_120px_rgba(0,0,0,0.64),0_0_0_1px_rgba(125,211,252,0.18),0_0_42px_rgba(103,232,249,0.26),0_0_96px_rgba(168,85,247,0.16),inset_0_1px_0_rgba(255,255,255,0.16)] [&_input]:border-white/14 [&_input]:bg-black/20 [&_input]:text-slate-100 [&_input]:placeholder:text-slate-500 [&_label]:text-slate-300 [&_[data-slot=checkbox]]:border-white/18 [&_[data-slot=checkbox]]:bg-white/6'
     : 'border-white/75 bg-white/72 text-slate-950 shadow-[0_28px_90px_rgba(79,70,229,0.16),0_16px_44px_rgba(30,41,59,0.10),inset_0_1px_0_rgba(255,255,255,0.92)] backdrop-blur-2xl transition-[border-color,background-color,box-shadow] duration-700 ease-out hover:border-white hover:bg-white/82 hover:shadow-[0_34px_108px_rgba(79,70,229,0.20),0_20px_58px_rgba(30,41,59,0.13),0_0_48px_rgba(125,211,252,0.18),inset_0_1px_0_rgba(255,255,255,0.98)]'
 
   return (
@@ -373,6 +399,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             announcements={notifications.announcements}
             loading={notifications.loading}
             onCloseToday={notifications.closeToday}
+            singleTabMode={notifications.isAutoPrompt}
           />
         </div>
       </header>
@@ -397,9 +424,9 @@ export function AuthLayout({ children }: AuthLayoutProps) {
           className='relative z-10 flex w-full flex-1 items-start justify-center px-5 pt-0 pb-8 sm:px-8 md:px-10 lg:items-center lg:px-10 lg:pt-4 lg:pb-12'
         >
           <div
-            className={`w-full max-w-[min(408px,100%)] rounded-[1.35rem] border px-5 py-7 sm:px-7 sm:py-8 md:px-8 lg:max-w-[392px] ${authFormSurfaceClass}`}
+            className={`group/auth-card relative w-full max-w-[min(408px,100%)] overflow-visible rounded-[1.35rem] border px-5 py-7 sm:px-7 sm:py-8 md:px-8 lg:max-w-[392px] ${authFormSurfaceClass}`}
           >
-            {children}
+            <div className='relative z-10'>{children}</div>
           </div>
         </div>
       </div>

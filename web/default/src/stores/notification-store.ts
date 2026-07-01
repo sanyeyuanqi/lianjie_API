@@ -19,20 +19,24 @@ For commercial licensing, please contact support@quantumnous.com
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 
+export type NotificationTab = 'notice' | 'announcements'
+
 interface NotificationState {
   // Last read Notice content signature (full trimmed message)
   lastReadNotice: string
   // Array of read announcement keys (id or content hash)
   readAnnouncementKeys: string[]
-  // Timestamp of last "Close Today" action
-  closedUntilDate: string | null
+  // Date of last "Close Today" action for each notification type
+  closedNoticeUntilDate: string | null
+  closedAnnouncementsUntilDate: string | null
 
   // Actions
   markNoticeRead: (noticeContent: string) => void
   markAnnouncementsRead: (keys: string[]) => void
-  setClosedUntilDate: (date: string | null) => void
+  setClosedUntilDate: (tab: NotificationTab, date: string | null) => void
   isAnnouncementRead: (key: string) => boolean
   isNoticeClosed: () => boolean
+  isAnnouncementsClosed: () => boolean
 }
 
 /**
@@ -44,7 +48,8 @@ export const useNotificationStore = create<NotificationState>()(
     (set, get) => ({
       lastReadNotice: '',
       readAnnouncementKeys: [],
-      closedUntilDate: null,
+      closedNoticeUntilDate: null,
+      closedAnnouncementsUntilDate: null,
 
       markNoticeRead: (noticeContent: string) => {
         // Persist the full trimmed content so edits beyond 100 chars register
@@ -60,8 +65,12 @@ export const useNotificationStore = create<NotificationState>()(
         }))
       },
 
-      setClosedUntilDate: (date: string | null) => {
-        set({ closedUntilDate: date })
+      setClosedUntilDate: (tab: NotificationTab, date: string | null) => {
+        set(
+          tab === 'notice'
+            ? { closedNoticeUntilDate: date }
+            : { closedAnnouncementsUntilDate: date }
+        )
       },
 
       isAnnouncementRead: (key: string) => {
@@ -69,11 +78,19 @@ export const useNotificationStore = create<NotificationState>()(
       },
 
       isNoticeClosed: () => {
-        const { closedUntilDate } = get()
-        if (!closedUntilDate) return false
+        const { closedNoticeUntilDate } = get()
+        if (!closedNoticeUntilDate) return false
 
         const today = new Date().toDateString()
-        return closedUntilDate === today
+        return closedNoticeUntilDate === today
+      },
+
+      isAnnouncementsClosed: () => {
+        const { closedAnnouncementsUntilDate } = get()
+        if (!closedAnnouncementsUntilDate) return false
+
+        const today = new Date().toDateString()
+        return closedAnnouncementsUntilDate === today
       },
     }),
     {
@@ -81,7 +98,8 @@ export const useNotificationStore = create<NotificationState>()(
       partialize: (state) => ({
         lastReadNotice: state.lastReadNotice,
         readAnnouncementKeys: state.readAnnouncementKeys,
-        closedUntilDate: state.closedUntilDate,
+        closedNoticeUntilDate: state.closedNoticeUntilDate,
+        closedAnnouncementsUntilDate: state.closedAnnouncementsUntilDate,
       }),
     }
   )

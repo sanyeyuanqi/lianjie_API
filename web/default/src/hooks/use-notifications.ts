@@ -18,7 +18,10 @@ For commercial licensing, please contact support@quantumnous.com
 */
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { useNotificationStore } from '@/stores/notification-store'
+import {
+  type NotificationTab,
+  useNotificationStore,
+} from '@/stores/notification-store'
 import { getNotice } from '@/lib/api'
 import { useStatus } from '@/hooks/use-status'
 
@@ -64,10 +67,13 @@ function getAnnouncementKey(item: Record<string, unknown>): string {
 export function useNotifications(options: { enabled?: boolean } = {}) {
   const enabled = options.enabled ?? true
   const [popoverOpen, setPopoverOpen] = useState(false)
-  const [hasAutoOpened, setHasAutoOpened] = useState(false)
-  const [activeTab, setActiveTab] = useState<'notice' | 'announcements'>(
-    'notice'
+  const [, setAutoQueue] = useState<NotificationTab[]>([])
+  const [pendingAutoTab, setPendingAutoTab] = useState<NotificationTab | null>(
+    null
   )
+  const [isAutoPrompt, setIsAutoPrompt] = useState(false)
+  const [autoPromptKey, setAutoPromptKey] = useState<string | null>(null)
+  const [activeTab, setActiveTab] = useState<NotificationTab>('notice')
 
   // Fetch Notice from API
   const {
@@ -97,6 +103,7 @@ export function useNotifications(options: { enabled?: boolean } = {}) {
     isAnnouncementRead,
     setClosedUntilDate,
     isNoticeClosed,
+    isAnnouncementsClosed,
   } = useNotificationStore()
 
   // Extract notice content
@@ -132,13 +139,21 @@ export function useNotifications(options: { enabled?: boolean } = {}) {
     }
   }, [announcements, markAnnouncementsRead])
 
+  const announcementKeys = useMemo(
+    () =>
+      announcements
+        .map((item: Record<string, unknown>) => getAnnouncementKey(item))
+        .filter(Boolean),
+    [announcements]
+  )
+
   // Handle popover open
   const handleOpenPopover = useCallback(
-    (tab?: 'notice' | 'announcements') => {
+    (tab?: NotificationTab) => {
       const nextTab = tab || activeTab
 
       // Mark currently visible content as read when opening the notification center
-      if (noticeContent) {
+      if (nextTab === 'notice' && noticeContent) {
         markNoticeRead(noticeContent)
       }
       if (nextTab === 'announcements') {
@@ -151,41 +166,86 @@ export function useNotifications(options: { enabled?: boolean } = {}) {
     [activeTab, markAnnouncementsAsRead, markNoticeRead, noticeContent]
   )
 
+  const closePopover = useCallback(() => {
+    setPopoverOpen(false)
+    setAutoQueue((queue) => {
+      const [nextTab, ...restTabs] = queue
+      setPendingAutoTab(nextTab || null)
+      if (!nextTab) {
+        setIsAutoPrompt(false)
+      }
+      return restTabs
+    })
+  }, [])
+
   const handlePopoverOpenChange = (open: boolean) => {
     if (open) {
+      setAutoQueue([])
+      setPendingAutoTab(null)
+      setIsAutoPrompt(false)
       handleOpenPopover(activeTab)
       return
     }
 
-    setPopoverOpen(false)
+    closePopover()
   }
 
   // Handle tab change - mark announcements as read when switching to that tab
-  const handleTabChange = (tab: 'notice' | 'announcements') => {
+  const handleTabChange = (tab: NotificationTab) => {
     setActiveTab(tab)
 
-    if (tab === 'announcements') {
+    if (tab === 'notice' && noticeContent) {
+      markNoticeRead(noticeContent)
+    } else if (tab === 'announcements') {
       markAnnouncementsAsRead()
     }
   }
 
-  const closeToday = useCallback(() => {
-    setClosedUntilDate(new Date().toDateString())
-    setPopoverOpen(false)
-  }, [setClosedUntilDate])
+  const closeToday = useCallback(
+    (tab: NotificationTab = activeTab) => {
+      setClosedUntilDate(tab, new Date().toDateString())
+      closePopover()
+    },
+    [activeTab, closePopover, setClosedUntilDate]
+  )
 
   useEffect(() => {
     if (!enabled) return
-    if (hasAutoOpened || popoverOpen) return
-    if (noticeLoading || statusLoading || isNoticeClosed()) return
-    if (!noticeContent && announcements.length === 0) return
+    if (popoverOpen) return
+    if (noticeLoading || statusLoading) return
 
-    setHasAutoOpened(true)
-    handleOpenPopover(noticeContent ? 'notice' : 'announcements')
+    const shouldShowNotice = Boolean(noticeContent) && !isNoticeClosed()
+    const shouldShowAnnouncements =
+      announcements.length > 0 && !isAnnouncementsClosed()
+
+    if (!shouldShowNotice && !shouldShowAnnouncements) return
+
+    const nextPromptKey = [
+      shouldShowAnnouncements ? `announcements:${announcementKeys.join(',')}` : '',
+      shouldShowNotice ? `notice:${hashString(noticeContent)}` : '',
+    ]
+      .filter(Boolean)
+      .join('|')
+
+    if (!nextPromptKey || nextPromptKey === autoPromptKey) return
+
+    const tabsToShow: NotificationTab[] = [
+      ...(shouldShowNotice ? (['notice'] as const) : []),
+      ...(shouldShowAnnouncements ? (['announcements'] as const) : []),
+    ]
+    const [firstTab, ...restTabs] = tabsToShow
+    if (!firstTab) return
+
+    setAutoPromptKey(nextPromptKey)
+    setIsAutoPrompt(true)
+    setAutoQueue(restTabs)
+    handleOpenPopover(firstTab)
   }, [
+    announcementKeys,
     announcements.length,
-    hasAutoOpened,
+    autoPromptKey,
     handleOpenPopover,
+    isAnnouncementsClosed,
     isNoticeClosed,
     noticeContent,
     noticeLoading,
@@ -193,6 +253,28 @@ export function useNotifications(options: { enabled?: boolean } = {}) {
     statusLoading,
     enabled,
   ])
+
+  useEffect(() => {
+    if (popoverOpen || !isAutoPrompt || !pendingAutoTab) return
+
+    const timer = window.setTimeout(() => {
+      const nextTab = pendingAutoTab
+      setPendingAutoTab(null)
+      handleOpenPopover(nextTab)
+    }, 120)
+
+    return () => window.clearTimeout(timer)
+  }, [handleOpenPopover, isAutoPrompt, pendingAutoTab, popoverOpen])
+
+  const openPopover = useCallback(
+    (tab?: NotificationTab) => {
+      setAutoQueue([])
+      setPendingAutoTab(null)
+      setIsAutoPrompt(false)
+      handleOpenPopover(tab)
+    },
+    [handleOpenPopover]
+  )
 
   return {
     // Data
@@ -210,10 +292,11 @@ export function useNotifications(options: { enabled?: boolean } = {}) {
     setPopoverOpen: handlePopoverOpenChange,
     activeTab,
     setActiveTab: handleTabChange,
+    isAutoPrompt,
 
     // Actions
-    openPopover: handleOpenPopover,
-    closePopover: () => setPopoverOpen(false),
+    openPopover,
+    closePopover,
     closeToday,
     refetchNotice,
   }
